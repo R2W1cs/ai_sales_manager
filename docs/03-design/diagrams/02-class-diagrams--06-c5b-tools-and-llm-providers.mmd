@@ -1,0 +1,83 @@
+classDiagram
+    direction LR
+
+    class ToolExecutor {
+        <<service>>
+        +execute(call, mode) ToolResult
+    }
+    class Tool {
+        <<interface>>
+        +String name
+        +Boolean mutates
+        +run(args, tenant) ToolResult
+    }
+    class CatalogSearchTool {
+        <<service>>
+        mutates false
+    }
+    class StockCheckTool {
+        <<service>>
+        mutates false
+    }
+    class PolicyLookupTool {
+        <<service>>
+        mutates false
+    }
+    class ReserveStockTool {
+        <<service>>
+        mutates true
+    }
+    class CreatePendingOrderTool {
+        <<service>>
+        mutates true
+    }
+    class ModelFallback {
+        <<service>>
+        +completeWithFallback(prompt) Completion
+    }
+    class AiGateway {
+        <<service>>
+        +complete(prompt, model) Completion
+    }
+    class LlmProvider {
+        <<interface>>
+        +chat(request) Completion
+    }
+    class GroqProvider {
+        <<service>>
+    }
+    class OrcaProvider {
+        <<service>>
+    }
+    class VercelGatewayProvider {
+        <<service>>
+    }
+    class CatalogService {
+        <<external module>>
+    }
+    class InventoryService {
+        <<external module>>
+    }
+    class OrderService {
+        <<external module>>
+    }
+    class BusinessRulesService {
+        <<external module>>
+    }
+
+    ToolExecutor o-- "*" Tool : registry
+    Tool <|.. CatalogSearchTool
+    Tool <|.. StockCheckTool
+    Tool <|.. PolicyLookupTool
+    Tool <|.. ReserveStockTool
+    Tool <|.. CreatePendingOrderTool
+    CatalogSearchTool ..> CatalogService
+    StockCheckTool ..> InventoryService
+    PolicyLookupTool ..> BusinessRulesService
+    ReserveStockTool ..> InventoryService
+    CreatePendingOrderTool ..> OrderService
+    ModelFallback --> AiGateway
+    AiGateway --> LlmProvider
+    LlmProvider <|.. GroqProvider
+    LlmProvider <|.. OrcaProvider
+    LlmProvider <|.. VercelGatewayProvider

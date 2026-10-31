@@ -1,0 +1,179 @@
+classDiagram
+    direction LR
+
+    class Customer {
+        <<entity>>
+        +String id
+        +String name
+        +String phone
+        +String email
+        +Json address
+        +String language
+        +LifecycleStage lifecycleStage
+        +Int confirmedOrderCount
+        +DateTime lastConfirmedOrderAt
+        +String mergedIntoCustomerId
+        +DateTime erasedAt
+        +Boolean isTest
+        +merge(target) void
+        +erase() void
+    }
+    class CustomerIdentity {
+        <<entity>>
+        +Channel platform
+        +String platformUserId
+        +String phoneNumber
+        +DateTime verifiedAt
+    }
+    class CustomerTag {
+        <<entity>>
+        +String label
+    }
+    class CustomerNote {
+        <<entity>>
+        +String authorUserId
+        +String body
+    }
+    class Conversation {
+        <<entity>>
+        +String id
+        +ConversationSource source
+        +String externalThreadId
+        +ConversationStatus status
+        +Boolean aiEnabled
+        +String assignedUserId
+        +String lastIntent
+        +String escalationReason
+        +HandoffPriority handoffPriority
+        +HandoffContext handoffContext
+        +DateTime handoffAt
+        +DateTime handoffCompletedAt
+        +String summary
+        +Json collectedFields
+        +DateTime snoozedUntil
+        +Int leadScore
+        +LeadTemperature leadTemperature
+        +DateTime lastMessageAt
+        +String lastMessagePreview
+        +DateTime staffReadAt
+        +Boolean isTest
+        +hasPendingOrder() Boolean
+    }
+    class ConversationStatusEvent {
+        <<entity>>
+        +ConversationStatus fromStatus
+        +ConversationStatus toStatus
+        +String reason
+        +String actorType
+        +DateTime at
+    }
+    class ConversationAssignment {
+        <<entity>>
+        +String userId
+        +String assignedByUserId
+        +AssignmentStatus status
+        +DateTime assignedAt
+        +DateTime releasedAt
+    }
+    class ConversationNote {
+        <<entity>>
+        +String authorUserId
+        +String body
+    }
+    class Message {
+        <<entity>>
+        +String id
+        +MessageDirection direction
+        +SenderType senderType
+        +String senderUserId
+        +String content
+        +ContentType contentType
+        +String externalMessageId
+        +String idempotencyKey
+        +Json aiMetadata
+        +MessageDeliveryStatus deliveryStatus
+        +DateTime createdAt
+    }
+    class MessageAttachment {
+        <<entity>>
+        +String url
+        +String mimeType
+        +Int sortOrder
+    }
+    class ConversationStatus {
+        <<enumeration>>
+        NEW
+        AI_ACTIVE
+        ORDER_INTENT_DETECTED
+        HUMAN_REQUIRED
+        HUMAN_HANDLING
+        ORDER_CONFIRMED
+        RESOLVED
+    }
+    class SenderType {
+        <<enumeration>>
+        customer
+        ai
+        human
+        system
+    }
+    class MessageDeliveryStatus {
+        <<enumeration>>
+        draft
+        queued
+        sent
+        delivered
+        failed
+    }
+    class LifecycleStage {
+        <<enumeration>>
+        unknown_visitor
+        interested
+        qualified_lead
+        order_pending
+        customer
+        returning_customer
+        vip
+    }
+    class LeadTemperature {
+        <<enumeration>>
+        cold
+        warm
+        hot
+    }
+    class HandoffPriority {
+        <<enumeration>>
+        critical
+        high
+        normal
+    }
+    class ConversationService {
+        <<service>>
+        +transition(id, to, reason, actor) Conversation
+        +ingest(inbound) Message
+        +takeOver(id, userId) Conversation
+        +resume(id, userId) Conversation
+        +close(id, userId) Conversation
+    }
+    class LeadScoringService {
+        <<service>>
+        +recompute(conversationId) Int
+    }
+
+    Customer "1" *-- "1..*" CustomerIdentity : known as
+    Customer "1" *-- "*" CustomerTag
+    Customer "1" *-- "*" CustomerNote
+    Customer "1" --> "*" Conversation : starts
+    Conversation "1" *-- "*" Message : contains
+    Message "1" *-- "*" MessageAttachment
+    Conversation "1" *-- "*" ConversationStatusEvent : audit trail
+    Conversation "1" *-- "*" ConversationAssignment
+    Conversation "1" *-- "*" ConversationNote
+    Conversation ..> ConversationStatus
+    Conversation ..> HandoffPriority
+    Conversation ..> LeadTemperature
+    Message ..> SenderType
+    Message ..> MessageDeliveryStatus
+    Customer ..> LifecycleStage
+    ConversationService ..> Conversation : sole writer of status
+    LeadScoringService ..> Conversation : writes score

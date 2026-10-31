@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant CR as Scheduler (01:10 business time)
+    participant Q as Analytics queue
+    participant W as rollup_daily worker
+    participant DB as PostgreSQL
+    actor O as Owner
+    participant API as Analytics API
+
+    CR->>Q: Enqueue rollup_daily per business and day
+    Q->>W: rollup_daily with job id = business:day
+    W->>DB: Count customer messages that reached a terminal outcome
+    W->>DB: Split by sender type of the reply (AI or human)
+    W->>DB: Count orders created that day
+    W->>DB: Count entries into HUMAN_REQUIRED by reason
+    W->>DB: Count AI-created orders that reached CONFIRMED
+    W->>DB: Upsert analytics_daily row
+    O->>API: GET kpis for date range
+    API->>DB: Sum rows in range using business timezone
+    API-->>O: Four KPIs

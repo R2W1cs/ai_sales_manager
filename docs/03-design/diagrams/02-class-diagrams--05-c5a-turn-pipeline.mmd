@@ -1,0 +1,83 @@
+classDiagram
+    direction TB
+
+    class AIOrchestrator {
+        <<service>>
+        +processTurn(input) TurnResult
+        -assertToolAllowedForMode(tool, mode) void
+        -recheckLock(token) Boolean
+    }
+    class ProcessTurnInput {
+        <<value>>
+        +String businessId
+        +String conversationId
+        +String inboundMessageId
+        +TurnMode mode
+        +String lockToken
+    }
+    class TurnResult {
+        <<value>>
+        +String replyText
+        +ReplyKind kind
+        +IntendedTransition intendedTransition
+        +HandoffContext handoff
+        +Boolean staleLock
+        +ToolCallRecord[] toolCalls
+    }
+    class TurnMode {
+        <<enumeration>>
+        inbound
+        suggest
+        playground
+    }
+    class IntentClassifier {
+        <<interface>>
+        +classify(message, context) IntentResult
+    }
+    class RuleIntentClassifier {
+        <<service>>
+        +classify(message, context) IntentResult
+    }
+    class LlmIntentClassifier {
+        <<service>>
+        +classify(message, context) IntentResult
+    }
+    class PolicyEngine {
+        <<service>>
+        +check(intent, context) PolicyDecision
+        +matchTriggers(context) HandoffTrigger[]
+    }
+    class PromptBuilder {
+        <<service>>
+        +build(agent, context, tools) Prompt
+        +version() String
+    }
+    class ToolExecutor {
+        <<service>>
+        +execute(call, mode) ToolResult
+    }
+    class ModelFallback {
+        <<service>>
+        +completeWithFallback(prompt) Completion
+    }
+    class Guardrails {
+        <<service>>
+        +verify(reply, toolFacts, rules) GuardrailVerdict
+    }
+    class ReplyModePolicy {
+        <<service>>
+        +decide(settings, flags) Delivery
+    }
+
+    AIOrchestrator ..> ProcessTurnInput : receives
+    AIOrchestrator ..> TurnResult : returns
+    ProcessTurnInput ..> TurnMode
+    AIOrchestrator --> IntentClassifier : 1 classify
+    AIOrchestrator --> PolicyEngine : 2 check triggers
+    AIOrchestrator --> PromptBuilder : 3 build prompt
+    AIOrchestrator --> ToolExecutor : 4 run tools
+    AIOrchestrator --> ModelFallback : 5 generate
+    AIOrchestrator --> Guardrails : 6 verify
+    IntentClassifier <|.. RuleIntentClassifier
+    IntentClassifier <|.. LlmIntentClassifier
+    TurnResult ..> ReplyModePolicy : delivery decided by

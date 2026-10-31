@@ -1,0 +1,123 @@
+classDiagram
+    direction TB
+
+    class Order {
+        <<entity>>
+        +String id
+        +String customerId
+        +String conversationId
+        +OrderStatus status
+        +PaymentStatus paymentStatus
+        +String currency
+        +Decimal subtotal
+        +Decimal deliveryFee
+        +Decimal total
+        +Json customerSnapshot
+        +Json deliveryAddress
+        +String createdByType
+        +String createdByUserId
+        +String idempotencyKey
+        +Boolean isTest
+        +DateTime orderConfirmedAt
+        +DateTime cancelledAt
+        +DateTime completedAt
+        +confirm(actor) void
+        +cancel(actor, reason) void
+        +isAiAttributed() Boolean
+    }
+    class OrderItem {
+        <<entity>>
+        +String variantId
+        +Int quantity
+        +Decimal unitPrice
+        +String nameSnapshot
+        +String skuSnapshot
+        +Json attributesSnapshot
+        +lineTotal() Decimal
+    }
+    class OrderStatus {
+        <<enumeration>>
+        PENDING_CONFIRMATION
+        CONFIRMED
+        CANCELLED
+        COMPLETED
+    }
+    class PaymentStatus {
+        <<enumeration>>
+        NOT_COMPLETED
+        COMPLETED
+    }
+    class HandoffContext {
+        <<value>>
+        +String reason
+        +HandoffPriority priority
+        +String summary
+        +Json collectedFields
+        +String pendingOrderId
+        +String suggestedNextStep
+        +String[] losingReasons
+    }
+    class HandoffTrigger {
+        <<enumeration>>
+        purchase_handoff
+        payment_issue
+        refund_request
+        return_exchange
+        complaint
+        low_confidence
+        human_request
+        negotiation
+        custom_order
+        vip_customer
+        bulk_order
+        legal_sensitive
+        inventory_conflict
+        policy_conflict
+        integration_failure
+    }
+    class PurchaseCollection {
+        <<value>>
+        +String variantId
+        +Int quantity
+        +String customerName
+        +String phone
+        +Json address
+        +missingFields() String[]
+        +isComplete() Boolean
+    }
+    class OrderService {
+        <<service>>
+        +createPending(input, idempotencyKey) Order
+        +confirm(orderId, actor) Order
+        +cancel(orderId, actor) Order
+        +createManual(input, actor) Order
+    }
+    class HandoffService {
+        <<service>>
+        +buildContext(turn, trigger) HandoffContext
+        +resolveConflict(triggers) HandoffTrigger
+    }
+    class StockReservation {
+        <<entity>>
+        +ReservationStatus status
+    }
+    class Conversation {
+        <<entity>>
+        +ConversationStatus status
+    }
+    class Customer {
+        <<entity>>
+        +LifecycleStage lifecycleStage
+    }
+
+    Order "1" *-- "1..*" OrderItem : lines
+    Order "*" --> "1" Customer : placed by
+    Order "0..1" --> "1" Conversation : originated in
+    Order "1" --> "*" StockReservation : holds stock via
+    Order ..> OrderStatus
+    Order ..> PaymentStatus
+    Conversation "1" --> "0..1" HandoffContext : briefing
+    HandoffContext ..> HandoffTrigger : reason
+    PurchaseCollection ..> Order : becomes
+    OrderService ..> Order : sole writer
+    HandoffService ..> HandoffContext : builds

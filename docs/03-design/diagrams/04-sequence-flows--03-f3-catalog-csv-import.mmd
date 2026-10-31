@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor A as Admin
+    participant API as Catalog API
+    participant Q as Job queue
+    participant V as Validate worker
+    participant R as Run worker
+    participant DB as PostgreSQL
+    participant X as Embedding queue
+
+    A->>API: Upload CSV
+    API->>DB: Insert import run status uploaded
+    API->>Q: Enqueue validate_import
+    API-->>A: 202 with import id
+    Q->>V: validate_import
+    V->>V: Parse rows and check price, stock, required fields
+    V->>DB: Save per-row errors, status validated
+    A->>API: GET import report
+    API-->>A: Counts and list of invalid rows with reasons
+    A->>API: POST confirm
+    API->>Q: Enqueue run_import
+    Q->>R: run_import
+    R->>DB: Upsert valid products and variants in batches
+    R->>DB: Status succeeded
+    R->>X: Enqueue reindex_business
+    API-->>A: Notification import finished

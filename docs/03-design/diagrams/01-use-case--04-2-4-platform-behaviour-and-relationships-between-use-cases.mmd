@@ -1,0 +1,24 @@
+flowchart LR
+    Sched([Scheduler])
+
+    subgraph SYS[AI Sales Manager: system use cases]
+        UC09[UC09 Activate AI]
+        UC11[UC11 Receive grounded AI reply]
+        UC12[UC12 Place order via chat]
+        UC13[UC13 Escalate to human]
+        UC14[UC14 Work the triage inbox]
+        UC17[UC17 Confirm or cancel order]
+        UC21[UC21 Check activation gates]
+        UC22[UC22 Verify reply against facts]
+        UC23[UC23 Fall back to another model]
+        UC24[UC24 Expire stock reservations]
+        UC25[UC25 Roll up daily KPIs]
+    end
+
+    Sched --- UC24
+    Sched --- UC25
+    UC09 -. include .-> UC21
+    UC11 -. include .-> UC22
+    UC11 -. include .-> UC23
+    UC12 -. leads to .-> UC17
+    UC13 -. leads to .-> UC14

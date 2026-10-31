@@ -1,0 +1,109 @@
+classDiagram
+    direction LR
+
+    class Plan {
+        <<entity>>
+        +String code
+        +String name
+        +Json limits
+        +limitFor(metric) Int
+    }
+    class Subscription {
+        <<entity>>
+        +SubscriptionStatus status
+        +DateTime periodStart
+        +DateTime periodEnd
+        +String provider
+        +isActive() Boolean
+    }
+    class UsageEvent {
+        <<entity>>
+        +UsageMetric metric
+        +Int quantity
+        +DateTime periodBucket
+        +Boolean isTest
+    }
+    class UsageAggregate {
+        <<entity>>
+        +UsageMetric metric
+        +Int total
+        +DateTime periodBucket
+    }
+    class AnalyticsDaily {
+        <<entity>>
+        +Date day
+        +Int messagesHandled
+        +Int messagesAi
+        +Int messagesHuman
+        +Int ordersCreated
+        +Int handoffsTotal
+        +Json handoffsByReason
+        +Int conversionConfirmed
+        +Int conversionAiPending
+        +conversionRate() Decimal
+    }
+    class Notification {
+        <<entity>>
+        +NotificationType type
+        +HandoffPriority handoffPriority
+        +String title
+        +String message
+        +String entityType
+        +String entityId
+        +String dedupeKey
+        +DateTime readAt
+        +markRead() void
+    }
+    class FeatureFlag {
+        <<entity>>
+        +String key
+        +Boolean enabled
+    }
+    class UsageMetric {
+        <<enumeration>>
+        messages_in
+        messages_out_ai
+        orders_created
+        whatsapp_conversations_started
+    }
+    class NotificationType {
+        <<enumeration>>
+        HOT_LEAD
+        ORDER_REQUEST
+        HANDOFF
+        ESCALATION
+    }
+    class UsageService {
+        <<service>>
+        +record(businessId, metric, qty) void
+        +isOverLimit(businessId, metric) Boolean
+    }
+    class AnalyticsService {
+        <<service>>
+        +kpis(businessId, from, to) KpiSet
+        +rollupDay(businessId, day) AnalyticsDaily
+    }
+    class NotificationService {
+        <<service>>
+        +notify(recipients, type, entity, dedupeKey) void
+    }
+    class KpiSet {
+        <<value>>
+        +Int messagesHandled
+        +Int aiHandled
+        +Int humanHandled
+        +Int ordersCreated
+        +Int humanHandoffs
+        +Decimal conversion
+    }
+
+    Plan "1" --> "*" Subscription
+    Subscription ..> UsageEvent : limits apply to
+    UsageEvent ..> UsageAggregate : summed hourly
+    UsageEvent ..> UsageMetric
+    Notification ..> NotificationType
+    UsageService ..> UsageEvent
+    UsageService ..> Plan : reads limits
+    AnalyticsService ..> AnalyticsDaily
+    AnalyticsService ..> KpiSet : returns
+    NotificationService ..> Notification : dedupes

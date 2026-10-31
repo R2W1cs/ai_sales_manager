@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor O as Owner
+    participant API as Playground API
+    participant Q as Job queue
+    participant WK as AI worker
+    participant O2 as AI orchestrator
+    participant DB as PostgreSQL
+
+    O->>API: POST simulate with message
+    API->>DB: Find or create conversation source playground, is_test true
+    API->>Q: Enqueue process_inbound_message with test flag
+    API-->>O: 202
+    Q->>WK: process_inbound_message
+    WK->>O2: processTurn in playground mode
+    O2->>O2: Read tools allowed, reserve and create order blocked
+    O2-->>WK: Reply
+    WK->>DB: Store reply with sent status, no channel call
+    WK-->>O: Reply appears in playground
+    Note over WK,DB: No Meta call, no KPI count, no usage event. Usage and traces still recorded for cost visibility.

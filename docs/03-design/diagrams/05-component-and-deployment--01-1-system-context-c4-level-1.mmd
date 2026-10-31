@@ -1,0 +1,8 @@
+flowchart TB
+    Cust([Customer<br/>Instagram, Messenger, website]) -->|messages| Meta[Meta platform]
+    Meta <-->|webhooks and Graph API| SYS
+    Cust -->|chat widget| SYS
+    Staff([Owner, Admin, Employee]) -->|browser| SYS
+    SYS[AI Sales Manager] -->|chat completions, embeddings| LLM[LLM providers<br/>Groq, OrcaRouter, Vercel Gateway]
+    SYS -->|transactional email| Mail[Email service]
+    SYS -->|logs, metrics, alarms| Obs[Monitoring]

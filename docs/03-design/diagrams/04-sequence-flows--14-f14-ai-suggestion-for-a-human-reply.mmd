@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor S as Staff
+    participant API as Conversations API
+    participant Q as Job queue
+    participant WK as generate_suggestion worker
+    participant O as AI orchestrator
+    participant RT as Realtime gateway
+
+    S->>API: POST suggest with idempotency key
+    API->>Q: Enqueue job id = conversation:suggest:key
+    API-->>S: 202 pending state shown
+    Q->>WK: generate_suggestion
+    WK->>WK: Take the conversation lock
+    WK->>O: processTurn in suggest mode
+    O->>O: Mutating tools blocked, no reserve, no order, no handoff
+    O-->>WK: Suggested text
+    WK-->>RT: suggestion.ready
+    RT-->>S: Suggestion appears in the composer
+    S->>S: Edit and send as a normal human message

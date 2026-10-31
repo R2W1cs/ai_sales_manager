@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant S as Sender
+    participant API as API or AI worker
+    participant DB as PostgreSQL
+    participant Q as Job queue
+    participant DW as deliver_outbound worker
+    participant AD as Channel adapter
+    participant M as Meta Graph API
+    participant RT as Realtime gateway
+
+    S->>API: Create outbound message
+    API->>DB: Insert message queued
+    API->>Q: Enqueue deliver_outbound with job id = message id
+    API-->>S: 201 immediately
+    Q->>DW: deliver_outbound
+    DW->>DB: Load message and channel account
+    DW->>AD: send canonical outbound
+    AD->>M: Graph API call using token from secret store
+    alt accepted
+        M-->>AD: Message id
+        DW->>DB: Status sent, store external id
+        DW-->>RT: message.sent
+    else provider error
+        AD-->>DW: Error
+        DW->>Q: Retry 5 s, then 10 s
+        alt retries exhausted
+            DW->>DB: Status failed
+            DW-->>RT: message.failed
+            Note over DW: Dead-letter queue alert raised
+        end
+    end
+    M-->>DW: Later delivery receipt webhook
+    DW->>DB: Status delivered

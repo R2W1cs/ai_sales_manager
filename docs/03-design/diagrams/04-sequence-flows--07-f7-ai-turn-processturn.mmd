@@ -1,0 +1,47 @@
+sequenceDiagram
+    participant Q as Job queue
+    participant WK as process_inbound_message worker
+    participant R as Redis lock
+    participant O as AI orchestrator
+    participant IC as Intent classifier
+    participant PE as Policy engine
+    participant T as Tool executor
+    participant L as LLM gateway
+    participant G as Guardrails
+    participant DB as PostgreSQL
+
+    Q->>WK: process_inbound_message
+    WK->>R: SET conversation lock token with NX and 30 s expiry
+    alt lock held by another turn
+        WK->>Q: Delay 2 s and retry, do not drop
+    else lock acquired
+        WK->>WK: Start heartbeat to extend lock every 10 s
+        WK->>O: processTurn
+        O->>IC: Classify intent of latest message
+        IC-->>O: Intent and confidence
+        O->>PE: Check policy before generating
+        alt exception trigger matched
+            PE-->>O: Escalate with reason and priority
+            O->>O: Prepare handoff briefing
+        else answerable
+            loop up to 8 tool calls and 2 rounds
+                O->>L: Prompt with rules, history, tool schema
+                L-->>O: Tool call request or final text
+                O->>T: Execute allowed tool for this business
+                T->>DB: Read catalog, stock or policy
+                T-->>O: Tool result
+            end
+            O->>G: Verify draft against tool results and rules
+            alt guardrail fails
+                G-->>O: Reject
+                O->>O: Regenerate once, else escalate low confidence
+            else pass
+                G-->>O: OK
+            end
+        end
+        O-->>WK: TurnResult with reply and intended transition
+        WK->>R: Check lock token still ours
+        WK->>DB: Persist outbound message, actions, trace, usage
+        WK->>DB: Apply intended transition through Conversation service
+        WK->>R: Release lock only if token matches
+    end

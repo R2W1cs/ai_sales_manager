@@ -1,0 +1,8 @@
+stateDiagram-v2
+    [*] --> uploaded: CSV received
+    uploaded --> validated: rows checked
+    validated --> previewed: report shown to user
+    previewed --> running: user confirms
+    running --> succeeded: valid rows written
+    running --> failed: unexpected error, nothing partially visible
+    uploaded --> failed: file unreadable

@@ -1,0 +1,30 @@
+classDiagram
+    direction TB
+
+    class Auth { <<module>> }
+    class Businesses { <<module>> }
+    class Products { <<module>> }
+    class Customers { <<module>> }
+    class Conversations { <<module>> }
+    class AI { <<module>> }
+    class Orders { <<module>> }
+    class Integrations { <<module>> }
+    class Analytics { <<module>> }
+    class Notifications { <<module>> }
+    class Realtime { <<module>> }
+
+    Businesses ..> Auth : current user
+    Conversations ..> Customers : resolve identity
+    Conversations ..> Integrations : send via UnifiedMessaging
+    Integrations ..> Conversations : ingest canonical inbound
+    AI ..> Products : CatalogService, InventoryService
+    AI ..> Businesses : BusinessRulesService
+    AI ..> Conversations : ConversationService
+    AI ..> Orders : OrderService.createPending
+    Orders ..> Products : InventoryService commit or release
+    Orders ..> Customers : lifecycle update
+    Orders ..> Conversations : events only
+    Analytics ..> Orders : events only
+    Analytics ..> Conversations : events only
+    Notifications ..> Businesses : recipients
+    Realtime ..> Conversations : events only

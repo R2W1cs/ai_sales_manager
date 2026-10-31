@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> draft: AI draft or draft-only mode
+    [*] --> queued: auto-send reply or human message
+    draft --> queued: staff approves
+    queued --> sent: provider accepted
+    queued --> failed: all retries exhausted
+    sent --> delivered: provider delivery receipt
+    failed --> queued: staff retries
+    delivered --> [*]

@@ -1,0 +1,82 @@
+classDiagram
+    direction LR
+
+    class Business {
+        <<entity>>
+    }
+    class AiAgent {
+        <<entity>>
+        +String name
+        +String personality
+        +String language
+        +String tone
+        +Decimal confidenceThreshold
+        +Boolean enabled
+    }
+    class AiSettings {
+        <<entity>>
+        +String modelPrimary
+        +String modelFallback
+        +Int maxTokens
+        +ReplyMode replyMode
+        +Int ragTopK
+        +String[] blockedTopics
+        +Int reservationTtlMinutes
+        +Decimal monthlyAiBudgetUsd
+    }
+    class ReplyMode {
+        <<enumeration>>
+        auto_send
+        approval_required
+        draft_only
+    }
+    class AiPrompt {
+        <<entity>>
+        +PromptType type
+        +String version
+        +String body
+    }
+    class Conversation {
+        <<entity>>
+    }
+    class AiAction {
+        <<entity>>
+        +AiActionType actionType
+        +String toolName
+        +Json input
+        +Json output
+        +Boolean success
+        +Int durationMs
+    }
+    class AiDecisionTrace {
+        <<entity>>
+        +Json decisionTrace
+    }
+    class AiUsage {
+        <<entity>>
+        +String provider
+        +String model
+        +Int tokensInput
+        +Int tokensOutput
+        +Decimal estimatedCostUsd
+    }
+    class AiFeedback {
+        <<entity>>
+        +FeedbackRating rating
+        +FeedbackReason reason
+        +String comment
+    }
+    class Message {
+        <<entity>>
+    }
+
+    Business "1" *-- "1" AiAgent : persona
+    Business "1" *-- "1" AiSettings : tuning
+    Business "1" o-- "*" AiPrompt : versions
+    AiSettings ..> ReplyMode
+    Conversation "1" *-- "*" AiAction : tool calls and decisions
+    Conversation "1" *-- "*" AiDecisionTrace : why each reply
+    Conversation "1" *-- "*" AiUsage : tokens and cost
+    AiPrompt "1" --> "*" AiUsage : version used
+    Message "1" *-- "*" AiFeedback : staff rating
+    AiFeedback ..> AiAction : reviews

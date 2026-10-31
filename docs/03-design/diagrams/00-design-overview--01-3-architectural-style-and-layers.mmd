@@ -1,0 +1,28 @@
+flowchart TB
+    subgraph L1[Presentation]
+        UI[Next.js UI]
+        CTRL[Controllers and DTO validation]
+        WSG[Socket gateway]
+    end
+    subgraph L2[Application]
+        SVC[Module services<br/>use cases and orchestration]
+        JOBS[Job processors]
+    end
+    subgraph L3[Domain]
+        ENT[Entities and value objects]
+        RULES[State machines, policies, guardrails]
+    end
+    subgraph L4[Infrastructure]
+        REPO[Tenant-scoped data access]
+        ADP[Channel and LLM adapters]
+        QUEUE[Queue, cache, secrets, storage]
+    end
+
+    UI --> CTRL --> SVC
+    WSG --> SVC
+    JOBS --> SVC
+    SVC --> ENT
+    SVC --> RULES
+    SVC --> REPO
+    SVC --> ADP
+    REPO --> QUEUE

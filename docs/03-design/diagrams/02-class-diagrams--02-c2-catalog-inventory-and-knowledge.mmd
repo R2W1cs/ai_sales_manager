@@ -1,0 +1,181 @@
+classDiagram
+    direction TB
+
+    class ProductCategory {
+        <<entity>>
+        +String id
+        +String name
+        +String parentId
+    }
+    class Product {
+        <<entity>>
+        +String id
+        +String businessId
+        +String name
+        +String description
+        +ProductStatus status
+        +String currency
+        +Json benefits
+        +Json sellingPoints
+        +Json objections
+        +Json faqs
+        +activate() void
+        +archive() void
+    }
+    class ProductVariant {
+        <<entity>>
+        +String id
+        +String sku
+        +String barcode
+        +Json attributes
+        +Decimal price
+        +Decimal discountPrice
+        +Int stock
+        +Boolean isDefault
+        +effectivePrice() Decimal
+        +availableStock() Int
+    }
+    class ProductImage {
+        <<entity>>
+        +String id
+        +String url
+        +Int sortOrder
+    }
+    class StockReservation {
+        <<entity>>
+        +String id
+        +String variantId
+        +String conversationId
+        +String orderId
+        +Int quantity
+        +ReservationStatus status
+        +DateTime reservedAt
+        +DateTime expiresAt
+        +commit() void
+        +release() void
+        +expire() void
+    }
+    class InventoryMovement {
+        <<entity>>
+        +String id
+        +Int delta
+        +String reason
+        +String orderId
+        +DateTime createdAt
+    }
+    class BusinessRule {
+        <<entity>>
+        +String id
+        +RuleType ruleType
+        +Json payload
+        +Int priority
+        +Boolean enabled
+        +DateTime effectiveFrom
+        +DateTime effectiveTo
+        +appliesAt(instant) Boolean
+    }
+    class KnowledgeDocument {
+        <<entity>>
+        +String id
+        +String title
+        +String sourceType
+        +String rawText
+        +String contentHash
+        +IndexingStatus indexingStatus
+    }
+    class Embedding {
+        <<entity>>
+        +String sourceId
+        +Int chunkIndex
+        +String chunkText
+        +String contentHash
+        +Vector1536 vector
+    }
+    class CatalogImportRun {
+        <<entity>>
+        +String id
+        +ImportStatus status
+        +Int totalRows
+        +Int validRows
+        +Json rowErrors
+    }
+    class ProductStatus {
+        <<enumeration>>
+        draft
+        active
+        archived
+    }
+    class ReservationStatus {
+        <<enumeration>>
+        active
+        committed
+        released
+        expired
+    }
+    class RuleType {
+        <<enumeration>>
+        delivery
+        payment
+        returns
+        working_hours
+        discount
+        min_order
+        free_shipping
+    }
+    class IndexingStatus {
+        <<enumeration>>
+        pending
+        indexing
+        ready
+        failed
+    }
+    class ImportStatus {
+        <<enumeration>>
+        uploaded
+        validated
+        previewed
+        running
+        succeeded
+        failed
+    }
+    class CatalogService {
+        <<service>>
+        +searchVariants(businessId, query) ProductVariant[]
+        +import(businessId, file) CatalogImportRun
+    }
+    class InventoryService {
+        <<service>>
+        +reserve(variantId, qty, conversationId, ttl) StockReservation
+        +commit(reservationId) void
+        +release(reservationId) void
+        +expireDue() Int
+    }
+    class KnowledgeService {
+        <<service>>
+        +index(document) void
+        +retrieve(businessId, query, topK) Embedding[]
+    }
+    class BusinessRulesService {
+        <<service>>
+        +lookup(businessId, type, context) BusinessRule
+        +detectConflicts(businessId) String[]
+    }
+
+    ProductCategory "0..1" o-- "*" ProductCategory : parent of
+    ProductCategory "1" o-- "*" Product : groups
+    Product "1" *-- "1..*" ProductVariant : sold as
+    Product "1" *-- "*" ProductImage : shown by
+    ProductVariant "1" --> "*" StockReservation : held by
+    ProductVariant "1" *-- "*" InventoryMovement : ledger
+    KnowledgeDocument "1" *-- "*" Embedding : chunked into
+    Product ..> Embedding : indexed as
+    BusinessRule ..> RuleType
+    Product ..> ProductStatus
+    StockReservation ..> ReservationStatus
+    KnowledgeDocument ..> IndexingStatus
+    CatalogImportRun ..> ImportStatus
+    CatalogService ..> Product
+    InventoryService ..> StockReservation
+    InventoryService ..> InventoryMovement : writes
+    KnowledgeService ..> Embedding
+    BusinessRulesService ..> BusinessRule

@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor C as Customer
+    participant O as AI orchestrator
+    participant PE as Policy engine
+    participant HS as Handoff service
+    participant CS as Conversation service
+    participant DB as PostgreSQL
+    participant N as Notification service
+    participant RT as Realtime gateway
+    actor S as Staff
+
+    C->>O: "Ena ma jitnish el commande w nheb remboursement"
+    O->>PE: Check triggers before generation
+    PE-->>O: refund_request critical
+    O->>HS: Build briefing from context
+    HS-->>O: reason, priority, summary, collected fields
+    O->>O: Write short pause message from the escalation prompt only
+    O->>DB: Save briefing on conversation
+    O->>CS: Transition to HUMAN_REQUIRED, ai_enabled false
+    CS->>DB: Append status event
+    CS-->>N: conversation.state_changed
+    N->>DB: Create notification with dedupe key
+    N-->>S: In-app alert
+    CS-->>RT: conversation.handoff
+    RT-->>S: Inbox moves thread to top by priority
+    O-->>C: "Un membre de l'equipe va vous repondre"

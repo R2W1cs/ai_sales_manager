@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant O as AI worker
+    participant RMP as Reply mode policy
+    participant DB as PostgreSQL
+    participant Q as Job queue
+    participant W as Inbox UI
+    actor S as Staff
+
+    O->>RMP: Decide delivery for this reply
+    RMP->>DB: Read reply mode and shadow flag
+    alt auto_send and not shadow
+        RMP-->>O: Queue for sending
+        O->>DB: Insert message queued
+        O->>Q: Enqueue send_ai_reply then deliver_outbound
+    else approval_required
+        RMP-->>O: Store as draft
+        O->>DB: Insert message draft
+        DB-->>W: Draft appears with Approve and Edit
+        S->>W: Approve, optionally after editing
+        W->>DB: Status queued
+        W->>Q: Enqueue deliver_outbound
+    else draft_only
+        RMP-->>O: Store as draft, never sendable by approval
+        O->>DB: Insert message draft
+        S->>W: Try Approve
+        W-->>S: 409, copy text and send as a normal human message
+    end

@@ -1,0 +1,117 @@
+classDiagram
+    direction LR
+
+    class User {
+        <<entity>>
+        +String id
+        +String email
+        +String name
+        +DateTime emailVerifiedAt
+        +signIn(credentials) Session
+        +signOut(sessionId) void
+    }
+    class Session {
+        <<entity>>
+        +String id
+        +String userId
+        +DateTime expiresAt
+        +String ipAddress
+        +isExpired() Boolean
+    }
+    class Business {
+        <<entity>>
+        +String id
+        +String name
+        +String industry
+        +String country
+        +String defaultLanguage
+        +String timezone
+        +String currency
+        +Json settings
+        +DateTime deletedAt
+        +DateTime deleteAfter
+        +isActive() Boolean
+    }
+    class BusinessMember {
+        <<entity>>
+        +String id
+        +String businessId
+        +String userId
+        +String roleId
+        +DateTime joinedAt
+        +DateTime removedAt
+        +DateTime lastActiveAt
+        +can(permissionCode) Boolean
+    }
+    class Role {
+        <<entity>>
+        +String id
+        +String businessId
+        +String name
+    }
+    class Permission {
+        <<entity>>
+        +String code
+    }
+    class Invitation {
+        <<entity>>
+        +String id
+        +String email
+        +String tokenHash
+        +DateTime expiresAt
+        +DateTime acceptedAt
+        +accept(user) BusinessMember
+        +isExpired() Boolean
+    }
+    class BusinessOnboarding {
+        <<entity>>
+        +Boolean catalogReady
+        +Boolean rulesAcknowledged
+        +Boolean channelActive
+        +Boolean aiTested
+        +Boolean handoffAcknowledged
+        +unmetGates() String[]
+        +isActivationReady() Boolean
+    }
+    class AuditLog {
+        <<entity>>
+        +String actorUserId
+        +String action
+        +String entityType
+        +String entityId
+        +Json before
+        +Json after
+        +DateTime createdAt
+    }
+    class AuthService {
+        <<service>>
+        +register(email, password) User
+        +signIn(email, password) Session
+        +resetPassword(token, newPassword) void
+    }
+    class BusinessService {
+        <<service>>
+        +createWorkspace(owner, name, tz, currency) Business
+        +invite(actor, email, role) Invitation
+        +removeMember(actor, memberId) void
+        +activateAi(actor) void
+    }
+    class TenantGuard {
+        <<service>>
+        +resolve(request) TenantContext
+        +assertPermission(ctx, code) void
+    }
+
+    User "1" --> "*" Session : opens
+    User "1" --> "*" BusinessMember : is
+    Business "1" *-- "*" BusinessMember : has
+    Business "1" *-- "*" Invitation : issues
+    Business "1" *-- "1" BusinessOnboarding : tracks
+    Business "1" o-- "*" Role : defines
+    Role "*" o-- "*" Permission : grants
+    BusinessMember "*" --> "1" Role : holds
+    Business ..> AuditLog : changes recorded
+    AuthService ..> User
+    BusinessService ..> Business
+    BusinessService ..> BusinessOnboarding : reads gates
+    TenantGuard ..> BusinessMember : resolves role

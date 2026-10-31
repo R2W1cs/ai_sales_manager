@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant S1 as Staff browser
+    participant RT as Realtime gateway
+    participant EV as Domain events
+    participant R as Redis
+
+    S1->>RT: Connect with session
+    RT->>RT: Authenticate and resolve business
+    RT->>S1: Join business room
+    S1->>RT: Open conversation, join conversation room
+    EV->>RT: message.received, state_changed, handoff, score changed
+    RT->>R: Publish for other API instances
+    RT-->>S1: conversation.message / conversation.status / conversation.handoff
+    Note over S1,RT: Connection drops
+    S1->>RT: Reconnect
+    RT->>S1: Rejoin rooms
+    S1->>S1: Refetch list and open thread to repair any gap

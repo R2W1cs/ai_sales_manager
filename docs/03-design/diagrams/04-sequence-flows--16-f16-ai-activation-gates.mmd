@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor O as Owner
+    participant W as Web app
+    participant API as Business service
+    participant DB as PostgreSQL
+
+    O->>W: Open onboarding checklist
+    W->>API: GET activation status
+    API->>DB: Evaluate G1 to G5
+    API-->>W: Each gate with met or unmet and link to fix it
+    W-->>O: Activate button disabled while any gate is unmet
+    O->>W: Complete the missing steps
+    O->>W: Click Activate AI
+    W->>API: POST activate
+    API->>DB: Re-evaluate all gates server-side
+    alt any gate unmet
+        API-->>W: 422 listing every unmet gate
+    else all met
+        API->>DB: Mark AI agent enabled
+        API-->>W: 200 AI is live
+    end
