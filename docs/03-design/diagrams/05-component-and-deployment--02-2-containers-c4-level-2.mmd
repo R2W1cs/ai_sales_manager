@@ -1,0 +1,36 @@
+flowchart TB
+    subgraph Browser
+        Web[Next.js web app<br/>operator UI, port 3000]
+        Widget[Website chat widget]
+    end
+
+    subgraph Backend[Backend services, same container image]
+        API[NestJS API<br/>REST and Socket.IO, port 4000]
+        Worker[Worker process<br/>BullMQ job processors]
+    end
+
+    subgraph Data[Data stores]
+        PG[(PostgreSQL<br/>with pgvector)]
+        RD[(Redis<br/>queues, locks, pub/sub)]
+        S3[(Object storage<br/>S3 or MinIO)]
+        SEC[(Secret store)]
+    end
+
+    Meta[Meta Graph API and webhooks]
+    LLM[LLM providers]
+
+    Web -->|HTTPS REST| API
+    Web <-->|WebSocket| API
+    Widget -->|HTTPS| API
+    Meta -->|webhook| API
+    API --> PG
+    API --> RD
+    API --> S3
+    API --> SEC
+    Worker --> PG
+    Worker --> RD
+    Worker --> S3
+    Worker --> SEC
+    Worker -->|send| Meta
+    Worker -->|complete, embed| LLM
+    API -. enqueue .-> RD

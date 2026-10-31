@@ -1,0 +1,8 @@
+stateDiagram-v2
+    [*] --> PENDING_CONFIRMATION: AI or staff creates order
+    PENDING_CONFIRMATION --> CONFIRMED: staff confirms
+    PENDING_CONFIRMATION --> CANCELLED: staff cancels
+    CONFIRMED --> COMPLETED: delivered and paid offline
+    CONFIRMED --> CANCELLED: staff cancels after confirmation
+    COMPLETED --> [*]
+    CANCELLED --> [*]

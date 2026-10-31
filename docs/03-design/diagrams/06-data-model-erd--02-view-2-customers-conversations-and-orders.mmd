@@ -1,0 +1,112 @@
+erDiagram
+    BUSINESS ||--o{ CUSTOMER : has
+    CUSTOMER ||--|{ CUSTOMER_IDENTITY : "known as"
+    CUSTOMER ||--o{ CUSTOMER_TAG : tagged
+    CUSTOMER ||--o{ CUSTOMER_NOTE : noted
+    CUSTOMER ||--o{ CONVERSATION : starts
+    BUSINESS ||--o{ CHANNEL_ACCOUNT : connects
+    CHANNEL_ACCOUNT ||--o{ CONVERSATION : carries
+    CHANNEL_ACCOUNT ||--o{ INTEGRATION_EVENT : receives
+    CONVERSATION ||--o{ MESSAGE : contains
+    MESSAGE ||--o{ MESSAGE_ATTACHMENT : has
+    CONVERSATION ||--o{ CONVERSATION_STATUS_EVENT : "audit trail"
+    CONVERSATION ||--o{ CONVERSATION_ASSIGNMENT : assigned
+    CONVERSATION ||--o{ CONVERSATION_NOTE : noted
+    CUSTOMER ||--o{ ORDER : places
+    CONVERSATION |o--o{ ORDER : originates
+    ORDER ||--|{ ORDER_ITEM : lines
+    PRODUCT_VARIANT ||--o{ ORDER_ITEM : "sold as"
+
+    CUSTOMER {
+        uuid id PK
+        uuid business_id FK
+        text name
+        text phone
+        text lifecycle_stage
+        uuid merged_into_customer_id FK
+        timestamptz erased_at
+    }
+    CUSTOMER_IDENTITY {
+        uuid id PK
+        uuid customer_id FK
+        text platform
+        text platform_user_id
+    }
+    CHANNEL_ACCOUNT {
+        uuid id PK
+        uuid business_id FK
+        text channel
+        text credentials_ref
+        text status
+        timestamptz token_expires_at
+    }
+    INTEGRATION_EVENT {
+        uuid id PK
+        uuid channel_account_id FK
+        text external_event_id UK
+        jsonb payload
+        boolean signature_valid
+        timestamptz processed_at
+    }
+    CONVERSATION {
+        uuid id PK
+        uuid business_id FK
+        uuid customer_id FK
+        text status
+        boolean ai_enabled
+        text escalation_reason
+        text handoff_priority
+        jsonb handoff_context
+        int lead_score
+        boolean is_test
+    }
+    CONVERSATION_STATUS_EVENT {
+        uuid id PK
+        uuid conversation_id FK
+        text from_status
+        text to_status
+        text reason
+    }
+    CONVERSATION_ASSIGNMENT {
+        uuid id PK
+        uuid conversation_id FK
+        uuid user_id
+        text status
+    }
+    MESSAGE {
+        uuid id PK
+        uuid conversation_id FK
+        text direction
+        text sender_type
+        text content
+        text external_message_id
+        text idempotency_key UK
+        text delivery_status
+    }
+    MESSAGE_ATTACHMENT {
+        uuid id PK
+        uuid message_id FK
+        text url
+        int sort_order
+    }
+    ORDER {
+        uuid id PK
+        uuid business_id FK
+        uuid customer_id FK
+        uuid conversation_id
+        text status
+        text payment_status
+        numeric subtotal
+        numeric delivery_fee
+        numeric total
+        jsonb customer_snapshot
+        text idempotency_key
+    }
+    ORDER_ITEM {
+        uuid id PK
+        uuid order_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+        text name_snapshot
+    }

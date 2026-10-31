@@ -1,0 +1,8 @@
+stateDiagram-v2
+    [*] --> active: AI reserves stock during collection
+    active --> committed: order confirmed
+    active --> released: order cancelled or collection abandoned
+    active --> expired: time to live elapsed
+    committed --> [*]
+    released --> [*]
+    expired --> [*]

@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor M as Merchant
+    participant W as Web app
+    participant A as Auth service
+    participant B as Business service
+    participant DB as PostgreSQL
+
+    M->>W: Submit email and password
+    W->>A: POST register
+    A->>A: Validate email format and password strength
+    A->>DB: Insert user if email unused
+    alt email already exists
+        DB-->>A: Unique violation
+        A-->>W: 409 email_in_use
+        W-->>M: Show clear error
+    else created
+        DB-->>A: User row
+        A->>DB: Create session
+        A-->>W: 201 with session cookie
+    end
+    M->>W: Enter business name, timezone, currency
+    W->>B: POST businesses
+    B->>DB: Begin transaction
+    B->>DB: Insert business
+    B->>DB: Seed default roles and permissions
+    B->>DB: Insert member as Owner
+    B->>DB: Insert onboarding row with all gates false
+    B->>DB: Commit
+    B-->>W: 201 business and tenant context
+    W-->>M: Open onboarding checklist

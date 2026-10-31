@@ -1,0 +1,34 @@
+sequenceDiagram
+    actor S as Staff
+    participant API as Orders API
+    participant ORD as Order service
+    participant INV as Inventory service
+    participant DB as PostgreSQL
+    participant EV as Domain events
+    participant CS as Conversation service
+    participant AN as Analytics
+    participant CU as Customer service
+
+    S->>API: POST confirm order
+    API->>ORD: confirm(orderId, actor)
+    ORD->>DB: Begin transaction, lock order row
+    alt status not PENDING_CONFIRMATION
+        ORD-->>API: 409 invalid_state
+    else pending
+        ORD->>INV: commit reservation
+        INV->>DB: Decrement stock, write ledger entry, reservation committed
+        ORD->>DB: Status CONFIRMED, set confirmed time
+        ORD->>DB: Commit
+        ORD-->>EV: order.confirmed after commit
+        EV->>CS: Move conversation to ORDER_CONFIRMED
+        EV->>AN: Count toward conversion
+        EV->>CU: Advance lifecycle and order count
+        API-->>S: 200
+    end
+    Note over S,CU: Cancel path
+    S->>API: POST cancel order
+    API->>ORD: cancel(orderId, actor)
+    ORD->>INV: release reservation
+    ORD->>DB: Status CANCELLED
+    ORD-->>EV: order.cancelled
+    EV->>CS: Update only, no auto resume of AI

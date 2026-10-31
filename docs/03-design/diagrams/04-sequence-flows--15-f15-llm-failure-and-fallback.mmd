@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant O as AI orchestrator
+    participant MF as Model fallback
+    participant P1 as Primary model (Groq)
+    participant P2 as Fallback model (Orca)
+    participant P3 as Last resort (Vercel gateway)
+    participant Q as Job queue
+    participant N as Notification service
+    actor Own as Owner
+
+    O->>MF: completeWithFallback
+    MF->>P1: Request, 15 s timeout
+    alt success
+        P1-->>MF: Completion
+        MF-->>O: Result
+    else timeout or error
+        MF->>P2: Retry on next provider
+        alt success
+            P2-->>MF: Completion
+            MF-->>O: Result, usage logged with model used
+        else failure
+            MF->>P3: Retry on next provider
+            alt all failed
+                P3-->>MF: Error
+                MF-->>O: Failure
+                O->>O: Escalate integration_failure, no reply invented
+                O->>Q: Job retried with backoff
+                O-->>N: ai.provider_down
+                N-->>Own: Alert, humans can still reply from the inbox
+            end
+        end
+    end

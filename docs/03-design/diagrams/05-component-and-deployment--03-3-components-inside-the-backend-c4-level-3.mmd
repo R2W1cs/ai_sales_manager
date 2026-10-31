@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph API[NestJS modular monolith]
+        direction TB
+
+        subgraph Edge[Edge]
+            GW[HTTP controllers<br/>DTO validation, guards]
+            WS[Realtime gateway]
+            WHC[Webhook controller]
+        end
+
+        subgraph Core[Domain modules]
+            AUTH[auth]
+            BIZ[businesses<br/>roles, rules, flags]
+            PROD[products<br/>catalog, inventory, knowledge]
+            CUST[customers]
+            CONV[conversations<br/>state machine, lead score]
+            AI[ai<br/>orchestrator, tools, guardrails]
+            ORD[orders]
+            INT[integrations<br/>adapters, delivery]
+            ANA[analytics]
+            NOT[notifications]
+        end
+
+        subgraph Cross[Cross-cutting]
+            TEN[Tenant guard and scoped DB client]
+            EVT[Domain event bus]
+            LOG[Structured logging with correlation id]
+            AUD[Audit log]
+        end
+    end
+
+    GW --> TEN
+    WHC --> INT
+    INT --> CONV
+    CONV --> AI
+    AI --> PROD
+    AI --> ORD
+    AI --> BIZ
+    ORD --> PROD
+    CONV --> EVT
+    ORD --> EVT
+    EVT --> ANA
+    EVT --> NOT
+    EVT --> WS
+    TEN --> Core

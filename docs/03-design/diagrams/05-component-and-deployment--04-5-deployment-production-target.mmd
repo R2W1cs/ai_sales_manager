@@ -1,0 +1,39 @@
+flowchart TB
+    Users([Staff and customers]) --> CF[HTTPS]
+    CF --> ALB[Application load balancer]
+
+    subgraph VPC[AWS VPC]
+        subgraph Pub[Public subnets]
+            ALB
+        end
+        subgraph Priv[Private subnets, ECS Fargate]
+            FE[frontend service<br/>Next.js]
+            BE[backend service<br/>NestJS API]
+            WK[worker service<br/>NestJS worker]
+        end
+        subgraph DataSub[Data subnets]
+            RDS[(RDS PostgreSQL<br/>pgvector)]
+            EC[(ElastiCache Redis)]
+        end
+    end
+
+    S3[(S3 bucket)]
+    SM[Secrets Manager]
+    CW[CloudWatch logs, metrics, alarms]
+    Meta[Meta]
+    LLM[LLM providers]
+
+    ALB --> FE
+    ALB --> BE
+    BE --> RDS
+    BE --> EC
+    WK --> RDS
+    WK --> EC
+    BE --> S3
+    BE --> SM
+    WK --> SM
+    BE --> CW
+    WK --> CW
+    Meta --> ALB
+    WK --> Meta
+    WK --> LLM

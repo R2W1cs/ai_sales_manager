@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor S as Staff
+    participant API as Conversations API
+    participant CS as Conversation service
+    participant DB as PostgreSQL
+    participant RT as Realtime gateway
+
+    S->>API: POST take over
+    API->>CS: takeOver(conversationId, userId)
+    CS->>DB: ai_enabled false, assign to user
+    alt status is HUMAN_REQUIRED
+        CS->>DB: Status HUMAN_HANDLING
+    else status AI_ACTIVE or ORDER_INTENT_DETECTED
+        CS->>DB: Status unchanged
+    end
+    CS->>DB: Append status event
+    CS-->>RT: conversation.updated
+    API-->>S: 200 within 500 ms
+    S->>API: POST send human message
+    API->>DB: Insert message queued, sender human
+    API-->>S: 201
+    Note over S,RT: Later, after the issue is handled
+    S->>API: POST resume AI
+    API->>CS: resume
+    CS->>DB: Check for orders in PENDING_CONFIRMATION
+    alt pending order exists
+        CS-->>API: 409 pending_order_blocks_resume
+        API-->>S: Explain: confirm or cancel the order first
+    else none
+        CS->>DB: ai_enabled true, status AI_ACTIVE
+        API-->>S: 200
+    end

@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> NEW
+    NEW --> AI_ACTIVE: first inbound message stored
+    AI_ACTIVE --> ORDER_INTENT_DETECTED: purchase collection starts
+    AI_ACTIVE --> HUMAN_REQUIRED: exception trigger or AI timeout
+    ORDER_INTENT_DETECTED --> HUMAN_REQUIRED: pending order created and purchase handoff,<br/>or exception during collection
+    HUMAN_REQUIRED --> HUMAN_HANDLING: staff takes over or sends first human reply
+    HUMAN_REQUIRED --> ORDER_CONFIRMED: staff confirms order without chatting
+    HUMAN_HANDLING --> ORDER_CONFIRMED: staff confirms order
+    HUMAN_REQUIRED --> AI_ACTIVE: resume AI, no pending order
+    HUMAN_HANDLING --> AI_ACTIVE: resume AI, no pending order
+    ORDER_CONFIRMED --> RESOLVED: close or auto-close
+    AI_ACTIVE --> RESOLVED: close or auto-close
+    ORDER_INTENT_DETECTED --> RESOLVED: close, no pending order
+    HUMAN_REQUIRED --> RESOLVED: close, no pending order
+    HUMAN_HANDLING --> RESOLVED: close, no pending order
+    RESOLVED --> [*]

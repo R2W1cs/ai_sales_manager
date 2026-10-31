@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor C as Customer
+    participant O as AI orchestrator
+    participant T as Tools
+    participant INV as Inventory service
+    participant ORD as Order service
+    participant CS as Conversation service
+    participant DB as PostgreSQL
+    participant N as Notification service
+    actor S as Staff
+
+    C->>O: "Nheb nechri el robe el zarka"
+    O->>T: search_products
+    T-->>O: Matching variants with price and stock
+    O->>CS: Transition to ORDER_INTENT_DETECTED
+    O->>C: Ask which size
+    C-->>O: "M"
+    O->>T: check_inventory
+    T-->>O: Available
+    O->>INV: reserve_stock for this conversation, short expiry
+    INV->>DB: Atomic conditional insert if stock minus reserved is enough
+    INV-->>O: Reservation active
+    loop until complete, one question per turn
+        O->>C: Ask next missing field
+        C-->>O: Provides name, phone, address, quantity
+    end
+    O->>T: check_inventory final re-check
+    alt still available
+        T-->>O: OK
+        O->>ORD: createPending with idempotency key
+        ORD->>DB: Insert order and items as snapshots
+        ORD-->>O: Order PENDING_CONFIRMATION
+        O->>CS: Transition to HUMAN_REQUIRED, purchase_handoff, high
+        O->>C: "Votre commande est enregistree, un membre de l'equipe la confirme"
+        ORD-->>N: order.pending_confirmation
+        N-->>S: Order request notification
+    else stock gone
+        T-->>O: Unavailable
+        O->>INV: Release reservation
+        O->>C: Offer alternatives or escalate inventory_conflict
+    end

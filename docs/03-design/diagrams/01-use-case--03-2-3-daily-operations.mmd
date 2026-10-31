@@ -1,0 +1,26 @@
+flowchart LR
+    Emp([Employee])
+    Owner([Owner])
+    Admin([Admin])
+
+    subgraph SYS[AI Sales Manager: operations]
+        UC14[UC14 Work the triage inbox]
+        UC15[UC15 Take over and resume AI]
+        UC16[UC16 Approve or edit AI draft]
+        UC17[UC17 Confirm or cancel order]
+        UC18[UC18 Manage customer profiles]
+        UC19[UC19 View KPIs and usage]
+        UC20[UC20 Get notifications]
+    end
+
+    Emp --- UC14
+    Emp --- UC15
+    Emp --- UC16
+    Emp --- UC17
+    Emp --- UC18
+    Emp --- UC20
+    Admin --- UC18
+    Owner --- UC14
+    Owner --- UC19
+    UC16 -. extends .-> UC14
+    UC15 -. extends .-> UC14

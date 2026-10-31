@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor O as Owner or Admin
+    actor I as Invitee
+    participant API as Business service
+    participant G as Tenant guard
+    participant DB as PostgreSQL
+    participant E as Email service
+
+    O->>API: POST invitations with email and role
+    API->>G: Check team.invite permission
+    alt role is Owner
+        API-->>O: 403 cannot invite owner
+    else allowed
+        API->>DB: Insert invitation with hashed token and expiry
+        API->>E: Send email with one-time link
+        API-->>O: 201 invitation pending
+    end
+    I->>API: Open link and accept
+    API->>DB: Find invitation by token hash
+    alt expired or already used
+        API-->>I: 410 invitation_invalid
+    else valid
+        API->>DB: Create or link user, insert member with invited role
+        API->>DB: Mark invitation accepted
+        API-->>I: Signed in to the workspace
+    end

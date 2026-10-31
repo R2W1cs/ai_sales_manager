@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor A as Admin
+    participant API as Knowledge API
+    participant DB as PostgreSQL with vectors
+    participant Q as Embedding queue
+    participant W as Index worker
+    participant EM as Embedding model
+
+    A->>API: Save product, FAQ or policy document
+    API->>DB: Store document with content hash, status pending
+    API->>Q: Enqueue index_document with id and hash
+    Q->>W: index_document
+    W->>DB: Load document and existing chunk hashes
+    W->>W: Split into chunks
+    loop each changed chunk
+        W->>EM: Embed chunk text
+        EM-->>W: Vector
+        W->>DB: Upsert embedding row
+    end
+    W->>DB: Delete chunks no longer present
+    W->>DB: Status ready

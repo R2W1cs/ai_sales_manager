@@ -1,0 +1,29 @@
+flowchart LR
+    Owner([Owner])
+    Admin([Admin])
+    Meta([Meta platform])
+
+    subgraph SYS[AI Sales Manager: setup]
+        UC01[UC01 Register and create workspace]
+        UC02[UC02 Invite and manage teammates]
+        UC03[UC03 Manage catalog and stock]
+        UC04[UC04 Import catalog from CSV]
+        UC05[UC05 Define business rules and FAQs]
+        UC06[UC06 Connect a channel]
+        UC07[UC07 Configure AI voice and reply mode]
+        UC08[UC08 Test AI in playground]
+        UC09[UC09 Activate AI]
+    end
+
+    Owner --- UC01
+    Owner --- UC02
+    Owner --- UC07
+    Owner --- UC08
+    Owner --- UC09
+    Owner --- UC06
+    Admin --- UC02
+    Admin --- UC03
+    Admin --- UC04
+    Admin --- UC05
+    Admin --- UC06
+    Meta --- UC06

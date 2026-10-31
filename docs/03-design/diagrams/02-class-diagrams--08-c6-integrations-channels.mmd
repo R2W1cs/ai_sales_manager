@@ -1,0 +1,116 @@
+classDiagram
+    direction LR
+
+    class ChannelAccount {
+        <<entity>>
+        +String id
+        +Channel channel
+        +String externalAccountId
+        +String pageId
+        +String igUserId
+        +String displayName
+        +String credentialsRef
+        +ChannelAccountStatus status
+        +DateTime lastInboundAt
+        +DateTime tokenExpiresAt
+        +String lastError
+        +isHealthy() Boolean
+    }
+    class IntegrationEvent {
+        <<entity>>
+        +String provider
+        +String externalEventId
+        +Json payload
+        +Json headers
+        +Boolean signatureValid
+        +DateTime processedAt
+        +isPending() Boolean
+    }
+    class MessageTemplate {
+        <<entity>>
+        +String name
+        +String language
+        +String status
+    }
+    class Channel {
+        <<enumeration>>
+        instagram
+        messenger
+        whatsapp
+    }
+    class ChannelAccountStatus {
+        <<enumeration>>
+        pending
+        pending_verification
+        active
+        error
+        disconnected
+    }
+    class UnifiedMessaging {
+        <<service>>
+        +mapInbound(rawEvent) CanonicalInbound
+        +send(canonicalOutbound) DeliveryResult
+    }
+    class ChannelAdapter {
+        <<interface>>
+        +verify(request) Boolean
+        +mapInbound(raw) CanonicalInbound
+        +send(out, account) DeliveryResult
+    }
+    class MessengerAdapter {
+        <<service>>
+    }
+    class InstagramAdapter {
+        <<service>>
+    }
+    class WhatsAppAdapter {
+        <<service>>
+        stub in Phase 1
+    }
+    class WidgetAdapter {
+        <<service>>
+    }
+    class WebhookController {
+        <<service>>
+        +receive(request) HttpStatus
+    }
+    class CanonicalInbound {
+        <<value>>
+        +String channelAccountId
+        +String externalMessageId
+        +String externalUserId
+        +String text
+        +Attachment[] attachments
+        +Boolean isLifecycle
+    }
+    class CanonicalOutbound {
+        <<value>>
+        +String messageId
+        +String text
+        +String recipientId
+    }
+    class OutboundDeliveryWorker {
+        <<service>>
+        +deliver(messageId) void
+    }
+    class TokenVault {
+        <<interface>>
+        +read(ref) Secret
+        +write(secret) String
+    }
+
+    ChannelAccount "1" *-- "*" IntegrationEvent : receives
+    ChannelAccount "1" o-- "*" MessageTemplate
+    ChannelAccount ..> Channel
+    ChannelAccount ..> ChannelAccountStatus
+    ChannelAccount ..> TokenVault : credentialsRef
+    WebhookController --> IntegrationEvent : persists first
+    WebhookController --> ChannelAdapter : verify
+    UnifiedMessaging --> ChannelAdapter : chooses by channel
+    ChannelAdapter <|.. MessengerAdapter
+    ChannelAdapter <|.. InstagramAdapter
+    ChannelAdapter <|.. WhatsAppAdapter
+    ChannelAdapter <|.. WidgetAdapter
+    UnifiedMessaging ..> CanonicalInbound
+    UnifiedMessaging ..> CanonicalOutbound
+    OutboundDeliveryWorker --> UnifiedMessaging

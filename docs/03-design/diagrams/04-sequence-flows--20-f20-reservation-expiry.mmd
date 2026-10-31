@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant CR as Scheduler (every minute)
+    participant W as expire_reservations worker
+    participant DB as PostgreSQL
+
+    CR->>W: Run singleton job
+    W->>DB: Select active reservations with expires_at in the past
+    loop each reservation
+        W->>DB: Status expired, availability restored
+    end
+    Note over W,DB: Stock balance was never decremented for a reservation, so nothing else needs correcting.

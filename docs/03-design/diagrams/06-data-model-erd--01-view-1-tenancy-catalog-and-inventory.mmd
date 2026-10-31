@@ -1,0 +1,109 @@
+erDiagram
+    USER ||--o{ SESSION : opens
+    USER ||--o{ BUSINESS_MEMBER : is
+    BUSINESS ||--o{ BUSINESS_MEMBER : has
+    BUSINESS ||--o{ INVITATION : issues
+    BUSINESS ||--o| BUSINESS_ONBOARDING : tracks
+    ROLE ||--o{ BUSINESS_MEMBER : assigned
+    ROLE ||--o{ ROLE_PERMISSION : grants
+    PERMISSION ||--o{ ROLE_PERMISSION : in
+    BUSINESS ||--o{ BUSINESS_RULE : defines
+    BUSINESS ||--o{ PRODUCT : sells
+    PRODUCT_CATEGORY ||--o{ PRODUCT : groups
+    PRODUCT ||--|{ PRODUCT_VARIANT : "sold as"
+    PRODUCT ||--o{ PRODUCT_IMAGE : shows
+    PRODUCT_VARIANT ||--o{ STOCK_RESERVATION : "held by"
+    PRODUCT_VARIANT ||--o{ INVENTORY_MOVEMENT : ledger
+    BUSINESS ||--o{ KNOWLEDGE_DOCUMENT : owns
+    KNOWLEDGE_DOCUMENT ||--o{ EMBEDDING : "chunked into"
+    BUSINESS ||--o{ CATALOG_IMPORT_RUN : runs
+
+    USER {
+        uuid id PK
+        text email UK
+        text name
+    }
+    BUSINESS {
+        uuid id PK
+        text name
+        text timezone
+        text currency
+        text default_language
+        timestamptz deleted_at
+    }
+    BUSINESS_MEMBER {
+        uuid id PK
+        uuid business_id FK
+        uuid user_id FK
+        uuid role_id FK
+        timestamptz removed_at
+    }
+    ROLE {
+        uuid id PK
+        text name
+    }
+    PERMISSION {
+        uuid id PK
+        text code UK
+    }
+    INVITATION {
+        uuid id PK
+        uuid business_id FK
+        text email
+        text token_hash
+        timestamptz expires_at
+        timestamptz accepted_at
+    }
+    BUSINESS_RULE {
+        uuid id PK
+        uuid business_id FK
+        text rule_type
+        jsonb payload
+        int priority
+        boolean enabled
+    }
+    PRODUCT {
+        uuid id PK
+        uuid business_id FK
+        text name
+        text status
+        jsonb faqs
+    }
+    PRODUCT_VARIANT {
+        uuid id PK
+        uuid business_id FK
+        uuid product_id FK
+        text sku
+        jsonb attributes
+        numeric price
+        numeric discount_price
+        int stock
+    }
+    STOCK_RESERVATION {
+        uuid id PK
+        uuid variant_id FK
+        uuid conversation_id
+        int quantity
+        text status
+        timestamptz expires_at
+    }
+    INVENTORY_MOVEMENT {
+        uuid id PK
+        uuid variant_id FK
+        int delta
+        text reason
+        uuid order_id
+    }
+    KNOWLEDGE_DOCUMENT {
+        uuid id PK
+        uuid business_id FK
+        text content_hash
+        text indexing_status
+    }
+    EMBEDDING {
+        uuid id PK
+        uuid business_id FK
+        uuid source_id
+        int chunk_index
+        vector embedding
+    }

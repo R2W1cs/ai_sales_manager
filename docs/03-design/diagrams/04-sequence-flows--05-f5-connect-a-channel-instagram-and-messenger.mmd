@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor O as Owner
+    participant W as Web app
+    participant API as Integrations API
+    participant M as Meta
+    participant V as Secret store
+    participant DB as PostgreSQL
+
+    O->>W: Click Connect Instagram or Messenger
+    W->>API: GET connect url
+    API->>API: Create state value bound to session and business
+    API-->>W: Redirect URL
+    W->>M: Redirect Owner to Meta consent
+    O->>M: Choose page and grant permissions
+    M-->>W: Redirect back with code and state
+    W->>API: POST callback with code and state
+    API->>API: Verify state matches session
+    API->>M: Exchange code for access token
+    M-->>API: Token and page information
+    API->>V: Store token, receive reference
+    API->>DB: Insert channel account status pending with credentials reference
+    API->>M: Subscribe page to webhook events
+    API->>M: Verify subscription
+    API->>DB: Status active
+    API-->>W: Channel connected

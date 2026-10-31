@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> pending: owner starts connection
+    pending --> pending_verification: authorised, awaiting provider checks
+    pending --> active: connection verified
+    pending_verification --> active: verification passed
+    active --> error: token invalid or provider failure
+    error --> active: reconnected or token refreshed
+    active --> disconnected: owner disconnects or provider deauthorises
+    error --> disconnected: owner disconnects
+    disconnected --> pending: owner reconnects

@@ -1,0 +1,19 @@
+flowchart LR
+    Cust([Customer])
+    Meta([Meta platform])
+    LLM([LLM providers])
+
+    subgraph SYS[AI Sales Manager: conversation]
+        UC10[UC10 Send message]
+        UC11[UC11 Receive grounded AI reply]
+        UC12[UC12 Place order via chat]
+        UC13[UC13 Escalate to human]
+    end
+
+    Cust --- UC10
+    Cust --- UC11
+    Cust --- UC12
+    Meta --- UC10
+    LLM --- UC11
+    UC12 -. extends .-> UC11
+    UC13 -. extends .-> UC11

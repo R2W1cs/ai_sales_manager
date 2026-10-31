@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor C as Customer
+    participant M as Meta
+    participant WH as Webhook controller
+    participant DB as PostgreSQL
+    participant Q as Job queue
+    participant WK as retry_webhook_processing worker
+    participant CS as Conversation service
+    participant RT as Realtime gateway
+
+    C->>M: Sends message
+    M->>WH: POST webhook with signature header
+    WH->>WH: Verify HMAC signature
+    alt invalid signature
+        WH-->>M: 401, nothing stored
+    else valid
+        WH->>DB: Insert integration event on conflict do nothing
+        alt duplicate already processed
+            WH-->>M: 200 and stop
+        else new or unprocessed
+            WH->>Q: Enqueue job with id = event id
+            alt enqueue failed
+                WH-->>M: non-200 so Meta retries
+            else enqueued
+                WH-->>M: 200 acknowledged
+            end
+        end
+    end
+    Q->>WK: retry_webhook_processing
+    WK->>WK: Map raw payload to canonical inbound
+    WK->>DB: Check channel account is active
+    WK->>DB: Resolve or create customer identity
+    WK->>DB: Insert message on conflict do nothing
+    WK->>CS: NEW to AI_ACTIVE if first message
+    WK->>DB: Update last message time and preview
+    WK->>Q: Enqueue score_lead
+    opt AI should answer
+        WK->>Q: Enqueue process_inbound_message
+    end
+    WK->>RT: Emit conversation.message
+    WK->>DB: Set event processed_at
