@@ -25,6 +25,8 @@ The deliberate design choice is **a human closes the sale**. The AI never takes 
 
 ## 3. Stakeholders and users
 
+This is the short list of the main groups. The complete register (22 stakeholders, with needs, concerns, conflicts and engagement plan) is in [07. Stakeholders](07-stakeholders.md).
+
 | Stakeholder | Goal | Main interactions |
 |---|---|---|
 | **Merchant owner** | More sales for less manual chat work, without losing control | Sets up the workspace, catalog and rules, activates the AI, reads KPIs |

@@ -19,7 +19,8 @@ Authorship is whatever Git records. Each member commits their own phase from the
 
 ```
 docs/
-  01-requirements/   proposal, user stories, backlog, NFRs, traceability
+  01-requirements/   proposal, user stories, backlog, NFRs, traceability, functional requirements, stakeholders
+backlog/             detailed task cards and runner (imported from aymnart/ai-sales-manager, authored by Aymen)
   02-methodology/    Scrum plan, definition of done, branching, risks, contributing
   03-design/         architecture, UML (use-case, class, sequence, state, component), flows, ERD, ADRs
   ai-usage-log.md    where AI tools were used, with prompts and review notes
@@ -29,7 +30,7 @@ docs/
 
 1. [Project proposal](docs/01-requirements/01-project-proposal.md): the problem, the users, the scope
 2. [User stories](docs/01-requirements/02-user-stories.md) and [backlog](docs/01-requirements/03-product-backlog.md): what gets built and in what order
-3. [NFRs](docs/01-requirements/04-non-functional-requirements.md) and [traceability](docs/01-requirements/05-traceability-matrix.md)
+3. [Functional requirements](docs/01-requirements/06-functional-requirements.md), [NFRs](docs/01-requirements/04-non-functional-requirements.md), [stakeholders](docs/01-requirements/07-stakeholders.md) and [traceability](docs/01-requirements/05-traceability-matrix.md)
 4. [Methodology](docs/02-methodology/01-methodology.md)
 5. [Design overview](docs/03-design/00-design-overview.md), then the diagram documents it links to
 

@@ -4,6 +4,16 @@ The backlog turns user stories into deliverable items. Each item has a MoSCoW pr
 
 Sizes are initial estimates. The team validates them at sprint planning; they are not commitments until then.
 
+## Related artefacts
+
+| Artefact | Where |
+|---|---|
+| Functional requirements (274 FRs with priority and verification) | [06-functional-requirements.md](06-functional-requirements.md) |
+| Stakeholders | [07-stakeholders.md](07-stakeholders.md) |
+| Detailed task cards (phases, waves, parent and leaf tasks, dependency graph, runner) | [`/backlog`](../../backlog/README.md), imported from `aymnart/ai-sales-manager` and authored by Aymen. Its relative links to `docs/` point to the source repository's documents. |
+
+The items below (BL-xx) are the course-level view; the task cards in `/backlog` are the fine-grained implementation board.
+
 ## 1. MoSCoW summary
 
 | Priority | Meaning | Items |
