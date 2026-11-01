@@ -1,0 +1,15 @@
+{
+  "extends": "@app/config/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "references": [{ "path": "../../packages/shared" }]
+}
