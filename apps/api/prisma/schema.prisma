@@ -1,0 +1,1432 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["typedSql"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 12 §3 Enums
+
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+enum LifecycleStage {
+  unknown_visitor
+  interested
+  qualified_lead
+  order_pending
+  customer
+  returning_customer
+  vip
+}
+
+enum ConversationStatus {
+  NEW
+  AI_ACTIVE
+  ORDER_INTENT_DETECTED
+  HUMAN_REQUIRED
+  HUMAN_HANDLING
+  ORDER_CONFIRMED
+  RESOLVED
+}
+
+enum ConversationSource {
+  instagram
+  messenger
+  whatsapp
+  playground
+  website
+}
+
+enum HandoffPriority {
+  critical
+  high
+  normal
+}
+
+enum LeadTemperature {
+  hot
+  warm
+  cold
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+enum SenderType {
+  customer
+  ai
+  human
+  system
+}
+
+enum ContentType {
+  text
+  image
+  template
+  system
+}
+
+enum MessageDeliveryStatus {
+  draft
+  queued
+  sent
+  delivered
+  failed
+}
+
+enum OrderStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  NOT_COMPLETED
+  COMPLETED
+}
+
+enum ReservationStatus {
+  active
+  committed
+  released
+  expired
+}
+
+enum Channel {
+  instagram
+  messenger
+  whatsapp
+}
+
+enum ChannelAccountStatus {
+  pending
+  pending_verification
+  active
+  error
+  disconnected
+}
+
+enum ReplyMode {
+  auto_send
+  approval_required
+  draft_only
+}
+
+enum PromptType {
+  system
+  sales
+  escalation
+  handoff_summary
+}
+
+enum EmbeddingSource {
+  knowledge_document
+  product
+  variant
+}
+
+enum IndexingStatus {
+  pending
+  indexing
+  ready
+  failed
+}
+
+enum RuleType {
+  delivery
+  payment
+  returns
+  working_hours
+  discount
+  min_order
+  free_shipping
+}
+
+enum NotificationType {
+  HOT_LEAD
+  ORDER_REQUEST
+  HANDOFF
+  ESCALATION
+}
+
+enum FeedbackRating {
+  positive
+  negative
+}
+
+enum FeedbackReason {
+  wrong_product
+  wrong_tone
+  missing_information
+  incorrect_policy
+  hallucination
+  other
+}
+
+enum EvaluatorType {
+  golden_set
+  production_sample
+  staff
+  automated_grounding
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  past_due
+}
+
+enum UsageMetric {
+  messages_in
+  messages_out_ai
+  orders_created
+  whatsapp_conversations_started
+}
+
+enum ImportStatus {
+  uploaded
+  validated
+  previewed
+  running
+  succeeded
+  failed
+}
+
+enum AssignmentStatus {
+  active
+  released
+}
+
+enum AiActionType {
+  tool_call
+  intent_classify
+  handoff
+  recommend
+  rate_limited
+}
+
+// 12 §5 Identity and workspace
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
+
+  password_hash     String?
+  email_verified_at DateTime? @db.Timestamptz
+  last_login_at     DateTime? @db.Timestamptz
+  platform_admin    Boolean   @default(false)
+
+  sessions    Session[]
+  accounts    Account[]
+  members     Member[]
+  invitations Invitation[]
+
+  refresh_tokens        RefreshToken[]
+  password_reset_tokens PasswordResetToken[]
+  oauth_accounts        OAuthAccount[]
+  memberships           BusinessMember[]
+  prompts               AiPrompt[]
+  feedback              AiFeedback[]
+  notifications         Notification[]
+  audit_logs            AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id                   String   @id @default(uuid())
+  expiresAt            DateTime @db.Timestamptz
+  token                String   @unique
+  createdAt            DateTime @default(now()) @db.Timestamptz
+  updatedAt            DateTime @updatedAt @db.Timestamptz
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz
+  refreshTokenExpiresAt DateTime? @db.Timestamptz
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @db.Timestamptz
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime  @db.Timestamptz
+  createdAt  DateTime? @default(now()) @db.Timestamptz
+  updatedAt  DateTime? @updatedAt @db.Timestamptz
+
+  @@map("verifications")
+}
+
+model Organization {
+  id          String       @id @default(uuid())
+  name        String
+  slug        String?      @unique
+  logo        String?
+  metadata    String?
+  createdAt   DateTime     @default(now()) @db.Timestamptz
+  updatedAt   DateTime     @default(now()) @updatedAt @db.Timestamptz
+  members     Member[]
+  invitations Invitation[]
+  businesses  Business[]
+
+  @@map("organizations")
+}
+
+model Member {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("members")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String
+  token_hash String    @unique
+  family_id  String    @db.Uuid
+  expires_at DateTime  @db.Timestamptz
+  revoked_at DateTime? @db.Timestamptz
+  user_agent String?
+  ip         String?
+  created_at DateTime  @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, revoked_at])
+  @@index([family_id])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String
+  token_hash String    @unique
+  expires_at DateTime  @db.Timestamptz
+  used_at    DateTime? @db.Timestamptz
+  created_at DateTime  @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model OAuthAccount {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String
+  provider         String
+  provider_user_id String
+  created_at       DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_user_id])
+  @@unique([user_id, provider])
+  @@map("oauth_accounts")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  business_id String?  @db.Uuid
+  name        String
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  role_permissions RolePermission[]
+  memberships      BusinessMember[]
+  invitations      Invitation[]
+
+  @@unique([name, business_id]) // Combined unique for system (NULL) and custom roles
+  @@map("roles")
+}
+
+model Permission {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  role_permissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  role_id       String @db.Uuid
+  permission_id String @db.Uuid
+
+  role       Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, permission_id])
+  @@map("role_permissions")
+}
+
+model Business {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String
+  industry         String    @default("fashion")
+  country          String    @default("TN")
+  default_language String    @default("fr")
+  timezone         String    @default("Africa/Tunis")
+  currency         String    @default("TND")
+  settings         Json      @default("{}")
+  organization_id  String?
+  deleted_at       DateTime? @db.Timestamptz
+  delete_after     DateTime? @db.Timestamptz
+  created_at       DateTime  @default(now()) @db.Timestamptz
+  updated_at       DateTime  @updatedAt @db.Timestamptz
+
+  organization Organization?       @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  members      BusinessMember[]
+  onboarding   BusinessOnboarding?
+  rules        BusinessRule[]
+  invitations  Invitation[]
+
+  product_categories  ProductCategory[]
+  products            Product[]
+  product_variants    ProductVariant[]
+  product_images      ProductImage[]
+  stock_reservations  StockReservation[]
+  inventory_movements InventoryMovement[]
+  catalog_import_runs CatalogImportRun[]
+  customers           Customer[]
+  customer_identities CustomerIdentity[]
+  customer_tags       CustomerTag[]
+  customer_notes      CustomerNote[]
+
+  channel_accounts           ChannelAccount[]
+  integration_events         IntegrationEvent[]
+  conversations              Conversation[]
+  conversation_status_events ConversationStatusEvent[]
+  messages                   Message[]
+  message_attachments        MessageAttachment[]
+  conversation_notes         ConversationNote[]
+  conversation_assignments   ConversationAssignment[]
+
+  orders              Order[]
+  order_items         OrderItem[]
+  knowledge_documents KnowledgeDocument[]
+  embeddings          Embedding[]
+
+  ai_agent           AiAgent?
+  ai_settings        AiSettings?
+  ai_prompts         AiPrompt[]
+  ai_actions         AiAction[]
+  ai_decision_traces AiDecisionTrace[]
+  ai_usage           AiUsage[]
+  ai_feedback        AiFeedback[]
+  ai_evaluations     AiEvaluation[]
+  subscription       Subscription?
+  usage_events       UsageEvent[]
+  usage_aggregates   UsageAggregate[]
+  analytics_daily    AnalyticsDaily[]
+  feature_flags      FeatureFlag[]
+  notifications      Notification[]
+  audit_logs         AuditLog[]
+
+  @@unique([id, deleted_at]) // For soft-delete checks if needed in relations
+  @@map("businesses")
+}
+
+model BusinessMember {
+  id             String    @id @default(uuid()) @db.Uuid
+  business_id    String    @db.Uuid
+  user_id        String
+  role_id        String    @db.Uuid
+  invited_at     DateTime? @db.Timestamptz
+  joined_at      DateTime  @default(now()) @db.Timestamptz
+  removed_at     DateTime? @db.Timestamptz
+  last_active_at DateTime? @db.Timestamptz
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  role     Role     @relation(fields: [role_id], references: [id], onDelete: Restrict)
+
+  @@unique([business_id, user_id]) // Invariant: user joins business once at a time
+  @@map("business_members")
+}
+
+model BusinessOnboarding {
+  business_id           String   @id @db.Uuid
+  business_created      Boolean  @default(true)
+  channel_connected     Boolean  @default(false)
+  products_imported     Boolean  @default(false)
+  ai_configured         Boolean  @default(false)
+  playground_passed     Boolean  @default(false)
+  approval_trial_passed Boolean  @default(false)
+  handoff_acknowledged  Boolean  @default(false)
+  ai_activated          Boolean  @default(false)
+  updated_at            DateTime @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@map("business_onboarding")
+}
+
+model BusinessRule {
+  id             String    @id @default(uuid()) @db.Uuid
+  business_id    String    @db.Uuid
+  rule_type      RuleType
+  payload        Json
+  priority       Int
+  enabled        Boolean
+  effective_from DateTime  @db.Timestamptz
+  effective_to   DateTime? @db.Timestamptz
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@index([business_id, rule_type, enabled, effective_from])
+  @@map("business_rules")
+}
+
+model Invitation {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime     @db.Timestamptz
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  // Optional legacy fields for domain backward compatibility
+  business_id        String?   @db.Uuid
+  role_id            String?   @db.Uuid
+  invited_by_user_id String?
+  token_hash         String?   @unique
+  accepted_at        DateTime? @db.Timestamptz
+
+  business Business? @relation(fields: [business_id], references: [id], onDelete: SetNull)
+  role_rel Role?     @relation(fields: [role_id], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, email])
+  @@unique([business_id, email])
+  @@index([inviterId])
+  @@index([business_id])
+  @@map("invitations")
+}
+
+model IdempotencyKey {
+  id              String   @id @default(uuid()) @db.Uuid
+  business_id     String   @db.Uuid
+  key             String
+  request_hash    String
+  response_status Int?
+  response_body   Json?
+  created_at      DateTime @default(now()) @db.Timestamptz
+  expires_at      DateTime @db.Timestamptz
+
+  @@unique([business_id, key])
+  @@map("idempotency_keys")
+}
+
+// 12 §6 Catalog and inventory
+
+model ProductCategory {
+  id          String   @id @default(uuid()) @db.Uuid
+  business_id String   @db.Uuid
+  name        String
+  parent_id   String?  @db.Uuid
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @updatedAt @db.Timestamptz
+
+  business Business          @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  parent   ProductCategory?  @relation("CategoryToCategory", fields: [parent_id, business_id], references: [id, business_id], onDelete: Restrict)
+  children ProductCategory[] @relation("CategoryToCategory")
+  products Product[]
+
+  @@unique([id, business_id]) // Composite PK for references
+  @@index([business_id, parent_id, sort_order])
+  @@map("product_categories")
+}
+
+model Product {
+  id             String        @id @default(uuid()) @db.Uuid
+  business_id    String        @db.Uuid
+  category_id    String?       @db.Uuid
+  name           String
+  description    String?
+  status         ProductStatus @default(draft)
+  currency       String?
+  benefits       Json? // StringListSchema
+  selling_points Json? // StringListSchema
+  objections     Json? // StringListSchema
+  faqs           Json? // FaqListSchema
+  created_at     DateTime      @default(now()) @db.Timestamptz
+  updated_at     DateTime      @updatedAt @db.Timestamptz
+
+  business Business         @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  category ProductCategory? @relation(fields: [category_id, business_id], references: [id, business_id], onDelete: Restrict)
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  @@unique([id, business_id]) // Composite PK for references
+  @@index([business_id, status])
+  @@index([business_id, category_id])
+  @@map("products")
+}
+
+model ProductVariant {
+  id             String   @id @default(uuid()) @db.Uuid
+  business_id    String   @db.Uuid
+  product_id     String   @db.Uuid
+  sku            String?
+  barcode        String?
+  attributes     Json     @default("{}")
+  price          Decimal  @db.Decimal(12, 3)
+  discount_price Decimal? @db.Decimal(12, 3)
+  stock          Int      @default(0)
+  is_default     Boolean  @default(false)
+  created_at     DateTime @default(now()) @db.Timestamptz
+  updated_at     DateTime @updatedAt @db.Timestamptz
+
+  business            Business            @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  product             Product             @relation(fields: [product_id, business_id], references: [id, business_id], onDelete: Restrict)
+  images              ProductImage[]
+  stock_reservations  StockReservation[]
+  inventory_movements InventoryMovement[]
+  order_items         OrderItem[]
+
+  @@unique([id, business_id]) // Composite PK for references
+  @@unique([business_id, sku]) // SKU unique per business when not null
+  @@index([product_id, is_default]) // Fast lookup for default variant
+  @@index([business_id, product_id])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  business_id String   @db.Uuid
+  product_id  String   @db.Uuid
+  variant_id  String?  @db.Uuid
+  s3_key      String
+  url         String
+  alt_text    String?
+  sort_order  Int
+  is_primary  Boolean
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  business Business        @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  product  Product         @relation(fields: [product_id, business_id], references: [id, business_id], onDelete: Restrict)
+  variant  ProductVariant? @relation(fields: [variant_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@index([product_id, is_primary])
+  @@index([variant_id, is_primary])
+  @@map("product_images")
+}
+
+model StockReservation {
+  id              String            @id @default(uuid()) @db.Uuid
+  business_id     String            @db.Uuid
+  variant_id      String            @db.Uuid
+  conversation_id String?           @db.Uuid // Cross-module UUID pointer
+  order_id        String?           @db.Uuid // Cross-module UUID pointer
+  quantity        Int
+  status          ReservationStatus
+  reserved_at     DateTime          @db.Timestamptz
+  expires_at      DateTime          @db.Timestamptz
+  created_at      DateTime          @default(now()) @db.Timestamptz
+  updated_at      DateTime          @updatedAt @db.Timestamptz
+
+  business Business       @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  variant  ProductVariant @relation(fields: [variant_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@index([variant_id, status, expires_at])
+  @@index([conversation_id, status])
+  @@index([expires_at])
+  @@map("stock_reservations")
+}
+
+model InventoryMovement {
+  id          String   @id @default(uuid()) @db.Uuid
+  business_id String   @db.Uuid
+  variant_id  String   @db.Uuid
+  delta       Int
+  reason      String
+  order_id    String?  @db.Uuid // Cross-module UUID pointer
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  business Business       @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  variant  ProductVariant @relation(fields: [variant_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@map("inventory_movements")
+}
+
+model CatalogImportRun {
+  id                  String       @id @default(uuid()) @db.Uuid
+  business_id         String       @db.Uuid
+  uploaded_by_user_id String
+  s3_key              String
+  status              ImportStatus
+  total_rows          Int?
+  success_rows        Int?
+  error_rows          Int?
+  error_s3_key        String?
+  created_at          DateTime     @default(now()) @db.Timestamptz
+  finished_at         DateTime?    @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@map("catalog_import_runs")
+}
+
+// 12 §7 Customers
+
+model Customer {
+  id                      String         @id @default(uuid()) @db.Uuid
+  business_id             String         @db.Uuid
+  name                    String?
+  phone                   String?
+  email                   String?
+  address                 Json?
+  language                String?
+  preferences             Json?
+  lifecycle_stage         LifecycleStage @default(unknown_visitor)
+  confirmed_order_count   Int            @default(0)
+  last_confirmed_order_at DateTime?      @db.Timestamptz
+  merged_into_customer_id String?        @db.Uuid
+  erased_at               DateTime?      @db.Timestamptz
+  is_test                 Boolean        @default(false)
+  created_at              DateTime       @default(now()) @db.Timestamptz
+  updated_at              DateTime       @updatedAt @db.Timestamptz
+
+  business      Business           @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  merged_into   Customer?          @relation("CustomerToCustomer", fields: [merged_into_customer_id, business_id], references: [id, business_id], onDelete: Restrict)
+  merged_from   Customer[]         @relation("CustomerToCustomer")
+  identities    CustomerIdentity[]
+  tags          CustomerTag[]
+  notes         CustomerNote[]
+  conversations Conversation[]
+  orders        Order[]
+
+  @@unique([id, business_id]) // Composite PK for references
+  @@index([business_id, lifecycle_stage])
+  @@index([business_id, phone])
+  @@map("customers")
+}
+
+model CustomerIdentity {
+  id               String    @id @default(uuid()) @db.Uuid
+  business_id      String    @db.Uuid
+  customer_id      String    @db.Uuid
+  platform         Channel
+  platform_user_id String
+  phone_number     String?
+  verified_at      DateTime? @db.Timestamptz
+  created_at       DateTime  @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [customer_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@unique([business_id, platform, platform_user_id])
+  @@unique([business_id, phone_number]) // Verified-phone auto-link partial unique logic is in repository/Check constraint
+  @@map("customer_identities")
+}
+
+model CustomerTag {
+  id                 String   @id @default(uuid()) @db.Uuid
+  business_id        String   @db.Uuid
+  customer_id        String   @db.Uuid
+  tag                String
+  created_at         DateTime @default(now()) @db.Timestamptz
+  created_by_user_id String?
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [customer_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@unique([customer_id, tag])
+  @@map("customer_tags")
+}
+
+model CustomerNote {
+  id             String   @id @default(uuid()) @db.Uuid
+  business_id    String   @db.Uuid
+  customer_id    String   @db.Uuid
+  author_user_id String
+  body           String
+  created_at     DateTime @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [customer_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@map("customer_notes")
+}
+
+// 12 §8 Integrations and messaging
+
+model ChannelAccount {
+  id                      String               @id @default(uuid()) @db.Uuid
+  business_id             String               @db.Uuid
+  channel                 Channel
+  external_account_id     String
+  page_id                 String?
+  ig_user_id              String?
+  waba_id                 String?
+  phone_number_id         String?
+  display_name            String?
+  credentials_ref         String?
+  webhook_secret_ref      String? // Unused in MVP
+  status                  ChannelAccountStatus
+  verification_status     String?
+  last_inbound_at         DateTime?            @db.Timestamptz
+  last_error              String?
+  token_expires_at        DateTime?            @db.Timestamptz
+  last_token_check_at     DateTime?            @db.Timestamptz
+  authorized_meta_user_id String?
+  connected_at            DateTime?            @db.Timestamptz
+  disconnected_at         DateTime?            @db.Timestamptz
+  created_at              DateTime             @default(now()) @db.Timestamptz
+  updated_at              DateTime             @updatedAt @db.Timestamptz
+
+  business           Business           @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  message_templates  MessageTemplate[]
+  conversations      Conversation[]
+  integration_events IntegrationEvent[]
+  messages           Message[]
+
+  @@unique([business_id, channel, external_account_id])
+  @@index([authorized_meta_user_id])
+  @@map("channel_accounts")
+}
+
+model MessageTemplate {
+  id                 String   @id @default(uuid()) @db.Uuid
+  business_id        String   @db.Uuid
+  channel_account_id String   @db.Uuid
+  name               String
+  language           String
+  category           String
+  body_params        Json?
+  meta_status        String
+  created_at         DateTime @default(now()) @db.Timestamptz
+  updated_at         DateTime @updatedAt @db.Timestamptz
+
+  channel_account ChannelAccount @relation(fields: [channel_account_id], references: [id], onDelete: Restrict)
+
+  @@unique([channel_account_id, name, language])
+  @@map("message_templates")
+}
+
+model IntegrationEvent {
+  id                 String    @id @default(uuid()) @db.Uuid
+  business_id        String?   @db.Uuid
+  channel_account_id String?   @db.Uuid
+  provider           String
+  external_event_id  String?
+  payload            Json
+  headers            Json?
+  signature_valid    Boolean
+  processed_at       DateTime? @db.Timestamptz
+  created_at         DateTime  @default(now()) @db.Timestamptz
+
+  business        Business?       @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  channel_account ChannelAccount? @relation(fields: [channel_account_id], references: [id], onDelete: Restrict)
+
+  @@index([created_at])
+  // Prisma doesn't support complex partial uniques like in §8.3; repository must handle idempotency.
+  @@map("integration_events")
+}
+
+model Conversation {
+  id                         String             @id @default(uuid()) @db.Uuid
+  business_id                String             @db.Uuid
+  customer_id                String             @db.Uuid
+  channel_account_id         String?            @db.Uuid
+  source                     ConversationSource
+  external_thread_id         String?
+  status                     ConversationStatus @default(NEW)
+  ai_enabled                 Boolean            @default(true)
+  assigned_user_id           String?
+  last_intent                String?
+  escalation_reason          String?
+  handoff_priority           HandoffPriority?
+  handoff_context            Json?
+  handoff_at                 DateTime?          @db.Timestamptz
+  handoff_completed_at       DateTime?          @db.Timestamptz
+  summary                    String?
+  collected_fields           Json?
+  snoozed_until              DateTime?          @db.Timestamptz
+  lead_score                 Int                @default(0)
+  lead_temperature           LeadTemperature    @default(cold)
+  lead_score_factors         Json?
+  lead_scored_at             DateTime?          @db.Timestamptz
+  last_message_at            DateTime?          @db.Timestamptz
+  last_message_preview       String?
+  staff_read_at              DateTime?          @db.Timestamptz
+  is_test                    Boolean            @default(false)
+  whatsapp_window_expires_at DateTime?          @db.Timestamptz
+  created_at                 DateTime           @default(now()) @db.Timestamptz
+  updated_at                 DateTime           @updatedAt @db.Timestamptz
+
+  business        Business        @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  customer        Customer        @relation(fields: [customer_id, business_id], references: [id, business_id], onDelete: Restrict)
+  channel_account ChannelAccount? @relation(fields: [channel_account_id], references: [id], onDelete: Restrict)
+
+  status_events      ConversationStatusEvent[]
+  messages           Message[]
+  notes              ConversationNote[]
+  assignments        ConversationAssignment[]
+  ai_actions         AiAction[]
+  ai_decision_traces AiDecisionTrace[]
+  ai_usage           AiUsage[]
+  ai_evaluations     AiEvaluation[]
+
+  @@unique([id, business_id]) // Composite PK for references
+  @@unique([channel_account_id, external_thread_id])
+  @@index([business_id, status, handoff_priority, handoff_at])
+  @@index([business_id, assigned_user_id, status])
+  @@index([business_id, lead_temperature, lead_score(sort: Desc)])
+  @@index([business_id, customer_id])
+  @@index([business_id, is_test, status, last_message_at(sort: Desc)])
+  @@map("conversations")
+}
+
+model ConversationStatusEvent {
+  id                String              @id @default(uuid()) @db.Uuid
+  business_id       String              @db.Uuid
+  conversation_id   String              @db.Uuid
+  from_status       ConversationStatus?
+  to_status         ConversationStatus
+  escalation_reason String?
+  actor_type        String
+  actor_user_id     String?
+  is_test           Boolean
+  created_at        DateTime            @default(now()) @db.Timestamptz
+
+  business     Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@index([business_id, created_at])
+  @@index([conversation_id, created_at])
+  @@index([business_id, to_status, created_at])
+  @@map("conversation_status_events")
+}
+
+model Message {
+  id                  String                @id @default(uuid()) @db.Uuid
+  business_id         String                @db.Uuid
+  conversation_id     String                @db.Uuid
+  channel_account_id  String?               @db.Uuid
+  direction           MessageDirection
+  sender_type         SenderType
+  sender_user_id      String?
+  content             String?
+  content_type        ContentType           @default(text)
+  external_message_id String?
+  idempotency_key     String                @unique
+  ai_metadata         Json?
+  delivery_status     MessageDeliveryStatus
+  created_at          DateTime              @default(now()) @db.Timestamptz
+
+  business                 Business            @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation             Conversation        @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+  channel_account          ChannelAccount?     @relation(fields: [channel_account_id], references: [id], onDelete: Restrict)
+  attachments              MessageAttachment[]
+  ai_actions               AiAction[]
+  inbound_decision_traces  AiDecisionTrace[]   @relation("InboundDecisionTrace")
+  outbound_decision_traces AiDecisionTrace[]   @relation("OutboundDecisionTrace")
+  ai_usage                 AiUsage[]
+  ai_feedback              AiFeedback[]
+
+  @@unique([id, business_id]) // Composite PK for child references
+  @@unique([channel_account_id, external_message_id])
+  @@index([conversation_id, created_at])
+  @@index([business_id, created_at])
+  @@index([conversation_id]) // Index for draft search
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id           String   @id @default(uuid()) @db.Uuid
+  business_id  String   @db.Uuid
+  message_id   String   @db.Uuid
+  s3_key       String
+  content_type String
+  size_bytes   Int?
+  sort_order   Int
+  created_at   DateTime @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  message  Message  @relation(fields: [message_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@unique([message_id, sort_order])
+  @@map("message_attachments")
+}
+
+model ConversationNote {
+  id              String   @id @default(uuid()) @db.Uuid
+  business_id     String   @db.Uuid
+  conversation_id String   @db.Uuid
+  author_user_id  String
+  body            String
+  created_at      DateTime @default(now()) @db.Timestamptz
+
+  business     Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@map("conversation_notes")
+}
+
+model ConversationAssignment {
+  id                  String           @id @default(uuid()) @db.Uuid
+  business_id         String           @db.Uuid
+  conversation_id     String           @db.Uuid
+  user_id             String
+  assigned_by_user_id String
+  status              AssignmentStatus
+  assigned_at         DateTime         @db.Timestamptz
+  released_at         DateTime?        @db.Timestamptz
+
+  business     Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Cascade)
+
+  @@index([conversation_id]) // Index for active search
+  @@map("conversation_assignments")
+}
+
+// 12 §9 Orders
+
+model Order {
+  id                 String        @id @default(uuid()) @db.Uuid
+  business_id        String        @db.Uuid
+  customer_id        String        @db.Uuid
+  conversation_id    String?       @db.Uuid // Pointer, no Prisma relation
+  status             OrderStatus
+  payment_status     PaymentStatus @default(NOT_COMPLETED)
+  currency           String
+  subtotal           Decimal       @db.Decimal(12, 3)
+  delivery_fee       Decimal       @db.Decimal(12, 3)
+  total              Decimal       @db.Decimal(12, 3)
+  customer_snapshot  Json
+  delivery_address   Json?
+  created_by_type    String
+  created_by_user_id String?
+  idempotency_key    String
+  is_test            Boolean       @default(false)
+  order_confirmed_at DateTime?     @db.Timestamptz
+  cancelled_at       DateTime?     @db.Timestamptz
+  completed_at       DateTime?     @db.Timestamptz
+  created_at         DateTime      @default(now()) @db.Timestamptz
+  updated_at         DateTime      @updatedAt @db.Timestamptz
+
+  business Business    @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  customer Customer    @relation(fields: [customer_id, business_id], references: [id, business_id], onDelete: Restrict)
+  items    OrderItem[]
+
+  @@unique([id, business_id])
+  @@unique([business_id, idempotency_key])
+  @@index([business_id, status, created_at])
+  @@index([business_id, conversation_id])
+  @@index([business_id, created_at, id])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String   @id @default(uuid()) @db.Uuid
+  business_id         String   @db.Uuid
+  order_id            String   @db.Uuid
+  variant_id          String   @db.Uuid
+  quantity            Int
+  unit_price          Decimal  @db.Decimal(12, 3)
+  name_snapshot       String
+  sku_snapshot        String?
+  attributes_snapshot Json?
+  created_at          DateTime @default(now()) @db.Timestamptz
+
+  business Business       @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  order    Order          @relation(fields: [order_id, business_id], references: [id, business_id], onDelete: Restrict)
+  variant  ProductVariant @relation(fields: [variant_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+// 12 §10 Knowledge and embeddings
+
+model KnowledgeDocument {
+  id              String         @id @default(uuid()) @db.Uuid
+  business_id     String         @db.Uuid
+  title           String
+  source_type     String
+  raw_text        String
+  content_hash    String
+  indexing_status IndexingStatus
+  created_at      DateTime       @default(now()) @db.Timestamptz
+  updated_at      DateTime       @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@map("knowledge_documents")
+}
+
+model Embedding {
+  id           String                      @id @default(uuid()) @db.Uuid
+  business_id  String                      @db.Uuid
+  source_type  EmbeddingSource
+  source_id    String                      @db.Uuid
+  chunk_index  Int
+  chunk_text   String
+  content_hash String
+  embedding    Unsupported("vector(1536)")
+  created_at   DateTime                    @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@unique([business_id, source_type, source_id, chunk_index])
+  @@index([business_id, source_type])
+  @@map("embeddings")
+}
+
+// 12 §11 AI config and observability
+
+model AiAgent {
+  id                   String   @id @default(uuid()) @db.Uuid
+  business_id          String   @unique @db.Uuid
+  name                 String
+  personality          String?
+  language             String
+  tone                 String?
+  sales_strategy       Json? // SalesStrategySchema
+  greeting_template    String?
+  fallback_template    String?
+  confidence_threshold Decimal  @default(0.65) @db.Decimal(3, 2)
+  enabled              Boolean
+  created_at           DateTime @default(now()) @db.Timestamptz
+  updated_at           DateTime @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@map("ai_agents")
+}
+
+model AiSettings {
+  business_id                       String    @id @db.Uuid
+  model_primary                     String    @default("gemini-3.5-flash")
+  model_fallback                    String    @default("gpt-5.6-terra")
+  max_tokens                        Int
+  temperature                       Decimal   @db.Decimal(2, 1)
+  rag_top_k                         Int
+  include_product_images_in_context Boolean   @default(false)
+  blocked_topics                    String[]  @default([])
+  custom_system_append              String?
+  reply_mode                        ReplyMode
+  lead_hot_min                      Int       @default(80)
+  lead_warm_min                     Int       @default(50)
+  reservation_ttl_minutes           Int       @default(30)
+  inactivity_close_days             Int       @default(30)
+  monthly_ai_budget_usd             Decimal?  @db.Decimal(12, 3)
+  created_at                        DateTime  @default(now()) @db.Timestamptz
+  updated_at                        DateTime  @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@map("ai_settings")
+}
+
+model AiPrompt {
+  id                 String     @id @default(uuid()) @db.Uuid
+  business_id        String     @db.Uuid
+  type               PromptType
+  content            String
+  version            Int
+  active             Boolean
+  created_at         DateTime   @default(now()) @db.Timestamptz
+  created_by_user_id String?
+
+  business   Business  @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  created_by User?     @relation(fields: [created_by_user_id], references: [id], onDelete: SetNull)
+  ai_usage   AiUsage[]
+
+  @@unique([business_id, type, version])
+  @@map("ai_prompts")
+}
+
+model AiAction {
+  id              String       @id @default(uuid()) @db.Uuid
+  business_id     String       @db.Uuid
+  conversation_id String       @db.Uuid
+  message_id      String?      @db.Uuid
+  action_type     AiActionType
+  tool_name       String?
+  input           Json?
+  output          Json?
+  success         Boolean
+  error_message   String?
+  duration_ms     Int?
+  created_at      DateTime     @default(now()) @db.Timestamptz
+
+  business     Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+  message      Message?     @relation(fields: [message_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@index([business_id, created_at, id])
+  @@index([business_id, action_type, created_at])
+  @@index([business_id, tool_name, created_at])
+  @@index([conversation_id, created_at])
+  @@map("ai_actions")
+}
+
+model AiDecisionTrace {
+  id                  String   @id @default(uuid()) @db.Uuid
+  business_id         String   @db.Uuid
+  conversation_id     String   @db.Uuid
+  inbound_message_id  String   @db.Uuid
+  outbound_message_id String?  @db.Uuid
+  decision_trace      Json
+  created_at          DateTime @default(now()) @db.Timestamptz
+
+  business         Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation     Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+  inbound_message  Message      @relation("InboundDecisionTrace", fields: [inbound_message_id, business_id], references: [id, business_id], onDelete: Restrict)
+  outbound_message Message?     @relation("OutboundDecisionTrace", fields: [outbound_message_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@index([conversation_id, created_at])
+  @@map("ai_decision_traces")
+}
+
+model AiUsage {
+  id                 String   @id @default(uuid()) @db.Uuid
+  business_id        String   @db.Uuid
+  conversation_id    String?  @db.Uuid
+  message_id         String?  @db.Uuid
+  provider           String
+  model              String
+  tokens_input       Int
+  tokens_output      Int
+  estimated_cost_usd Decimal  @db.Decimal(12, 6)
+  prompt_version_id  String?  @db.Uuid
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  business     Business      @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation? @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+  message      Message?      @relation(fields: [message_id, business_id], references: [id, business_id], onDelete: Restrict)
+  prompt       AiPrompt?     @relation(fields: [prompt_version_id], references: [id], onDelete: SetNull)
+
+  @@index([business_id, created_at])
+  @@index([business_id, model, created_at])
+  @@map("ai_usage")
+}
+
+model AiFeedback {
+  id          String          @id @default(uuid()) @db.Uuid
+  business_id String          @db.Uuid
+  message_id  String          @db.Uuid
+  user_id     String
+  rating      FeedbackRating
+  reason      FeedbackReason?
+  comment     String?
+  created_at  DateTime        @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  message  Message  @relation(fields: [message_id, business_id], references: [id, business_id], onDelete: Restrict)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+
+  @@unique([business_id, message_id, user_id])
+  @@unique([message_id, user_id])
+  @@index([business_id, created_at, id])
+  @@index([business_id, reason, created_at])
+  @@index([business_id, rating, created_at])
+  @@map("ai_feedback")
+}
+
+model AiEvaluation {
+  id               String        @id @default(uuid()) @db.Uuid
+  business_id      String        @db.Uuid
+  conversation_id  String        @db.Uuid
+  score            Int?
+  dimension_scores Json?
+  failure_reason   String?
+  evaluator_type   EvaluatorType
+  created_at       DateTime      @default(now()) @db.Timestamptz
+
+  business     Business     @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [conversation_id, business_id], references: [id, business_id], onDelete: Restrict)
+
+  @@map("ai_evaluations")
+}
+
+// 12 §12 Billing, flags, analytics
+
+model Plan {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  name       String
+  limits     Json
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id           String             @id @default(uuid()) @db.Uuid
+  business_id  String             @unique @db.Uuid
+  plan_id      String             @db.Uuid
+  status       SubscriptionStatus
+  period_start DateTime           @db.Timestamptz
+  period_end   DateTime           @db.Timestamptz
+  provider     String
+  provider_ref String?
+  created_at   DateTime           @default(now()) @db.Timestamptz
+  updated_at   DateTime           @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  plan     Plan     @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+
+  @@map("subscriptions")
+}
+
+model UsageEvent {
+  id            String      @id @default(uuid()) @db.Uuid
+  business_id   String      @db.Uuid
+  metric        UsageMetric
+  quantity      Int
+  period_bucket DateTime    @db.Date
+  is_test       Boolean     @default(false)
+  recorded_at   DateTime    @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@index([business_id, metric, recorded_at])
+  @@map("usage_events")
+}
+
+model UsageAggregate {
+  id           String      @id @default(uuid()) @db.Uuid
+  business_id  String      @db.Uuid
+  period_start DateTime    @db.Timestamptz
+  period_end   DateTime    @db.Timestamptz
+  metric       UsageMetric
+  quantity     Int
+  updated_at   DateTime    @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@unique([business_id, period_start, metric])
+  @@map("usage_aggregates")
+}
+
+model AnalyticsDaily {
+  business_id           String   @db.Uuid
+  day                   DateTime @db.Date
+  messages_handled      Int
+  messages_ai           Int
+  messages_human        Int
+  orders_created        Int
+  handoffs_total        Int
+  handoffs_by_reason    Json
+  conversion_confirmed  Int
+  conversion_ai_pending Int
+  updated_at            DateTime @updatedAt @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@id([business_id, day])
+  @@map("analytics_daily")
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid()) @db.Uuid
+  business_id String?  @db.Uuid
+  feature     String
+  enabled     Boolean
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @updatedAt @db.Timestamptz
+
+  business Business? @relation(fields: [business_id], references: [id], onDelete: Restrict)
+
+  @@unique([business_id, feature])
+  @@map("feature_flags")
+}
+
+// 12 §13 Notifications and audit
+
+model Notification {
+  id               String           @id @default(uuid()) @db.Uuid
+  business_id      String           @db.Uuid
+  user_id          String
+  type             NotificationType
+  handoff_priority HandoffPriority?
+  title            String
+  message          String
+  entity_type      String
+  entity_id        String           @db.Uuid
+  dedupe_key       String
+  read_at          DateTime?        @db.Timestamptz
+  created_at       DateTime         @default(now()) @db.Timestamptz
+
+  business Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+
+  @@unique([user_id, dedupe_key])
+  @@index([user_id, read_at, handoff_priority, created_at(sort: Desc)])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  business_id   String   @db.Uuid
+  actor_user_id String?
+  action        String
+  entity_type   String
+  entity_id     String   @db.Uuid
+  payload       Json?
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  business   Business @relation(fields: [business_id], references: [id], onDelete: Restrict)
+  actor_user User?    @relation(fields: [actor_user_id], references: [id], onDelete: SetNull)
+
+  @@index([business_id, created_at])
+  @@index([business_id, entity_type, entity_id])
+  @@map("audit_logs")
+}
