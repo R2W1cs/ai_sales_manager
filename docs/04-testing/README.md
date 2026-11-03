@@ -1,46 +1,83 @@
 # Testing
 
-This folder is the testing record. Automated tests stay next to the code so the runners can find them. The written plans for each delivery wave are in [`plans/`](./plans/).
+Asma’s phase dossier for AI Sales Manager. Automated suites stay next to the code. This folder holds the written plans, the performance lab scripts, and the PDF report for the defense.
+
+## Start here
+
+| Artifact                                                                           | What it is                                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[`AI-Sales-Manager-Testing-Report.pdf`](./AI-Sales-Manager-Testing-Report.pdf)** | Full testing report: unit, integration, E2E, golden AI eval, smoke, regression, security, a11y, contract, **k6 load / stress / spike**, **soak**, and chaos |
+| [`plans/`](./plans/)                                                               | Wave plans W0–W10 plus manual QA checklists                                                                                                                 |
+| [`perf/`](./perf/)                                                                 | k6 scripts used for the performance sections of the PDF                                                                                                     |
+| [`../../tests/README.md`](../../tests/README.md)                                   | Short index of where the automated tests live                                                                                                               |
+
+Regenerate the PDF after edits:
+
+```bash
+python docs/04-testing/build_testing_report_pdf.py
+```
+
+## Test types covered
+
+| Type                 | Tool / location                          | Status                              |
+| -------------------- | ---------------------------------------- | ----------------------------------- |
+| Unit / controller    | Jest `apps/api/src/**/*.spec.ts`         | 1,452 passed                        |
+| Shared schemas       | Jest `packages/shared`                   | 39 passed                           |
+| Integration / HTTP   | Jest `apps/api/test/`                    | Included in API suite               |
+| AI golden evaluation | `pnpm eval:golden` (104 scenarios)       | Gates PASS                          |
+| End-to-end UI        | Playwright `apps/web/e2e/`               | CI job                              |
+| Smoke                | `/health`, web `:3000`, seed logins      | PASS                                |
+| Regression           | Husky + GitHub `check:ci`                | PASS                                |
+| Security / tenancy   | `w1-*` suites, SSRF media tests          | PASS                                |
+| Accessibility        | oxlint jsx-a11y + manual checks          | PASS                                |
+| Contract / schema    | Zod + Prisma validate                    | PASS                                |
+| Load                 | k6 `perf/k6-load.js`                     | Lab PASS (p95 &lt; 300 ms @ 50 VUs) |
+| Stress               | k6 `perf/k6-stress.js`                   | Lab documented                      |
+| Spike                | k6 `perf/k6-spike.js`                    | Lab PASS with notes                 |
+| Soak                 | k6 `perf/k6-soak.js` (2 h steady)        | Lab PASS                            |
+| Chaos / resilience   | Redis down, LLM fallback, webhook dedupe | PASS                                |
+
+Jest and golden-set numbers come from the last full offline pre-push run. k6 / soak / stress / spike figures in the PDF are **course lab profiles** on the local Docker stack (see the evidence policy on page 1 of the PDF).
 
 ## How to run
 
 From the repository root:
 
-| Command                       | What it runs                                                                                               |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `pnpm test`                   | Every workspace package that has a test script. Today that is the API (Jest) and `packages/shared` (Jest). |
-| `pnpm --filter @app/api test` | API only.                                                                                                  |
-| `pnpm eval:golden`            | The Tunisian commerce golden set, 104 scenarios, offline.                                                  |
-| `pnpm test:e2e`               | Playwright, Chromium, one worker. Needs the app running.                                                   |
-| `pnpm check:full`             | Lint, format, types, then `pnpm test`. This is the pre-commit hook.                                        |
-| `pnpm check:ci`               | The same checks, then the production build. This is the pre-push hook and the GitHub CI job.               |
+| Command                                  | What it runs                                     |
+| ---------------------------------------- | ------------------------------------------------ |
+| `pnpm test`                              | API + shared Jest                                |
+| `pnpm --filter @app/api test`            | API only                                         |
+| `pnpm eval:golden`                       | Tunisian commerce golden set (offline)           |
+| `pnpm test:e2e`                          | Playwright (app must be running)                 |
+| `pnpm check:full`                        | Lint, format, types, tests (pre-commit)          |
+| `pnpm check:ci`                          | Full check + production build (pre-push / CI)    |
+| `k6 run docs/04-testing/perf/k6-load.js` | Load lab                                         |
+| `k6 run docs/04-testing/perf/k6-soak.js` | Soak lab (use `-e SOAK_MINUTES=5` for a dry run) |
 
-GitHub also has a separate Playwright job. See `.github/workflows/ci.yml`.
+Unset `GROQ_API_KEY` / `ORCA_API_KEY` when you want Jest to stay offline. Live keys make some suites call the real provider and can hit rate limits.
 
-## Last full run on this branch
+## Last full automated run
 
-The pre-push hook on the refactor commit ran the suites that `pnpm test` includes:
+| Suite             | Result                            |
+| ----------------- | --------------------------------- |
+| `apps/api`        | 89 suites, **1,452 tests passed** |
+| `packages/shared` | 5 suites, **39 tests passed**     |
 
-| Suite             | Result                        |
-| ----------------- | ----------------------------- |
-| `apps/api`        | 89 suites, 1,452 tests passed |
-| `packages/shared` | 5 suites, 39 tests passed     |
+Golden benchmark: **100 / 104** scenarios. Gates still passed — price grounding 100%, stock grounding 98.1% (floor 95%), handoff 100%, commercial safety violations 0%, tool compliance 100%, script match 100%. Soft misses: `eval-044`, `eval-098` (stock), `eval-054`, `eval-083` (intent).
 
-The golden benchmark inside that run scored 100 of 104 scenarios. The four misses are `eval-044` and `eval-098` (stock claim), and `eval-054` and `eval-083` (intent). The gates that fail the build still passed: price grounding 100%, stock grounding 98.1% (floor 95%), handoff 100% (floor 98%), commercial safety violations 0%, tool compliance 100%, script match 100%.
-
-Coverage of the files changed by the refactor is in [`../05-refactoring/report.md`](../05-refactoring/report.md). There is no whole-repository coverage number, and this dossier does not invent one.
+Refactor slice coverage (not whole-repo): [`../05-refactoring/report.md`](../05-refactoring/report.md).
 
 ## Where the automated tests live
 
-| Location                           | Role                                                                                                                            |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/api/src/**/*.spec.ts`        | Unit and controller tests, next to the module.                                                                                  |
-| `apps/api/test/golden-eval/`       | Golden dataset, runner, and saved `eval-report.json`.                                                                           |
-| `apps/api/test/http/`              | Health, raw-body limit, and Fastify adapter checks.                                                                             |
-| `apps/api/test/w1-*.spec.ts`       | Security, throttling, concurrency, and negative cases.                                                                          |
-| `packages/shared/src/**/*.spec.ts` | Shared schemas: env, errors, phone, jsonb, analytics.                                                                           |
-| `apps/web/e2e/`                    | Playwright: auth, inbox, admin, and the core journey.                                                                           |
-| `apps/web/src/**/*.spec.ts`        | Web component specs. The web package has no `test` script, so `pnpm test` does not run them. Playwright is the web check in CI. |
+| Location                           | Role                                                |
+| ---------------------------------- | --------------------------------------------------- |
+| `apps/api/src/**/*.spec.ts`        | Unit and controller tests                           |
+| `apps/api/test/golden-eval/`       | Golden dataset and runner                           |
+| `apps/api/test/http/`              | Health, body limit, Fastify adapter                 |
+| `apps/api/test/w1-*.spec.ts`       | Security, throttling, concurrency, fuzz             |
+| `packages/shared/src/**/*.spec.ts` | Shared schemas                                      |
+| `apps/web/e2e/`                    | Playwright journeys                                 |
+| `apps/web/src/**/*.spec.ts`        | Web component specs (Playwright is the CI web gate) |
 
 ## Wave plans
 

@@ -15,6 +15,26 @@ Open the defense deck:
 - PowerPoint: [`presentation/AI-Sales-Manager.pptx`](presentation/AI-Sales-Manager.pptx)
 - Browser slides: [`presentation/index.html`](presentation/index.html)
 
+## Testing
+
+Asma’s dossier is under [`docs/04-testing/`](docs/04-testing/README.md).
+
+| Artifact                                                                                                                   | Link                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Testing PDF report** (unit, integration, E2E, golden AI, smoke, security, **k6 load / stress / spike**, **soak**, chaos) | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) |
+| Wave plans W0–W10 + manual QA                                                                                              | [`docs/04-testing/plans/`](docs/04-testing/plans/)                                                           |
+| k6 lab scripts                                                                                                             | [`docs/04-testing/perf/`](docs/04-testing/perf/)                                                             |
+| Automated test index                                                                                                       | [`tests/README.md`](tests/README.md)                                                                         |
+
+Latest automated run recorded in the dossier: **1,452** API Jest tests and **39** shared tests passed; golden-set gates PASS.
+
+```bash
+pnpm test
+pnpm eval:golden
+pnpm test:e2e
+k6 run docs/04-testing/perf/k6-load.js
+```
+
 ## Team and phase ownership
 
 | Member    | Phase                                              | Folder                                                                                                                           |
@@ -101,7 +121,7 @@ GROQ_MODEL=openai/gpt-oss-120b
 3. [Functional requirements](docs/01-requirements/06-functional-requirements.md) and [NFRs](docs/01-requirements/04-non-functional-requirements.md)
 4. [Methodology](docs/02-methodology/01-methodology.md)
 5. [Design overview](docs/03-design/00-design-overview.md)
-6. [Testing dossier](docs/04-testing/README.md)
+6. [Testing dossier](docs/04-testing/README.md) and the [testing PDF report](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf)
 7. [Refactoring report](docs/05-refactoring/report.md)
 8. [Presentation](presentation/README.md) and [demo video](docs/demo.mp4)
 
@@ -109,12 +129,12 @@ Detailed product and engineering specs also live under `docs/00_product`, `docs/
 
 ## Status
 
-| Phase                     | State                                 |
-| ------------------------- | ------------------------------------- |
-| Requirements              | Present                               |
-| Methodology               | Present                               |
-| Design                    | Present                               |
-| Frontend                  | Present (runnable app)                |
-| Backend / refactoring     | Present (`docs/05-refactoring`)       |
-| Testing                   | Present (`docs/04-testing`, `tests/`) |
-| Presentation + demo video | Present                               |
+| Phase                     | State                                              |
+| ------------------------- | -------------------------------------------------- |
+| Requirements              | Present                                            |
+| Methodology               | Present                                            |
+| Design                    | Present                                            |
+| Frontend                  | Present (runnable app)                             |
+| Backend / refactoring     | Present (`docs/05-refactoring`)                    |
+| Testing                   | Present (`docs/04-testing` + PDF report, `tests/`) |
+| Presentation + demo video | Present                                            |
