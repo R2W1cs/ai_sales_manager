@@ -12,8 +12,6 @@ import {
   UseGuards,
 } from "@nestjs/common";
 
-import type { HttpReply } from "../../platform/core/http";
-
 import type {
   ApproveDraftMessageDto,
   AssignConversationDto,
@@ -24,6 +22,7 @@ import type {
   SendMessageDto,
 } from "@app/shared";
 
+import type { HttpReply } from "../../platform/core/http";
 import { RequirePermission } from "../../platform/security/permissions";
 import { PermissionsGuard } from "../../platform/security/permissions.guard";
 import {

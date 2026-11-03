@@ -2,8 +2,8 @@
 
 import React from "react";
 
-import { StepPlaygroundTest } from "@/components/onboarding/step-playground-test";
 import { useTenant } from "@/components/layout/tenant-context";
+import { StepPlaygroundTest } from "@/components/onboarding/step-playground-test";
 
 export default function PlaygroundPage(): React.ReactElement {
   const { currentBusinessId } = useTenant();

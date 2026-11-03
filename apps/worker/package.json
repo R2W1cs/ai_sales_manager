@@ -1,0 +1,13 @@
+{
+  "name": "@app/worker",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm --filter @app/api dev:worker",
+    "start": "pnpm --filter @app/api start:worker"
+  },
+  "dependencies": {
+    "@app/api": "workspace:*"
+  }
+}

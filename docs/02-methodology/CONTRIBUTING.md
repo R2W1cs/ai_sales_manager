@@ -21,12 +21,12 @@ Use [Conventional Commits](https://www.conventionalcommits.org/): `feat(orders):
 
 ## Ownership
 
-| Area | Lead |
-|---|---|
-| `docs/01-requirements`, `docs/02-methodology`, `docs/03-design` | Rayen |
-| Frontend and ethics | Aymen |
-| Backend, optimization and refactoring | Moataz |
-| Testing | Asma |
+| Area                                                            | Lead   |
+| --------------------------------------------------------------- | ------ |
+| `docs/01-requirements`, `docs/02-methodology`, `docs/03-design` | Rayen  |
+| Frontend and ethics                                             | Aymen  |
+| Backend, optimization and refactoring                           | Moataz |
+| Testing                                                         | Asma   |
 
 ## AI-assisted work
 

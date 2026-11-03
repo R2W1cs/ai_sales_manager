@@ -1,0 +1,13 @@
+{
+  "extends": "@app/config/tsconfig.base.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@app/shared/*": ["./packages/shared/src/*"],
+      "@app/config/*": ["./packages/config/*"]
+    }
+  },
+  "references": [{ "path": "apps/api" }, { "path": "apps/web" }, { "path": "packages/shared" }],
+  "files": []
+}

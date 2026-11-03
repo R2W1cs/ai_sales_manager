@@ -474,9 +474,7 @@ export class MessagesService implements OnModuleDestroy {
       });
     }
 
-    const safeName = (body.filename || "file")
-      .replace(/[^a-zA-Z0-9._-]/g, "_")
-      .slice(0, 80);
+    const safeName = (body.filename || "file").replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
     const s3Key = `businesses/${businessId}/conversations/${conversationId}/attachments/${randomUUID()}-${safeName}`;
     await uploadFile(s3Key, buffer, { contentType });
 

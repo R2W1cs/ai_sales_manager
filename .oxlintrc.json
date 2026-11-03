@@ -1,0 +1,139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "promise"],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.output/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/playwright-report/**",
+    "**/test-results/**",
+    "**/graphify-out/**",
+    "apps/web/src/routeTree.gen.ts",
+    "apps/web/next-env.d.ts"
+  ],
+  "rules": {
+    "eqeqeq": ["error", "smart"],
+    "no-console": [
+      "error",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "no-debugger": "error",
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "separate-type-imports"
+      }
+    ],
+    "typescript/no-import-type-side-effects": "error",
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "args": "after-used",
+        "argsIgnorePattern": "^_",
+        "caughtErrors": "all",
+        "caughtErrorsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "typescript/no-extraneous-class": [
+      "error",
+      {
+        "allowWithDecorator": true
+      }
+    ],
+    "unicorn/no-new-array": "off",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "promise/no-callback-in-promise": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "19.2.8"
+    },
+    "next": {
+      "rootDir": ["apps/web"]
+    }
+  },
+  "overrides": [
+    {
+      "files": ["apps/api/**/*.ts", "apps/worker/**/*.ts", "packages/shared/**/*.ts"],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": ["apps/api/**/*.ts"],
+      "rules": {
+        "typescript/consistent-type-imports": "off"
+      }
+    },
+    {
+      "files": ["apps/web/**/*.{js,jsx,mjs,ts,tsx}"],
+      "env": {
+        "browser": true,
+        "node": true
+      },
+      "plugins": [
+        "typescript",
+        "unicorn",
+        "oxc",
+        "react",
+        "react-perf",
+        "nextjs",
+        "import",
+        "jsx-a11y",
+        "promise"
+      ]
+    },
+    {
+      "files": ["apps/web/src/components/ui/**"],
+      "rules": {
+        "jsx-a11y/label-has-associated-control": "off"
+      },
+      "plugins": ["jsx-a11y"]
+    },
+    {
+      "files": ["**/*.{spec,test}.{ts,tsx,js}", "**/e2e/**/*.{ts,tsx}", "**/prisma/seed.ts"],
+      "env": {
+        "jest": true,
+        "node": true
+      },
+      "plugins": ["typescript", "unicorn", "oxc", "jest", "node", "promise"],
+      "rules": {
+        "no-console": "off",
+        "typescript/no-explicit-any": "off",
+        "jest/no-conditional-expect": "off",
+        "promise/no-callback-in-promise": "off",
+        "jest/require-to-throw-message": "off",
+        "jest/valid-title": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,mjs,cjs}",
+        "playwright.config.ts",
+        "**/*.config.{js,mjs,cjs,ts}",
+        "**/jest.config.js"
+      ],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": ["scripts/**/*"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

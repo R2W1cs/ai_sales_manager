@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 
 type PublicMessage = {
   id: string;
@@ -143,7 +143,7 @@ function EmbedWidget(): React.ReactElement {
       </header>
       <div ref={scrollerRef} className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {greeting && messages.length === 0 ? (
-          <p className="max-w-[85%] rounded-2xl bg-muted px-3 py-2 text-sm">{greeting}</p>
+          <p className="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm">{greeting}</p>
         ) : null}
         {messages.map((message) => {
           const mine = message.role === "customer";
@@ -152,8 +152,8 @@ function EmbedWidget(): React.ReactElement {
               key={message.id}
               className={
                 mine
-                  ? "ms-auto w-fit max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground"
-                  : "w-fit max-w-[85%] rounded-2xl bg-muted px-3 py-2 text-sm"
+                  ? "ms-auto w-fit max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
+                  : "w-fit max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm"
               }
             >
               {message.content}

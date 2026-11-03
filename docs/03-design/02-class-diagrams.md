@@ -2,25 +2,25 @@
 
 The domain is large, so it is modelled as **seven bounded-context diagrams** (C1 to C7), then a **module/service dependency diagram** (C8) and a **design-pattern map** (C9). Together they answer three questions a reviewer asks:
 
-1. *What are the things in the business?* (C1 to C7: entities, value objects, enumerations)
-2. *Who is allowed to change them?* (C8: each module owns its data; others call its service)
-3. *Which known solutions are reused?* (C9: State, Strategy, Adapter, Facade, Observer, Repository)
+1. _What are the things in the business?_ (C1 to C7: entities, value objects, enumerations)
+2. _Who is allowed to change them?_ (C8: each module owns its data; others call its service)
+3. _Which known solutions are reused?_ (C9: State, Strategy, Adapter, Facade, Observer, Repository)
 
 ## How to read the diagrams
 
-| Notation | Meaning |
-|---|---|
-| `<<entity>>` | Persisted object with identity |
-| `<<value>>` | Immutable value object, stored as JSON or embedded |
-| `<<enumeration>>` | Closed set of values |
-| `<<service>>` | Stateless domain service (the only writer of its module's data) |
-| `<<interface>>` | Port: a contract implemented elsewhere |
-| `*--` composition | Child cannot exist without parent; deleted with it |
-| `o--` aggregation | Child has its own life but belongs to a parent |
-| `-->` association | One object holds a reference to another |
-| `..>` dependency | Uses at call time, no stored reference |
-| `..|>` realisation | Class implements an interface |
-| `"1"`, `"*"`, `"0..1"` | Multiplicity |
+| Notation               | Meaning                                                         |
+| ---------------------- | --------------------------------------------------------------- |
+| `<<entity>>`           | Persisted object with identity                                  |
+| `<<value>>`            | Immutable value object, stored as JSON or embedded              |
+| `<<enumeration>>`      | Closed set of values                                            |
+| `<<service>>`          | Stateless domain service (the only writer of its module's data) |
+| `<<interface>>`        | Port: a contract implemented elsewhere                          |
+| `*--` composition      | Child cannot exist without parent; deleted with it              |
+| `o--` aggregation      | Child has its own life but belongs to a parent                  |
+| `-->` association      | One object holds a reference to another                         |
+| `..>` dependency       | Uses at call time, no stored reference                          |
+| `..                    | >` realisation                                                  | Class implements an interface |
+| `"1"`, `"*"`, `"0..1"` | Multiplicity                                                    |
 
 **Tenancy rule that applies to every entity below:** every entity (except global reference data such as `Permission` and `Plan`) carries `business_id`. Composite foreign keys `(id, business_id)` make it impossible for a row in one workspace to point at a row in another.
 
@@ -1267,19 +1267,19 @@ classDiagram
     Realtime ..> Conversations : events only
 ```
 
-| Module | Owns | Must not |
-|---|---|---|
-| Auth | users, sessions, credentials | know about conversations or Meta |
-| Businesses | workspace, members, roles, rules, flags, plans | call Meta or the LLM |
-| Products | catalog, stock, reservations, knowledge, embeddings | send messages or change conversation status |
-| Customers | customers, identities, tags, notes | own conversations or orders |
-| Conversations | conversations, messages, state machine, lead score | call Meta or the LLM directly |
-| AI | agent config, prompts, orchestrator, traces, usage | persist orders or messages except through their services |
-| Orders | orders, items, confirm and cancel | talk to Meta, mutate stock except through Products |
-| Integrations | channel accounts, webhooks, adapters, delivery | import AI or inbox internals |
-| Analytics | KPI rollups, usage | sit on the inbound hot path |
-| Notifications | notifications and fan-out | decide when to hand off; it only delivers |
-| Realtime | socket gateway | be a source of truth; it is an accelerator |
+| Module        | Owns                                                | Must not                                                 |
+| ------------- | --------------------------------------------------- | -------------------------------------------------------- |
+| Auth          | users, sessions, credentials                        | know about conversations or Meta                         |
+| Businesses    | workspace, members, roles, rules, flags, plans      | call Meta or the LLM                                     |
+| Products      | catalog, stock, reservations, knowledge, embeddings | send messages or change conversation status              |
+| Customers     | customers, identities, tags, notes                  | own conversations or orders                              |
+| Conversations | conversations, messages, state machine, lead score  | call Meta or the LLM directly                            |
+| AI            | agent config, prompts, orchestrator, traces, usage  | persist orders or messages except through their services |
+| Orders        | orders, items, confirm and cancel                   | talk to Meta, mutate stock except through Products       |
+| Integrations  | channel accounts, webhooks, adapters, delivery      | import AI or inbox internals                             |
+| Analytics     | KPI rollups, usage                                  | sit on the inbound hot path                              |
+| Notifications | notifications and fan-out                           | decide when to hand off; it only delivers                |
+| Realtime      | socket gateway                                      | be a source of truth; it is an accelerator               |
 
 Dotted arrows marked "events only" mean the dependency is through in-process domain events, not direct calls (see [flow F6 to F11](04-sequence-flows.md)).
 
@@ -1287,26 +1287,26 @@ Dotted arrows marked "events only" mean the dependency is through in-process dom
 
 ## C9. Design patterns applied
 
-| Pattern | Where | Problem it solves | Class names |
-|---|---|---|---|
-| **State** | Conversation and order lifecycles | Illegal transitions (for example confirming a cancelled order) | `ConversationService.transition`, `Order.confirm` / `cancel`; allowed pairs listed in S1 and S2 |
-| **Strategy** | Intent classification, LLM providers, reply modes | Swap algorithm without changing callers | `IntentClassifier` (rule or LLM), `LlmProvider`, `ReplyModePolicy` |
-| **Adapter** | Channels | Meta's payloads differ per channel and change over time | `ChannelAdapter` implementations |
-| **Facade** | Messaging, AI | Hide a subsystem behind one call | `UnifiedMessaging`, `AIOrchestrator.processTurn` |
-| **Registry / Command** | AI tools | Uniform execution, permissions and logging of tool calls | `ToolExecutor` with `Tool` registry |
-| **Chain of responsibility** | Provider fallback | Try next model if one fails | `ModelFallback` over providers |
-| **Observer (domain events)** | Order confirmed, state changed, message received | Decouple modules; analytics and notifications react without being called | In-process event emitter |
-| **Repository / ports** | Data access | Keep modules testable and tenant-scoped | Service layer over Prisma, tenant-scoped client |
-| **Idempotent receiver** | Webhooks, jobs, orders | Exactly-once effect on at-least-once delivery | Unique keys, deterministic job ids |
-| **Snapshot** | Orders | Preserve what the customer agreed to | `OrderItem.*Snapshot`, `Order.customerSnapshot` |
-| **Value object** | Handoff briefing, canonical messages | Validated, immutable data crossing module boundaries | `HandoffContext`, `CanonicalInbound` |
+| Pattern                      | Where                                             | Problem it solves                                                        | Class names                                                                                     |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **State**                    | Conversation and order lifecycles                 | Illegal transitions (for example confirming a cancelled order)           | `ConversationService.transition`, `Order.confirm` / `cancel`; allowed pairs listed in S1 and S2 |
+| **Strategy**                 | Intent classification, LLM providers, reply modes | Swap algorithm without changing callers                                  | `IntentClassifier` (rule or LLM), `LlmProvider`, `ReplyModePolicy`                              |
+| **Adapter**                  | Channels                                          | Meta's payloads differ per channel and change over time                  | `ChannelAdapter` implementations                                                                |
+| **Facade**                   | Messaging, AI                                     | Hide a subsystem behind one call                                         | `UnifiedMessaging`, `AIOrchestrator.processTurn`                                                |
+| **Registry / Command**       | AI tools                                          | Uniform execution, permissions and logging of tool calls                 | `ToolExecutor` with `Tool` registry                                                             |
+| **Chain of responsibility**  | Provider fallback                                 | Try next model if one fails                                              | `ModelFallback` over providers                                                                  |
+| **Observer (domain events)** | Order confirmed, state changed, message received  | Decouple modules; analytics and notifications react without being called | In-process event emitter                                                                        |
+| **Repository / ports**       | Data access                                       | Keep modules testable and tenant-scoped                                  | Service layer over Prisma, tenant-scoped client                                                 |
+| **Idempotent receiver**      | Webhooks, jobs, orders                            | Exactly-once effect on at-least-once delivery                            | Unique keys, deterministic job ids                                                              |
+| **Snapshot**                 | Orders                                            | Preserve what the customer agreed to                                     | `OrderItem.*Snapshot`, `Order.customerSnapshot`                                                 |
+| **Value object**             | Handoff briefing, canonical messages              | Validated, immutable data crossing module boundaries                     | `HandoffContext`, `CanonicalInbound`                                                            |
 
 ### SOLID in this design
 
-| Principle | Example |
-|---|---|
-| Single responsibility | Each module owns one domain; `Guardrails` only verifies, `PromptBuilder` only builds |
-| Open/closed | New channel = new `ChannelAdapter`; new LLM = new `LlmProvider`; new tool = new `Tool` |
-| Liskov | Any `Tool` or `LlmProvider` is substitutable behind its interface |
-| Interface segregation | Ports are small (`Tool.run`, `LlmProvider.chat`) |
-| Dependency inversion | The orchestrator depends on `IntentClassifier` and `Tool`, not on concrete classes or vendors |
+| Principle             | Example                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| Single responsibility | Each module owns one domain; `Guardrails` only verifies, `PromptBuilder` only builds          |
+| Open/closed           | New channel = new `ChannelAdapter`; new LLM = new `LlmProvider`; new tool = new `Tool`        |
+| Liskov                | Any `Tool` or `LlmProvider` is substitutable behind its interface                             |
+| Interface segregation | Ports are small (`Tool.run`, `LlmProvider.chat`)                                              |
+| Dependency inversion  | The orchestrator depends on `IntentClassifier` and `Tool`, not on concrete classes or vendors |

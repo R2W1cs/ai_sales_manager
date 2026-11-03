@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Sales Manager — Presentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0f1720;
+        --card: #202c3a;
+        --text: #f4f1ec;
+        --muted: #9aa6b2;
+        --accent: #3d8b7a;
+        --gold: #c9a26b;
+        --line: #2e3c4c;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        background: var(--ink);
+        color: var(--text);
+        font-family: "Source Sans 3", system-ui, sans-serif;
+      }
+      body {
+        overflow: hidden;
+      }
+      .deck {
+        height: 100%;
+        width: 100%;
+        position: relative;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        padding: clamp(2rem, 5vw, 4.5rem);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        background:
+          linear-gradient(180deg, rgba(61, 139, 122, 0.08), transparent 35%),
+          radial-gradient(ellipse at 100% 0%, rgba(201, 162, 107, 0.08), transparent 40%),
+          var(--ink);
+      }
+      .slide.active {
+        display: flex;
+        animation: in 420ms ease;
+      }
+      @keyframes in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .accent-bar {
+        width: 2.5rem;
+        height: 0.28rem;
+        background: var(--accent);
+        border-radius: 999px;
+        margin-bottom: 1rem;
+      }
+      .kicker {
+        color: var(--accent);
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 0.6rem;
+      }
+      h1 {
+        font-family: Fraunces, Georgia, serif;
+        font-weight: 700;
+        font-size: clamp(2.4rem, 5vw, 4.2rem);
+        line-height: 1.05;
+      }
+      h2 {
+        font-family: Fraunces, Georgia, serif;
+        font-weight: 700;
+        font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 0.5rem;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: clamp(1rem, 1.5vw, 1.25rem);
+        max-width: 46rem;
+        margin-top: 1rem;
+        line-height: 1.5;
+      }
+      .grid {
+        display: grid;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .grid.four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        padding: 1.15rem 1.25rem;
+        min-height: 7rem;
+      }
+      .card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 0.45rem;
+      }
+      .card p,
+      .card li {
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.45;
+      }
+      .metric {
+        font-family: Fraunces, Georgia, serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0.35rem 0;
+      }
+      .note {
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .agenda {
+        list-style: none;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem 2.5rem;
+        margin-top: 2rem;
+      }
+      .agenda li {
+        display: flex;
+        gap: 0.85rem;
+        align-items: baseline;
+        font-size: 1.1rem;
+      }
+      .agenda span {
+        color: var(--accent);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .rows {
+        display: grid;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 8rem 1fr;
+        gap: 1rem;
+        align-items: start;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 0.9rem;
+        padding: 0.95rem 1.15rem;
+      }
+      .row strong {
+        color: var(--accent);
+      }
+      .footer-meta {
+        margin-top: 2.5rem;
+        color: var(--gold);
+        font-weight: 600;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: var(--accent);
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1.25rem;
+        background: rgba(15, 23, 32, 0.85);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid var(--line);
+        font-size: 0.85rem;
+        color: var(--muted);
+        z-index: 10;
+      }
+      .nav button {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        cursor: pointer;
+        font: inherit;
+      }
+      .nav button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .progress {
+        height: 3px;
+        background: var(--line);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 11;
+      }
+      .progress > i {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width 200ms ease;
+      }
+      ul.plain {
+        list-style: none;
+        display: grid;
+        gap: 0.55rem;
+        margin-top: 0.5rem;
+      }
+      ul.plain li::before {
+        content: "▸ ";
+        color: var(--accent);
+      }
+      @media (max-width: 900px) {
+        .grid.two,
+        .grid.three,
+        .grid.four,
+        .agenda {
+          grid-template-columns: 1fr;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        body {
+          overflow: visible;
+        }
+        .nav,
+        .progress {
+          display: none;
+        }
+        .slide {
+          position: relative;
+          display: flex !important;
+          page-break-after: always;
+          min-height: 100vh;
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="deck" id="deck">
+      <section class="slide active">
+        <p class="kicker">Software Engineering · AI-assisted development</p>
+        <h1>AI Sales Manager</h1>
+        <p class="lead">
+          An AI sales workspace for Tunisian ecommerce. Catalog-grounded answers in French, Arabic,
+          and Derja — with a human handoff when it is time to buy.
+        </p>
+        <p class="footer-meta">Team · Rayen · Aymen · Moataz · Asma</p>
+        <p class="muted" style="margin-top: 0.4rem">github.com/R2W1cs/ai_sales_manager</p>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Agenda</p>
+        <h2>What we will cover</h2>
+        <p class="lead">From the problem to measured proof.</p>
+        <ol class="agenda">
+          <li><span>01</span> The problem in Tunisian ecommerce</li>
+          <li><span>02</span> Product vision and MVP scope</li>
+          <li><span>03</span> Architecture and stack</li>
+          <li><span>04</span> Product walkthrough</li>
+          <li><span>05</span> AI behaviour and Derja support</li>
+          <li><span>06</span> Testing evidence</li>
+          <li><span>07</span> Refactoring and optimization</li>
+          <li><span>08</span> Demo, team, and how to run it</li>
+        </ol>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Problem</p>
+        <h2>Night messages do not wait for morning staff</h2>
+        <p class="lead">
+          Fashion shops on Instagram and Messenger lose sales when nobody is online.
+        </p>
+        <div class="two grid">
+          <div class="card">
+            <h3>Delayed replies</h3>
+            <p>
+              Customers ask about size, price, and stock after hours. A slow answer often ends the
+              sale.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Unreliable answers</h3>
+            <p>
+              Staff quote outdated prices or invent delivery promises when the catalog is not at
+              hand.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Handoff chaos</h3>
+            <p>When a buyer is ready, context is scattered across chats, notes, and memory.</p>
+          </div>
+          <div class="card">
+            <h3>No operating picture</h3>
+            <p>Owners cannot see whether AI or humans are closing the loop.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Solution</p>
+        <h2>A sales workspace that answers from the catalog</h2>
+        <p class="lead">AI handles the first reply. Humans confirm the order.</p>
+        <div class="four grid">
+          <div class="card">
+            <p class="note">01</p>
+            <h3>Load the shop</h3>
+            <p>Catalog, variants, stock, and rules become the only source of truth.</p>
+          </div>
+          <div class="card">
+            <p class="note">02</p>
+            <h3>Talk like the shop</h3>
+            <p>Customers write in French, Arabic, or Derja. The AI matches the register.</p>
+          </div>
+          <div class="card">
+            <p class="note">03</p>
+            <h3>Stay grounded</h3>
+            <p>Prices, stock, and delivery come from tools — never from invention.</p>
+          </div>
+          <div class="card">
+            <p class="note">04</p>
+            <h3>Hand off to buy</h3>
+            <p>Purchase intent becomes a pending order with a briefing for staff.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">MVP scope</p>
+        <h2>What ships in phase 1</h2>
+        <div class="two grid">
+          <div class="card">
+            <h3 style="color: var(--accent)">In scope</h3>
+            <ul class="plain">
+              <li>Instagram + Messenger</li>
+              <li>Website chat widget</li>
+              <li>Inbox command center</li>
+              <li>AI playground in Derja</li>
+              <li>Pending orders + pipeline</li>
+              <li>Analytics KPIs</li>
+              <li>Startup operator console</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--gold)">Out of scope</h3>
+            <ul class="plain">
+              <li>WhatsApp (stub only)</li>
+              <li>Payments</li>
+              <li>Broad vertical templates</li>
+              <li>Automatic fine-tuning</li>
+              <li>Multi-region deploy</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Architecture</p>
+        <h2>Modular monolith, clear boundaries</h2>
+        <div class="four grid">
+          <div class="card">
+            <h3 style="color: var(--accent)">Web</h3>
+            <p>Next.js 16<br />Inbox, playground, widget, operator</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">API</h3>
+            <p>NestJS + Fastify<br />Auth, AI, orders, channels, billing</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">Data</h3>
+            <p>Postgres + pgvector<br />Redis queues · object storage</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">Models</h3>
+            <p>Groq → Orca → Vercel<br />Grounded tool calls</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Product</p>
+        <h2>Surfaces the team ships</h2>
+        <div class="three grid">
+          <div class="card">
+            <h3 style="color: var(--accent)">/inbox</h3>
+            <p>Sales command center</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/playground</h3>
+            <p>Customer simulator</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/website</h3>
+            <p>Embeddable chat bubble</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/pipeline</h3>
+            <p>Pending orders board</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/products</h3>
+            <p>Catalog and CSV import</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/analytics</h3>
+            <p>Four operating KPIs</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/settings</h3>
+            <p>Personality, rules, team</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/operator</h3>
+            <p>Startup console</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">/onboarding</h3>
+            <p>Go-live checklist</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">AI behaviour</p>
+        <h2>Derja-first, catalog-bound</h2>
+        <p class="lead">The model is allowed to speak. It is not allowed to invent the shop.</p>
+        <div class="rows">
+          <div class="row">
+            <strong>Language</strong>
+            <p>
+              French, MSA, Tunisian Arabic, and Arabizi. Demo prompts use Derja such as “slm, andkom
+              pntallon blue”.
+            </p>
+          </div>
+          <div class="row">
+            <strong>Grounding</strong>
+            <p>
+              Stock, price, and policy answers come from tools. Golden-set gates block unsafe
+              commercial claims.
+            </p>
+          </div>
+          <div class="row">
+            <strong>Handoff</strong>
+            <p>
+              Human-required triggers pause AI and open a briefing so staff continue without
+              re-asking.
+            </p>
+          </div>
+          <div class="row">
+            <strong>Playground</strong>
+            <p>Merchants rehearse replies against a sandboxed store before going live.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Testing</p>
+        <h2>Evidence, not ambition</h2>
+        <p class="lead">Asma’s dossier lives in docs/04-testing. Suites run in CI.</p>
+        <div class="three grid">
+          <div class="card">
+            <p class="muted">API tests</p>
+            <div class="metric">1,452</div>
+            <p class="note">89 suites passed</p>
+          </div>
+          <div class="card">
+            <p class="muted">Shared tests</p>
+            <div class="metric">39</div>
+            <p class="note">5 suites passed</p>
+          </div>
+          <div class="card">
+            <p class="muted">Golden set gates</p>
+            <div class="metric">Pass</div>
+            <p class="note">Price 100% · Stock 98.1%</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 1rem">
+          <p>
+            Wave plans W0–W10 · Jest next to Nest modules · Playwright for auth, inbox, admin · 104
+            Tunisian commerce scenarios · commercial safety violations at 0%.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Refactoring</p>
+        <h2>Measured improvements only</h2>
+        <p class="lead">AI suggested changes. Humans kept what tests could prove.</p>
+        <div class="four grid">
+          <div class="card">
+            <p class="muted">Total complexity</p>
+            <div class="metric">8750→8697</div>
+            <p class="note">max stays 65</p>
+          </div>
+          <div class="card">
+            <p class="muted">Functions &gt; 20</p>
+            <div class="metric">43→41</div>
+            <p class="note">intent + SSRF</p>
+          </div>
+          <div class="card">
+            <p class="muted">Chart payload</p>
+            <div class="metric">4874→194B</div>
+            <p class="note">p95 1.43→0.88ms</p>
+          </div>
+          <div class="card">
+            <p class="muted">Lint errors</p>
+            <div class="metric">7→0</div>
+            <p class="note">6 fixed in code</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 1rem">
+          <p>
+            Accepted: phrase-table intent fallback · SSRF predicates · grouped operator chart SQL.
+            Rejected: rewriting order/AI pipelines without characterization tests. Full write-up in
+            docs/05-refactoring/report.md.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Demo</p>
+        <h2>Watch the full walkthrough</h2>
+        <p class="lead">About three and a half minutes. Captions explain every screen.</p>
+        <div class="card" style="margin-top: 1.5rem">
+          <p class="code">docs/demo.mp4</p>
+          <ul class="plain" style="margin-top: 1rem">
+            <li>Playground and website widget tried in Tunisian Derja</li>
+            <li>Inbox, pipeline, catalog, analytics, every settings tab</li>
+            <li>Six onboarding steps and the live startup console</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Team</p>
+        <h2>Phase ownership</h2>
+        <div class="four grid">
+          <div class="card">
+            <h3>Rayen</h3>
+            <p>Requirements, methodology, design</p>
+            <p class="note" style="margin-top: 1rem">docs/01 · 02 · 03</p>
+          </div>
+          <div class="card">
+            <h3>Aymen</h3>
+            <p>Frontend and ethics</p>
+            <p class="note" style="margin-top: 1rem">apps/web · docs/06</p>
+          </div>
+          <div class="card">
+            <h3>Moataz</h3>
+            <p>Backend, optimization, refactoring</p>
+            <p class="note" style="margin-top: 1rem">apps/api · docs/05</p>
+          </div>
+          <div class="card">
+            <h3>Asma</h3>
+            <p>Testing of the whole application</p>
+            <p class="note" style="margin-top: 1rem">tests · docs/04</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="accent-bar"></div>
+        <p class="kicker">Run it</p>
+        <h2>Same path as the working demo</h2>
+        <div class="two grid">
+          <div class="card">
+            <ul class="plain">
+              <li>pnpm install</li>
+              <li>cp .env.example into apps/api and apps/web</li>
+              <li>docker compose up -d postgres redis</li>
+              <li>pnpm db:generate && pnpm db:push && pnpm db:seed</li>
+              <li>pnpm dev:api · pnpm dev:web</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--accent)">Demo login</h3>
+            <ul class="plain">
+              <li>demo@example.com</li>
+              <li>admin@example.com</li>
+              <li>agent@example.com</li>
+              <li>operator@example.com</li>
+              <li>Password123!</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <p class="kicker">Closing</p>
+        <h1>Questions</h1>
+        <p class="lead">
+          AI Sales Manager — grounded replies for Tunisian shops, with a human still holding the
+          confirmation.
+        </p>
+        <p class="footer-meta">github.com/R2W1cs/ai_sales_manager</p>
+        <p class="muted" style="margin-top: 0.5rem">
+          Presentation · docs/demo.mp4 · docs/04-testing · docs/05-refactoring
+        </p>
+      </section>
+    </div>
+
+    <div class="nav">
+      <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+      <span id="label">1 / 14</span>
+      <button type="button" id="next" aria-label="Next slide">Next →</button>
+    </div>
+
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      let i = 0;
+      const label = document.getElementById("label");
+      const bar = document.getElementById("bar");
+      function show(n) {
+        i = (n + slides.length) % slides.length;
+        slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
+        label.textContent = `${i + 1} / ${slides.length}`;
+        bar.style.width = `${((i + 1) / slides.length) * 100}%`;
+      }
+      document.getElementById("prev").onclick = () => show(i - 1);
+      document.getElementById("next").onclick = () => show(i + 1);
+      window.addEventListener("keydown", (e) => {
+        if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) {
+          e.preventDefault();
+          show(i + 1);
+        }
+        if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) {
+          e.preventDefault();
+          show(i - 1);
+        }
+        if (e.key === "Home") show(0);
+        if (e.key === "End") show(slides.length - 1);
+      });
+      let touchX = null;
+      window.addEventListener("touchstart", (e) => {
+        touchX = e.changedTouches[0].screenX;
+      });
+      window.addEventListener("touchend", (e) => {
+        if (touchX == null) return;
+        const dx = e.changedTouches[0].screenX - touchX;
+        if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+        touchX = null;
+      });
+      show(0);
+    </script>
+  </body>
+</html>

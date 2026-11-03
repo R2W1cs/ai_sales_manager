@@ -1,6 +1,5 @@
 "use client";
 
-import type { CreateBusinessResponse } from "@app/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Store, ArrowRight, Building2, Globe2, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,7 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { rememberActiveBusiness } from "@/lib/active-business";
 import { apiClient } from "@/lib/api-client";
+import type { CreateBusinessResponse } from "@app/shared";
 
 const storeSetupSchema = z.object({
   name: z.string().trim().min(1, "Veuillez saisir le nom de votre entreprise."),
@@ -107,21 +108,16 @@ export function StepStoreSetup({
         return;
       }
 
-      const created = await apiClient.post<CreateBusinessResponse>(
-        "/api/v1/businesses",
-        payload,
-        {
-          headers: {
-            "Idempotency-Key": `onboarding-create-${crypto.randomUUID()}`,
-          },
+      const created = await apiClient.post<CreateBusinessResponse>("/api/v1/businesses", payload, {
+        headers: {
+          "Idempotency-Key": `onboarding-create-${crypto.randomUUID()}`,
         },
-      );
+      });
 
       await refreshSession();
 
       if (typeof window !== "undefined" && created?.business?.id) {
-        window.localStorage.setItem("active_business_id", created.business.id);
-        document.cookie = `x-business-id=${created.business.id}; path=/; max-age=31536000; SameSite=Lax`;
+        rememberActiveBusiness(created.business.id);
       }
 
       onNext(created?.business?.id);

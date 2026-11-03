@@ -89,6 +89,10 @@ export function LoginForm() {
 
     try {
       const session = await login(data);
+      if (session.user.platformAdmin) {
+        router.push("/operator" as Route);
+        return;
+      }
       const hasMemberships = Boolean(session.memberships && session.memberships.length > 0);
       const target = getSafeRedirectUrl(undefined, hasMemberships);
       router.push(target);

@@ -238,6 +238,48 @@ describe("Media attachments processing & MinIO storage (T-INT-05)", () => {
       expect(isBlockedHostname("metadata.google.internal")).toBe(true);
     });
 
+    it("keeps every reserved IPv4 and IPv6 range blocked and leaves public addresses open", () => {
+      const blocked = [
+        "0.1.2.3",
+        "10.1.2.3",
+        "100.64.0.1",
+        "100.127.255.255",
+        "127.0.0.1",
+        "169.254.169.254",
+        "172.16.0.1",
+        "172.31.255.1",
+        "192.0.0.1",
+        "192.168.0.1",
+        "198.18.0.1",
+        "198.19.255.1",
+        "224.0.0.1",
+        "240.0.0.1",
+        "::",
+        "0:0:0:0:0:0:0:1",
+        "fe9::1",
+        "fea::1",
+        "feb::1",
+        "fd00::1",
+        "::ffff:10.0.0.1",
+        "999.1.1.1",
+      ];
+      for (const ip of blocked) {
+        expect(isPrivateOrReservedIp(ip)).toBe(true);
+      }
+      expect(isPrivateOrReservedIp("8.8.8.8")).toBe(false);
+      expect(isPrivateOrReservedIp("1.1.1.1")).toBe(false);
+      expect(isPrivateOrReservedIp("172.15.0.1")).toBe(false);
+      expect(isPrivateOrReservedIp("172.32.0.1")).toBe(false);
+      expect(isPrivateOrReservedIp("100.63.0.1")).toBe(false);
+      expect(isPrivateOrReservedIp("100.128.0.1")).toBe(false);
+      expect(isBlockedHostname("")).toBe(true);
+      expect(isBlockedHostname("shop.localhost")).toBe(true);
+      expect(isBlockedHostname("printer.local")).toBe(true);
+      expect(isBlockedHostname("db.internal")).toBe(true);
+      expect(isBlockedHostname("host.arpa")).toBe(true);
+      expect(isBlockedHostname("cdn.example.com")).toBe(false);
+    });
+
     it("rejects malformed or empty URLs", async () => {
       await expect(mediaService.validateMediaUrl("")).rejects.toThrow(BadRequestException);
       await expect(mediaService.validateMediaUrl("not-a-valid-url")).rejects.toThrow(

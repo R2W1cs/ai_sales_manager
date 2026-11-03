@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/../scripts/hooks/common.sh"
+
+if git_operation_in_progress; then
+  exit 0
+fi
+
+if hook_should_skip pre-push; then
+  exit 0
+fi
+
+hook_run pnpm run check:ci

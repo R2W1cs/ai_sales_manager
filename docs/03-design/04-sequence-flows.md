@@ -2,21 +2,21 @@
 
 Every significant flow in the system, each with: **purpose**, **actors**, **preconditions**, a **sequence diagram**, a **step-by-step explanation**, and **failure and edge cases**. Flows are grouped as:
 
-| Group | Flows |
-|---|---|
-| Setup | F1 Register and create workspace, F2 Invite teammate, F3 Catalog CSV import, F4 Knowledge indexing, F5 Connect a channel, F16 AI activation gates, F17 Playground |
-| The message path | F6 Inbound webhook, F7 AI turn, F12 Outbound delivery, F13 Reply modes and approval, F14 AI suggestion, F15 LLM failure fallback |
-| Handoff and orders | F8 Exception handoff, F9 Purchase collection and pending order, F10 Takeover and resume, F11 Confirm or cancel an order, F20 Reservation expiry |
-| Platform | F18 KPI rollup, F19 Realtime updates |
+| Group              | Flows                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup              | F1 Register and create workspace, F2 Invite teammate, F3 Catalog CSV import, F4 Knowledge indexing, F5 Connect a channel, F16 AI activation gates, F17 Playground |
+| The message path   | F6 Inbound webhook, F7 AI turn, F12 Outbound delivery, F13 Reply modes and approval, F14 AI suggestion, F15 LLM failure fallback                                  |
+| Handoff and orders | F8 Exception handoff, F9 Purchase collection and pending order, F10 Takeover and resume, F11 Confirm or cancel an order, F20 Reservation expiry                   |
+| Platform           | F18 KPI rollup, F19 Realtime updates                                                                                                                              |
 
 Four principles run through all of them. Reading them first makes every diagram easier to follow.
 
-| Principle | Meaning |
-|---|---|
-| **Persist, acknowledge, then enqueue** | A webhook is stored durably before the `200` is returned. The LLM is never awaited in the request. |
-| **Facts come from tools** | Prices, stock and policies enter a reply only from tool results, never from model memory. |
-| **One writer per state** | Only `ConversationService` changes conversation status; only `OrderService` changes orders; only `InventoryService` changes stock. |
-| **At-least-once, effect-once** | Jobs and webhooks may repeat; unique keys and deterministic job ids make repeats harmless. |
+| Principle                              | Meaning                                                                                                                            |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Persist, acknowledge, then enqueue** | A webhook is stored durably before the `200` is returned. The LLM is never awaited in the request.                                 |
+| **Facts come from tools**              | Prices, stock and policies enter a reply only from tool results, never from model memory.                                          |
+| **One writer per state**               | Only `ConversationService` changes conversation status; only `OrderService` changes orders; only `InventoryService` changes stock. |
+| **At-least-once, effect-once**         | Jobs and webhooks may repeat; unique keys and deterministic job ids make repeats harmless.                                         |
 
 ---
 
@@ -286,13 +286,13 @@ sequenceDiagram
 
 **Failure and edge cases**
 
-| Case | Behaviour |
-|---|---|
-| Crash after `200`, before the worker finishes | A sweep job re-processes events where `processed_at` is empty and older than 30 s |
-| Channel not active | Event marked processed, **no** customer message created |
-| Delivery receipt or echo, not a customer message | Not treated as a customer message |
-| Enqueue fails | Non-200 so Meta retries; the duplicate insert is harmless |
-| Deauthorise callback | Handled as a lifecycle event; channel set to `disconnected` |
+| Case                                             | Behaviour                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Crash after `200`, before the worker finishes    | A sweep job re-processes events where `processed_at` is empty and older than 30 s |
+| Channel not active                               | Event marked processed, **no** customer message created                           |
+| Delivery receipt or echo, not a customer message | Not treated as a customer message                                                 |
+| Enqueue fails                                    | Non-200 so Meta retries; the duplicate insert is harmless                         |
+| Deauthorise callback                             | Handled as a lifecycle event; channel set to `disconnected`                       |
 
 ---
 
@@ -372,23 +372,23 @@ sequenceDiagram
 
 There are **15 triggers**; 14 are exceptions and one (#1) is the successful end of a purchase (F9).
 
-| # | Situation | `escalation_reason` | Priority |
-|---|---|---|---|
-| 1 | Purchase completion (no online payment) | `purchase_handoff` | high |
-| 2 | Payment issue (claims already paid, amount dispute) | `payment_issue` | critical |
-| 3 | Refund request | `refund_request` | critical |
-| 4 | Return or exchange | `return_exchange` | high |
-| 5 | Complaint or negative sentiment | `complaint` | critical |
-| 6 | Low confidence after one clarifying question | `low_confidence` | normal |
-| 7 | Customer asks for a human | `human_request` | high |
-| 8 | Negotiation or discount with no matching rule | `negotiation` | high |
-| 9 | Custom or out-of-catalog order | `custom_order` | high |
-| 10 | VIP or high-value customer (when the flag is on) | `vip_customer` | critical |
-| 11 | Bulk or large quantity | `bulk_order` | high |
-| 12 | Legal or sensitive topic | `legal_sensitive` | critical |
-| 13 | Inventory conflict | `inventory_conflict` | high |
-| 14 | Conflicting business rules | `policy_conflict` | normal |
-| 15 | Integration or tool failure | `integration_failure` | critical |
+| #   | Situation                                           | `escalation_reason`   | Priority |
+| --- | --------------------------------------------------- | --------------------- | -------- |
+| 1   | Purchase completion (no online payment)             | `purchase_handoff`    | high     |
+| 2   | Payment issue (claims already paid, amount dispute) | `payment_issue`       | critical |
+| 3   | Refund request                                      | `refund_request`      | critical |
+| 4   | Return or exchange                                  | `return_exchange`     | high     |
+| 5   | Complaint or negative sentiment                     | `complaint`           | critical |
+| 6   | Low confidence after one clarifying question        | `low_confidence`      | normal   |
+| 7   | Customer asks for a human                           | `human_request`       | high     |
+| 8   | Negotiation or discount with no matching rule       | `negotiation`         | high     |
+| 9   | Custom or out-of-catalog order                      | `custom_order`        | high     |
+| 10  | VIP or high-value customer (when the flag is on)    | `vip_customer`        | critical |
+| 11  | Bulk or large quantity                              | `bulk_order`          | high     |
+| 12  | Legal or sensitive topic                            | `legal_sensitive`     | critical |
+| 13  | Inventory conflict                                  | `inventory_conflict`  | high     |
+| 14  | Conflicting business rules                          | `policy_conflict`     | normal   |
+| 15  | Integration or tool failure                         | `integration_failure` | critical |
 
 ```mermaid
 sequenceDiagram
@@ -770,13 +770,13 @@ sequenceDiagram
     end
 ```
 
-| Gate | Condition |
-|---|---|
-| **G1 Catalog** | At least one active product with a variant that has a price and a stock value |
-| **G2 Rules** | Delivery, payment and return rules present and acknowledged (accepting seeded defaults counts) |
-| **G3 Channel** | At least one channel account in `active` status |
-| **G4 AI test** | A playground simulation completed, or an approved reply in approval mode |
-| **G5 Handoff** | Owner acknowledged that buying intent creates a pending order that a human must confirm |
+| Gate           | Condition                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| **G1 Catalog** | At least one active product with a variant that has a price and a stock value                  |
+| **G2 Rules**   | Delivery, payment and return rules present and acknowledged (accepting seeded defaults counts) |
+| **G3 Channel** | At least one channel account in `active` status                                                |
+| **G4 AI test** | A playground simulation completed, or an approved reply in approval mode                       |
+| **G5 Handoff** | Owner acknowledged that buying intent creates a pending order that a human must confirm        |
 
 **Explanation:** the check runs again on the server at activation time; a disabled button is a convenience, not the control. The error lists **every** unmet gate so the merchant fixes them in one pass.
 
@@ -838,12 +838,12 @@ sequenceDiagram
     API-->>O: Four KPIs
 ```
 
-| KPI | Definition |
-|---|---|
+| KPI              | Definition                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Messages handled | Inbound customer messages that reached a terminal outcome (AI replied, escalated, or answered by a human); split AI vs human by who produced the reply |
-| Orders created | Orders created in the period in pending or confirmed state, counted even if cancelled later |
-| Human handoffs | Entries into `HUMAN_REQUIRED`, grouped by reason; escalating twice counts twice |
-| Conversion | AI-created orders that reached `CONFIRMED` divided by AI-created pending orders |
+| Orders created   | Orders created in the period in pending or confirmed state, counted even if cancelled later                                                            |
+| Human handoffs   | Entries into `HUMAN_REQUIRED`, grouped by reason; escalating twice counts twice                                                                        |
+| Conversion       | AI-created orders that reached `CONFIRMED` divided by AI-created pending orders                                                                        |
 
 Test rows are excluded. Periods start at the beginning of the first day and end before the day after the last, in the **business timezone**. Re-running the job for a day produces the same row (idempotent upsert).
 
@@ -895,4 +895,4 @@ sequenceDiagram
     Note over W,DB: Stock balance was never decremented for a reservation, so nothing else needs correcting.
 ```
 
-**Explanation:** a reservation only reduces *available* stock; the real `stock` number changes only when an order is confirmed (F11). Expiry therefore needs no compensating ledger entry. The job is a singleton so two instances never race.
+**Explanation:** a reservation only reduces _available_ stock; the real `stock` number changes only when an order is confirmed (F11). Expiry therefore needs no compensating ledger entry. The job is a singleton so two instances never race.

@@ -31,7 +31,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, memberships } = useAuth();
 
   if (isLoading) {
     return (
@@ -48,6 +48,10 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) {
     redirect("/login" as Route);
+  }
+
+  if (user?.platformAdmin && memberships.length === 0) {
+    redirect("/operator" as Route);
   }
 
   return (

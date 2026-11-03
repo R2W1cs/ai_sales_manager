@@ -42,6 +42,9 @@ interface MockPrisma {
   order: {
     findMany: jest.Mock;
   };
+  channelAccount: {
+    findFirst: jest.Mock;
+  };
   $transaction: jest.Mock;
 }
 
@@ -176,6 +179,9 @@ describe("Message thread, sending, actions (approve/retry/takeover/resume/assign
       },
       order: {
         findMany: jest.fn().mockResolvedValue([]),
+      },
+      channelAccount: {
+        findFirst: jest.fn().mockResolvedValue(null),
       },
       $transaction: jest.fn((cb: (tx: MockPrisma) => Promise<unknown>) => cb(prismaMock)),
     };

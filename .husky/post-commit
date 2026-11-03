@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/../scripts/hooks/common.sh"
+. "$(dirname "$0")/../scripts/hooks/graphify.sh"
+
+if hook_should_skip post-commit; then
+  exit 0
+fi
+
+hook_cd_repo_root
+graphify_post_commit

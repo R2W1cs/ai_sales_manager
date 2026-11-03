@@ -49,65 +49,64 @@ export interface ProcessInboundMediaParams {
   contentType?: string;
 }
 
+type Ipv4Octets = readonly [number, number, number, number];
+
+/** Each predicate is one reserved IPv4 range. Order does not matter; any hit blocks the address. */
+const IPV4_RESERVED: ReadonlyArray<(octets: Ipv4Octets) => boolean> = [
+  ([first]) => first === 0, // 0.0.0.0/8 current network
+  ([first]) => first === 10, // 10.0.0.0/8 private
+  ([first]) => first === 127, // 127.0.0.0/8 loopback
+  ([first, second]) => first === 169 && second === 254, // 169.254.0.0/16 link-local and metadata
+  ([first, second]) => first === 172 && second >= 16 && second <= 31, // 172.16.0.0/12 private
+  ([first, second]) => first === 192 && second === 168, // 192.168.0.0/16 private
+  ([first, second]) => first === 100 && second >= 64 && second <= 127, // 100.64.0.0/10 CGNAT
+  ([first, second, third]) => first === 192 && second === 0 && third === 0, // 192.0.0.0/24 IETF
+  ([first, second]) => first === 198 && (second === 18 || second === 19), // 198.18.0.0/15 benchmarking
+  ([first]) => first >= 224 && first <= 239, // 224.0.0.0/4 multicast
+  ([first]) => first >= 240, // 240.0.0.0/4 reserved
+];
+
+const IPV6_EXACT = new Set(["::1", "::", "0:0:0:0:0:0:0:1"]);
+const IPV6_LINK_LOCAL_PREFIXES = ["fe80:", "fe8", "fe9", "fea", "feb"];
+const IPV6_UNIQUE_LOCAL_PREFIXES = ["fc", "fd"];
+
+const BLOCKED_HOSTS = new Set([
+  "localhost",
+  "169.254.169.254",
+  "metadata.google.internal",
+  "metadata.internal",
+  "instance-data",
+]);
+const BLOCKED_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".arpa"];
+
+function parseIpv4(ip: string): Ipv4Octets | null {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+  if (!match) return null;
+  return match.slice(1, 5).map(Number) as unknown as Ipv4Octets;
+}
+
+function isReservedIpv4(octets: Ipv4Octets): boolean {
+  if (octets.some((octet) => octet < 0 || octet > 255)) return true;
+  return IPV4_RESERVED.some((rule) => rule(octets));
+}
+
+function isReservedIpv6(ip: string): boolean {
+  if (IPV6_EXACT.has(ip)) return true;
+  if (IPV6_LINK_LOCAL_PREFIXES.some((prefix) => ip.startsWith(prefix))) return true;
+  if (IPV6_UNIQUE_LOCAL_PREFIXES.some((prefix) => ip.startsWith(prefix))) return true;
+  if (!ip.includes("::ffff:")) return false;
+  const mapped = ip.split("::ffff:")[1];
+  if (!mapped) return false;
+  return isPrivateOrReservedIp(mapped);
+}
+
 /**
  * Validates whether an IP address is a private, loopback, link-local, or cloud metadata address.
  */
 export function isPrivateOrReservedIp(ip: string): boolean {
-  // IPv4 Check
-  const ipv4Match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
-  if (ipv4Match) {
-    const octets = ipv4Match.slice(1, 5).map(Number);
-    if (octets.some((o) => o < 0 || o > 255)) return true;
-    const [o0, o1] = octets;
-
-    // 0.0.0.0/8 (Current network)
-    if (o0 === 0) return true;
-    // 10.0.0.0/8 (Private network)
-    if (o0 === 10) return true;
-    // 127.0.0.0/8 (Loopback)
-    if (o0 === 127) return true;
-    // 169.254.0.0/16 (Link-local & Cloud Metadata 169.254.169.254)
-    if (o0 === 169 && o1 === 254) return true;
-    // 172.16.0.0/12 (Private network: 172.16.0.0 - 172.31.255.255)
-    if (o0 === 172 && o1 !== undefined && o1 >= 16 && o1 <= 31) return true;
-    // 192.168.0.0/16 (Private network)
-    if (o0 === 192 && o1 === 168) return true;
-    // 100.64.0.0/10 (Shared address space / Carrier-grade NAT)
-    if (o0 === 100 && o1 !== undefined && o1 >= 64 && o1 <= 127) return true;
-    // 192.0.0.0/24 (IETF Protocol Assignments)
-    if (o0 === 192 && o1 === 0 && octets[2] === 0) return true;
-    // 198.18.0.0/15 (Benchmarking)
-    if (o0 === 198 && o1 !== undefined && (o1 === 18 || o1 === 19)) return true;
-    // 224.0.0.0/4 (Multicast: 224.0.0.0 - 239.255.255.255)
-    if (o0 !== undefined && o0 >= 224 && o0 <= 239) return true;
-    // 240.0.0.0/4 (Reserved: 240.0.0.0 - 255.255.255.254)
-    if (o0 !== undefined && o0 >= 240) return true;
-
-    return false;
-  }
-
-  // IPv6 Check
-  const cleanIp = ip.toLowerCase();
-  if (cleanIp === "::1" || cleanIp === "::" || cleanIp === "0:0:0:0:0:0:0:1") return true;
-  // Link-local fe80::/10
-  if (
-    cleanIp.startsWith("fe80:") ||
-    cleanIp.startsWith("fe8") ||
-    cleanIp.startsWith("fe9") ||
-    cleanIp.startsWith("fea") ||
-    cleanIp.startsWith("feb")
-  ) {
-    return true;
-  }
-  // Unique local fc00::/7 (fc00:: - fdff::)
-  if (cleanIp.startsWith("fc") || cleanIp.startsWith("fd")) return true;
-  // IPv4-mapped IPv6
-  if (cleanIp.includes("::ffff:")) {
-    const mappedPart = cleanIp.split("::ffff:")[1];
-    if (mappedPart && isPrivateOrReservedIp(mappedPart)) return true;
-  }
-
-  return false;
+  const ipv4 = parseIpv4(ip);
+  if (ipv4) return isReservedIpv4(ipv4);
+  return isReservedIpv6(ip.toLowerCase());
 }
 
 /**
@@ -116,26 +115,9 @@ export function isPrivateOrReservedIp(ip: string): boolean {
 export function isBlockedHostname(hostname: string): boolean {
   const host = hostname.toLowerCase().trim();
   if (!host) return true;
-
-  if (
-    host === "localhost" ||
-    host.endsWith(".localhost") ||
-    host.endsWith(".local") ||
-    host.endsWith(".internal") ||
-    host.endsWith(".arpa") ||
-    host === "169.254.169.254" ||
-    host === "metadata.google.internal" ||
-    host === "metadata.internal" ||
-    host === "instance-data"
-  ) {
-    return true;
-  }
-
-  if (isPrivateOrReservedIp(host)) {
-    return true;
-  }
-
-  return false;
+  if (BLOCKED_HOSTS.has(host)) return true;
+  if (BLOCKED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))) return true;
+  return isPrivateOrReservedIp(host);
 }
 
 @Injectable()

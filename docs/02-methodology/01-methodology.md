@@ -4,68 +4,68 @@
 
 ## 1. Why Scrum
 
-| Factor | Our situation | Effect on the choice |
-|---|---|---|
-| Team size | Four people with distinct specialities | Small enough for Scrum's lightweight roles |
-| Deadline | Fixed academic submission date | Time-boxed sprints expose slippage early |
+| Factor       | Our situation                                                            | Effect on the choice                                                  |
+| ------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Team size    | Four people with distinct specialities                                   | Small enough for Scrum's lightweight roles                            |
+| Deadline     | Fixed academic submission date                                           | Time-boxed sprints expose slippage early                              |
 | Requirements | Mostly known up front, with a few unknowns (AI behaviour, Meta approval) | Backlog is stable but reprioritised each sprint as AI results come in |
-| Risk | AI quality, tenant isolation, third-party approval | Frequent increments and reviews catch risk early |
-| Delivery | A working demo at the end, no live traffic | Continuous flow (pure Kanban) is not needed |
+| Risk         | AI quality, tenant isolation, third-party approval                       | Frequent increments and reviews catch risk early                      |
+| Delivery     | A working demo at the end, no live traffic                               | Continuous flow (pure Kanban) is not needed                           |
 
 **Alternatives considered**
 
-| Option | Verdict |
-|---|---|
-| Waterfall | Rejected. AI behaviour cannot be fully specified up front; we need feedback from working increments |
-| Pure Kanban | Rejected. No stream of unplanned work, and the team benefits from regular planning and review |
-| XP | Partly adopted: pair review, continuous integration, test-first for state machines and guardrails |
+| Option      | Verdict                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Waterfall   | Rejected. AI behaviour cannot be fully specified up front; we need feedback from working increments |
+| Pure Kanban | Rejected. No stream of unplanned work, and the team benefits from regular planning and review       |
+| XP          | Partly adopted: pair review, continuous integration, test-first for state machines and guardrails   |
 
 ## 2. Roles
 
-| Scrum role | Who | Notes |
-|---|---|---|
-| Product Owner | Rayen | Owns the backlog order and acceptance criteria |
-| Scrum Master | Rotating each sprint | Runs ceremonies, removes blockers |
-| Development team | Rayen, Aymen, Moataz, Asma | Cross-functional; each has a lead area |
+| Scrum role       | Who                        | Notes                                          |
+| ---------------- | -------------------------- | ---------------------------------------------- |
+| Product Owner    | Rayen                      | Owns the backlog order and acceptance criteria |
+| Scrum Master     | Rotating each sprint       | Runs ceremonies, removes blockers              |
+| Development team | Rayen, Aymen, Moataz, Asma | Cross-functional; each has a lead area         |
 
-| Member | Lead area |
-|---|---|
-| Rayen | Requirements, methodology, design and architecture |
-| Aymen | Frontend and ethics |
-| Moataz | Backend, optimization and refactoring |
-| Asma | Testing across the whole application |
+| Member | Lead area                                          |
+| ------ | -------------------------------------------------- |
+| Rayen  | Requirements, methodology, design and architecture |
+| Aymen  | Frontend and ethics                                |
+| Moataz | Backend, optimization and refactoring              |
+| Asma   | Testing across the whole application               |
 
 Lead means accountable, not exclusive. Anyone may contribute anywhere, always through a pull request reviewed by someone else.
 
 ## 3. Cadence
 
-| Ceremony | When | Duration | Output |
-|---|---|---|---|
-| Sprint planning | Day 1 | 1 h | Sprint goal, items pulled from the backlog |
-| Daily sync | Daily, async in chat is fine | 10 min | Progress and blockers |
-| Backlog refinement | Mid-sprint | 45 min | Items split to L or smaller, acceptance criteria written |
-| Sprint review | Last day | 45 min | Demo of the working increment |
-| Retrospective | After the review | 30 min | One to three concrete actions, logged below |
+| Ceremony           | When                         | Duration | Output                                                   |
+| ------------------ | ---------------------------- | -------- | -------------------------------------------------------- |
+| Sprint planning    | Day 1                        | 1 h      | Sprint goal, items pulled from the backlog               |
+| Daily sync         | Daily, async in chat is fine | 10 min   | Progress and blockers                                    |
+| Backlog refinement | Mid-sprint                   | 45 min   | Items split to L or smaller, acceptance criteria written |
+| Sprint review      | Last day                     | 45 min   | Demo of the working increment                            |
+| Retrospective      | After the review             | 30 min   | One to three concrete actions, logged below              |
 
 ## 4. Sprint plan (six sprints)
 
 Dates are filled in by the team when the course calendar is fixed. Sprint contents follow the dependency order in the [backlog](../01-requirements/03-product-backlog.md).
 
-| Sprint | Goal | Backlog items | Exit demo |
-|---|---|---|---|
-| 0 | Requirements, methodology and design accepted | Phase documents | Review of documents |
-| 1 | Foundation | BL-01..06 | Register, create workspace, tenant-isolation tests pass in CI |
-| 2 | Catalog and knowledge | BL-07..12 | Import a CSV, edit rules, invite a teammate |
-| 3 | Channels and inbox | BL-13..19 | A message arrives (widget or Meta test) and appears live in the inbox |
-| 4 | AI core | BL-20..25 | Playground answers from real catalog data; guardrails block a bad reply |
-| 5 | Handoff and orders | BL-26..30 | Customer chats to a pending order; staff confirm it |
-| 6 | Platform, hardening, report | BL-31..37, BL-X* | KPIs, load test results, refactor report, final demo |
+| Sprint | Goal                                          | Backlog items    | Exit demo                                                               |
+| ------ | --------------------------------------------- | ---------------- | ----------------------------------------------------------------------- |
+| 0      | Requirements, methodology and design accepted | Phase documents  | Review of documents                                                     |
+| 1      | Foundation                                    | BL-01..06        | Register, create workspace, tenant-isolation tests pass in CI           |
+| 2      | Catalog and knowledge                         | BL-07..12        | Import a CSV, edit rules, invite a teammate                             |
+| 3      | Channels and inbox                            | BL-13..19        | A message arrives (widget or Meta test) and appears live in the inbox   |
+| 4      | AI core                                       | BL-20..25        | Playground answers from real catalog data; guardrails block a bad reply |
+| 5      | Handoff and orders                            | BL-26..30        | Customer chats to a pending order; staff confirm it                     |
+| 6      | Platform, hardening, report                   | BL-31..37, BL-X* | KPIs, load test results, refactor report, final demo                    |
 
 ### Sprint log (fill in with real data)
 
 | Sprint | Dates | Goal met? | Velocity (items done) | Retro actions |
-|---|---|---|---|---|
-| | | | | |
+| ------ | ----- | --------- | --------------------- | ------------- |
+|        |       |           |                       |               |
 
 Do not back-fill sprints that did not happen. The sprint log is evidence.
 
@@ -98,33 +98,33 @@ The scope boundary is the in-scope list in the [proposal](../01-requirements/01-
 ### Decision log
 
 | Date | Decision | Reason | Decided by |
-|---|---|---|---|
-| | | | |
+| ---- | -------- | ------ | ---------- |
+|      |          |        |            |
 
 ## 8. Risk register
 
 Likelihood and impact scored L / M / H. Reviewed at every retrospective.
 
-| ID | Risk | L | I | Mitigation | Owner |
-|---|---|---|---|---|---|
-| R1 | AI states an invented price, stock level or policy | M | H | Facts only via tools; guardrail before send; approval mode default; golden set blocks regressions in CI | Moataz |
-| R2 | Cross-tenant data exposure | L | H | Tenant guard on every query; composite foreign keys; automated tenancy tests on every endpoint | Moataz, Asma |
-| R3 | Meta app review delays real channels | H | M | Website widget and playground as demo paths; mocked Meta in tests | Rayen |
-| R4 | LLM provider outage or quota exhaustion | M | M | Fallback chain, queue, owner notification, human reply path | Moataz |
-| R5 | Scope creep | M | M | MoSCoW, out-of-scope list, change control | Rayen |
-| R6 | Uneven workload, a member blocked on another's phase | M | M | Interfaces agreed in the design phase; mocks; daily sync | Scrum Master |
-| R7 | Late discovery of performance problems | M | M | k6 smoke test in CI from Sprint 3; baseline measured before refactor | Asma |
-| R8 | AI-generated code or docs contain errors or licence problems | M | M | Human review of all AI output; AI usage log; dependency licence scan | Whole team |
-| R9 | Test environment differs from production behaviour | L | M | Docker Compose parity, same migrations everywhere | Moataz |
-| R10 | Demo fails live | M | H | Recorded backup demo; seeded data; rehearsal in Sprint 6 | Whole team |
+| ID  | Risk                                                         | L   | I   | Mitigation                                                                                              | Owner        |
+| --- | ------------------------------------------------------------ | --- | --- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| R1  | AI states an invented price, stock level or policy           | M   | H   | Facts only via tools; guardrail before send; approval mode default; golden set blocks regressions in CI | Moataz       |
+| R2  | Cross-tenant data exposure                                   | L   | H   | Tenant guard on every query; composite foreign keys; automated tenancy tests on every endpoint          | Moataz, Asma |
+| R3  | Meta app review delays real channels                         | H   | M   | Website widget and playground as demo paths; mocked Meta in tests                                       | Rayen        |
+| R4  | LLM provider outage or quota exhaustion                      | M   | M   | Fallback chain, queue, owner notification, human reply path                                             | Moataz       |
+| R5  | Scope creep                                                  | M   | M   | MoSCoW, out-of-scope list, change control                                                               | Rayen        |
+| R6  | Uneven workload, a member blocked on another's phase         | M   | M   | Interfaces agreed in the design phase; mocks; daily sync                                                | Scrum Master |
+| R7  | Late discovery of performance problems                       | M   | M   | k6 smoke test in CI from Sprint 3; baseline measured before refactor                                    | Asma         |
+| R8  | AI-generated code or docs contain errors or licence problems | M   | M   | Human review of all AI output; AI usage log; dependency licence scan                                    | Whole team   |
+| R9  | Test environment differs from production behaviour           | L   | M   | Docker Compose parity, same migrations everywhere                                                       | Moataz       |
+| R10 | Demo fails live                                              | M   | H   | Recorded backup demo; seeded data; rehearsal in Sprint 6                                                | Whole team   |
 
 ## 9. Metrics we track
 
-| Metric | Source | Why |
-|---|---|---|
-| Items done per sprint | Board | Velocity and planning accuracy |
-| Test coverage | Coverage report in CI | Course target 60% or more |
-| Defects found after merge | Issue tracker | Quality of review and tests |
-| Lint and static-analysis issues | CI and SonarQube scan | Refactor before/after evidence |
-| API latency p95 | k6 | Performance before/after evidence |
-| Build and CI duration | CI | Developer feedback speed |
+| Metric                          | Source                | Why                               |
+| ------------------------------- | --------------------- | --------------------------------- |
+| Items done per sprint           | Board                 | Velocity and planning accuracy    |
+| Test coverage                   | Coverage report in CI | Course target 60% or more         |
+| Defects found after merge       | Issue tracker         | Quality of review and tests       |
+| Lint and static-analysis issues | CI and SonarQube scan | Refactor before/after evidence    |
+| API latency p95                 | k6                    | Performance before/after evidence |
+| Build and CI duration           | CI                    | Developer feedback speed          |
