@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
@@ -14,16 +15,18 @@ interface GuestGuardProps {
 
 export function GuestGuard({ children }: GuestGuardProps): React.ReactElement {
   const router = useRouter();
-  const { isAuthenticated, isLoading, memberships } = useAuth();
+  const { isAuthenticated, isLoading, memberships, user } = useAuth();
   const hasMemberships = (memberships?.length ?? 0) > 0;
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      const targetUrl = getSafeRedirectUrl(undefined, hasMemberships);
+      const targetUrl = user?.platformAdmin
+        ? ("/operator" as Route)
+        : getSafeRedirectUrl(undefined, hasMemberships);
       // react-doctor-disable-next-line nextjs-no-client-side-redirect
       router.replace(targetUrl);
     }
-  }, [isAuthenticated, isLoading, hasMemberships, router]);
+  }, [isAuthenticated, isLoading, hasMemberships, user?.platformAdmin, router]);
 
   // While checking auth status or when authenticated, render the brand loading indicator inside
   // the card container so the guest auth form is never displayed to an authenticated user.

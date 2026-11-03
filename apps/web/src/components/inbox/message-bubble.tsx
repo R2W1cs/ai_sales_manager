@@ -59,17 +59,18 @@ function AttachmentPreview({
 
   if (isImage && url) {
     return (
-      <img
-        src={url}
-        alt={attachment.s3Key.split("/").pop() || "attachment"}
-        className="mt-2 max-h-48 rounded-md"
-      />
+      <>
+        {/* oxlint-disable-next-line next/no-img-element -- Blob URL from an authenticated attachment fetch. next/image cannot load it. */}
+        <img
+          src={url}
+          alt={attachment.s3Key.split("/").pop() || "attachment"}
+          className="mt-2 max-h-48 rounded-md"
+        />
+      </>
     );
   }
 
-  return (
-    <p className="mt-2 text-[11px] opacity-80">{attachment.s3Key.split("/").pop()}</p>
-  );
+  return <p className="mt-2 text-[11px] opacity-80">{attachment.s3Key.split("/").pop()}</p>;
 }
 
 export interface MessageBubbleProps {

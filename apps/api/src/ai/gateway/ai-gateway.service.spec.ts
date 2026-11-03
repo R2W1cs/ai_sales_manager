@@ -108,10 +108,10 @@ describe("AiGatewayService & Gateway Model Routing", () => {
     it("throws clear error message when getLanguageModel or getEmbeddingModel called while unconfigured", () => {
       const service = new AiGatewayService();
       expect(() => service.getLanguageModel("gpt-5.6-luna")).toThrow(
-        "AI Gateway is not configured. Please provide AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN.",
+        "AI Gateway is not configured. Please provide GROQ_API_KEY, ORCA_API_KEY, AI_GATEWAY_API_KEY, or VERCEL_OIDC_TOKEN.",
       );
       expect(() => service.getEmbeddingModel()).toThrow(
-        "AI Gateway is not configured. Please provide AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN.",
+        "AI Gateway is not configured. Please provide GROQ_API_KEY, ORCA_API_KEY, AI_GATEWAY_API_KEY, or VERCEL_OIDC_TOKEN.",
       );
     });
   });

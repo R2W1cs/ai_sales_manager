@@ -10,16 +10,16 @@ Customers message a shop on Instagram, Messenger or a website widget. A webhook 
 
 The design is driven by the quality attributes ranked in the [NFRs](../01-requirements/04-non-functional-requirements.md). Each driver maps to concrete tactics:
 
-| Driver | Tactic | Where |
-|---|---|---|
-| **Correct AI answers** | Facts only via tools; guardrail verification; golden set in CI | ADR-004, F7, C5 |
-| **Never leak between shops** | Tenant guard, scoped DB client, composite keys, cross-tenant test suite | ADR-007, [component doc](05-component-and-deployment.md) |
-| **No lost or duplicated message** | Persist before ack; unique keys; deterministic job ids; recovery sweep | ADR-002, F6 |
-| **Fast webhook, slow AI** | Asynchronous queue between them | F6, F7 |
-| **Safe by default** | Human confirms orders; approval mode first; policy check before generation | ADR-003, 005, 011 |
-| **Survive provider outages** | Fallback chain; humans keep working | ADR-010, F15 |
-| **Change later (WhatsApp, payments)** | Adapter and Strategy interfaces, module boundaries | C6, C8, C9 |
-| **Control cost** | Caps on tool calls and tokens; usage metering; embedding by content hash | C5, F4 |
+| Driver                                | Tactic                                                                     | Where                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Correct AI answers**                | Facts only via tools; guardrail verification; golden set in CI             | ADR-004, F7, C5                                          |
+| **Never leak between shops**          | Tenant guard, scoped DB client, composite keys, cross-tenant test suite    | ADR-007, [component doc](05-component-and-deployment.md) |
+| **No lost or duplicated message**     | Persist before ack; unique keys; deterministic job ids; recovery sweep     | ADR-002, F6                                              |
+| **Fast webhook, slow AI**             | Asynchronous queue between them                                            | F6, F7                                                   |
+| **Safe by default**                   | Human confirms orders; approval mode first; policy check before generation | ADR-003, 005, 011                                        |
+| **Survive provider outages**          | Fallback chain; humans keep working                                        | ADR-010, F15                                             |
+| **Change later (WhatsApp, payments)** | Adapter and Strategy interfaces, module boundaries                         | C6, C8, C9                                               |
+| **Control cost**                      | Caps on tool calls and tokens; usage metering; embedding by content hash   | C5, F4                                                   |
 
 ## 3. Architectural style and layers
 
@@ -56,24 +56,24 @@ flowchart TB
     REPO --> QUEUE
 ```
 
-| Layer | Allowed to depend on | Never |
-|---|---|---|
-| Presentation | Application | Reach into the database |
-| Application | Domain, Infrastructure interfaces | Know Meta payload formats |
-| Domain | Nothing external | Import frameworks |
-| Infrastructure | External systems | Contain business rules |
+| Layer          | Allowed to depend on              | Never                     |
+| -------------- | --------------------------------- | ------------------------- |
+| Presentation   | Application                       | Reach into the database   |
+| Application    | Domain, Infrastructure interfaces | Know Meta payload formats |
+| Domain         | Nothing external                  | Import frameworks         |
+| Infrastructure | External systems                  | Contain business rules    |
 
 ## 4. Document map
 
-| # | Document | Answers the question | Course requirement |
-|---|---|---|---|
-| 01 | [Use-case model](01-use-case.md) | Who uses the system and for what? | Use-case diagram |
-| 02 | [Class diagrams](02-class-diagrams.md) | What are the things, and who may change them? | Class diagram (C1 to C9, with C5 in three views) |
-| 03 | [State machines](03-state-machines.md) | What states can things be in, and which moves are legal? | Supports design and tests |
-| 04 | [Flows and sequences](04-sequence-flows.md) | What happens, step by step, in every scenario? | Sequence diagrams (F1 to F20, at least two required) |
-| 05 | [Components and deployment](05-component-and-deployment.md) | What runs where? | Component / deployment diagram |
-| 06 | [Data model](06-data-model-erd.md) | How is it stored? | Persistence design |
-| 07 | [Decisions](07-architecture-decisions.md) | Why is it built this way? | Architecture rationale |
+| #   | Document                                                    | Answers the question                                     | Course requirement                                   |
+| --- | ----------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| 01  | [Use-case model](01-use-case.md)                            | Who uses the system and for what?                        | Use-case diagram                                     |
+| 02  | [Class diagrams](02-class-diagrams.md)                      | What are the things, and who may change them?            | Class diagram (C1 to C9, with C5 in three views)     |
+| 03  | [State machines](03-state-machines.md)                      | What states can things be in, and which moves are legal? | Supports design and tests                            |
+| 04  | [Flows and sequences](04-sequence-flows.md)                 | What happens, step by step, in every scenario?           | Sequence diagrams (F1 to F20, at least two required) |
+| 05  | [Components and deployment](05-component-and-deployment.md) | What runs where?                                         | Component / deployment diagram                       |
+| 06  | [Data model](06-data-model-erd.md)                          | How is it stored?                                        | Persistence design                                   |
+| 07  | [Decisions](07-architecture-decisions.md)                   | Why is it built this way?                                | Architecture rationale                               |
 
 Diagram source files (`.mmd`) are in [`diagrams/`](diagrams); they are extracted from these documents by a script so the two never drift apart.
 
@@ -96,14 +96,14 @@ This design was derived from the earlier planning documents and schema of the te
 
 The following are **design proposals** written for this project and should be confirmed against the implementation as it is built:
 
-| Item | Status |
-|---|---|
-| Detailed steps of F1 (registration), F2 (invitation), F5 (OAuth connection), F19 (realtime reconnect) | Proposed; follow the documented rules but not copied step by step |
-| Permission matrix cells in the use-case document (for example Employee view-only areas) | Proposed; the documented rules are: Owner and Admin only for traces, audit, export, erase, merge, playground |
-| Order transition `CONFIRMED` to `CANCELLED` and stock return on that path (S2) | Proposed; the documented flow covers cancelling pending orders |
-| Channel account transitions (S4) beyond `active`, `error`, `disconnected` | Proposed |
-| Backlog sizes and sprint allocation | Estimates; to be validated at sprint planning |
-| Class operations (method names and signatures) | Illustrative; the data model is faithful to the schema, the methods express intended responsibilities |
+| Item                                                                                                  | Status                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Detailed steps of F1 (registration), F2 (invitation), F5 (OAuth connection), F19 (realtime reconnect) | Proposed; follow the documented rules but not copied step by step                                            |
+| Permission matrix cells in the use-case document (for example Employee view-only areas)               | Proposed; the documented rules are: Owner and Admin only for traces, audit, export, erase, merge, playground |
+| Order transition `CONFIRMED` to `CANCELLED` and stock return on that path (S2)                        | Proposed; the documented flow covers cancelling pending orders                                               |
+| Channel account transitions (S4) beyond `active`, `error`, `disconnected`                             | Proposed                                                                                                     |
+| Backlog sizes and sprint allocation                                                                   | Estimates; to be validated at sprint planning                                                                |
+| Class operations (method names and signatures)                                                        | Illustrative; the data model is faithful to the schema, the methods express intended responsibilities        |
 
 Per the course rules, AI assistance in producing these documents is recorded in the [AI usage log](../ai-usage-log.md).
 

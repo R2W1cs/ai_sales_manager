@@ -4,15 +4,15 @@ The relational schema has about 60 tables. The diagrams show the tables that car
 
 ## Conventions
 
-| Convention | Rule |
-|---|---|
-| Keys | UUID primary keys |
-| Tenancy | Every tenant table has `business_id`. Cross-table references use composite keys `(id, business_id)` so a row can only point inside its own tenant |
-| Time | `timestamptz` everywhere; the business timezone is applied only when reporting |
-| Money | `numeric(12,3)`: Tunisian dinar has three decimal places (millimes) |
-| Soft delete | Businesses use `deleted_at` plus a retention date; customers can be erased (`erased_at`) |
-| Idempotency | Unique keys on `messages.idempotency_key`, `(channel_account_id, external_message_id)`, `orders (business_id, idempotency_key)` |
-| JSON | Flexible, validated fields (`address`, `handoff_context`, `payload`) use `jsonb` with a schema checked in code |
+| Convention  | Rule                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keys        | UUID primary keys                                                                                                                                 |
+| Tenancy     | Every tenant table has `business_id`. Cross-table references use composite keys `(id, business_id)` so a row can only point inside its own tenant |
+| Time        | `timestamptz` everywhere; the business timezone is applied only when reporting                                                                    |
+| Money       | `numeric(12,3)`: Tunisian dinar has three decimal places (millimes)                                                                               |
+| Soft delete | Businesses use `deleted_at` plus a retention date; customers can be erased (`erased_at`)                                                          |
+| Idempotency | Unique keys on `messages.idempotency_key`, `(channel_account_id, external_message_id)`, `orders (business_id, idempotency_key)`                   |
+| JSON        | Flexible, validated fields (`address`, `handoff_context`, `payload`) use `jsonb` with a schema checked in code                                    |
 
 ## View 1. Tenancy, catalog and inventory
 
@@ -371,15 +371,15 @@ erDiagram
 
 ## Key constraints and indexes (design intent)
 
-| Constraint | Purpose |
-|---|---|
-| `UNIQUE (channel_account_id, external_message_id)` on messages | No duplicate inbound message |
-| `UNIQUE idempotency_key` on messages | Safe retry of outbound creation |
-| `UNIQUE (business_id, idempotency_key)` on orders | One order per AI turn or click |
-| `UNIQUE external_event_id` per provider on integration events | Webhook dedupe |
-| Partial index on `integration_events (created_at) WHERE processed_at IS NULL` | Fast recovery sweep |
-| `UNIQUE dedupe_key` on notifications | No duplicate alerts |
-| One default variant per product (partial unique index) | Predictable pricing display |
-| Index on `(business_id, status, handoff_priority, handoff_at)` for conversations | Inbox triage ordering |
-| Vector index on `embedding` filtered by `business_id` | Tenant-scoped retrieval under 250 ms |
-| Composite FK `(customer_id, business_id)` | A conversation cannot reference another tenant's customer |
+| Constraint                                                                       | Purpose                                                   |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `UNIQUE (channel_account_id, external_message_id)` on messages                   | No duplicate inbound message                              |
+| `UNIQUE idempotency_key` on messages                                             | Safe retry of outbound creation                           |
+| `UNIQUE (business_id, idempotency_key)` on orders                                | One order per AI turn or click                            |
+| `UNIQUE external_event_id` per provider on integration events                    | Webhook dedupe                                            |
+| Partial index on `integration_events (created_at) WHERE processed_at IS NULL`    | Fast recovery sweep                                       |
+| `UNIQUE dedupe_key` on notifications                                             | No duplicate alerts                                       |
+| One default variant per product (partial unique index)                           | Predictable pricing display                               |
+| Index on `(business_id, status, handoff_priority, handoff_at)` for conversations | Inbox triage ordering                                     |
+| Vector index on `embedding` filtered by `business_id`                            | Tenant-scoped retrieval under 250 ms                      |
+| Composite FK `(customer_id, business_id)`                                        | A conversation cannot reference another tenant's customer |

@@ -342,7 +342,9 @@ export class AiGatewayService {
    */
   getLanguageModel(modelId: string): LanguageModel {
     if (this.usesCompat() && this.compatProvider) {
-      return this.compatProvider.chat(this.resolveCompatChatModelId(modelId));
+      // Two copies of @ai-sdk/provider are installed (4.0.7 and 4.0.29). The
+      // chat model is the same runtime object; the assertion only satisfies tsc.
+      return this.compatProvider.chat(this.resolveCompatChatModelId(modelId)) as LanguageModel;
     }
     const gateway = this.getGateway();
     if (!gateway) {
@@ -364,7 +366,7 @@ export class AiGatewayService {
       const bare = gatewayModelId.includes("/")
         ? (gatewayModelId.split("/")[1] ?? gatewayModelId)
         : gatewayModelId;
-      return this.compatProvider.embedding(bare);
+      return this.compatProvider.embedding(bare) as EmbeddingModel;
     }
     const gateway = this.getGateway();
     if (!gateway) {

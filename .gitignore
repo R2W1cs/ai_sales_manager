@@ -1,11 +1,78 @@
+# Dependencies
 node_modules
+.pnp
+.pnp.js
+
+# Build outputs
 dist
 build
+*.tsbuildinfo
+
+# Environment variables
 .env
 .env.*
 !.env.example
-.DS_Store
-*.log
-.idea
+.env*.local
+ngrok.yml
+
+# IDEs and editors
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Turbo
+.turbo
+
+# Better Fullstack
+.alchemy
+
+# Testing
+coverage
+.nyc_output
+playwright-report/
+test-results/
+**/test/golden-eval/eval-report.json
+
+# Misc
+*.tgz
+.cache
+.storage
+**/.storage
+tmp
+temp
+
+# Graphify
+graphify-out
+__pycache__/
+*.py[cod]
+
+# IDE agent directories (keep source of truth in .agents/)
+.cursor/
+.claude/
+.gemini/
+.codeium/
+.windsurf/
+
+# Backlog
+backlog/CURSOR.md
+backlog/INDEX.md
+backlog/LOG.md
+
+# Labs
+labs/

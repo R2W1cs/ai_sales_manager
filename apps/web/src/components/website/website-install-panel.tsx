@@ -2,7 +2,7 @@
 
 import { Check, Copy, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,20 +24,22 @@ export function WebsiteInstallPanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
-  const [origin, setOrigin] = useState("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  const origin = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => "",
+  );
 
   const load = useCallback(() => {
     if (!businessId) return;
-    setError(null);
     apiClient
       .get<WidgetInstall>("/api/v1/website-widget", {
         headers: { "x-business-id": businessId },
       })
-      .then((data) => setInstall(data))
+      .then((data) => {
+        setInstall(data);
+        setError(null);
+      })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : t("loadError"));
       });
@@ -105,7 +107,13 @@ export function WebsiteInstallPanel({
                 {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
                 {copied ? t("copied") : t("copy")}
               </Button>
-              <Button type="button" variant="outline" onClick={rotate} disabled={rotating || !install} className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={rotate}
+                disabled={rotating || !install}
+                className="gap-2"
+              >
                 <RefreshCw className="size-4" />
                 {t("rotate")}
               </Button>
@@ -128,7 +136,7 @@ export function WebsiteInstallPanel({
               <iframe
                 title={t("previewTitle")}
                 src={`/embed/preview?key=${encodeURIComponent(install.publicKey)}`}
-                className="h-[640px] w-full border-0 bg-[#f6f3ee]"
+                className="h-[640px] w-full border-0 bg-muted"
               />
             ) : (
               <div className="h-[640px] bg-muted" />

@@ -8,11 +8,11 @@ Each record states the context, the options considered, the decision, and the co
 
 **Context.** Four developers, a fixed deadline, about a dozen business domains, and one deployable product.
 
-| Option | For | Against |
-|---|---|---|
-| Microservices | Independent scaling and deploys | Network failures between every call, distributed transactions for orders and stock, heavy DevOps for four people |
-| Single unstructured app | Fastest to start | Domains tangle; impossible to test or split later |
-| **Modular monolith** | One deploy, in-process calls, real transactions; clear module boundaries | Discipline needed to keep boundaries |
+| Option                  | For                                                                      | Against                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Microservices           | Independent scaling and deploys                                          | Network failures between every call, distributed transactions for orders and stock, heavy DevOps for four people |
+| Single unstructured app | Fastest to start                                                         | Domains tangle; impossible to test or split later                                                                |
+| **Modular monolith**    | One deploy, in-process calls, real transactions; clear module boundaries | Discipline needed to keep boundaries                                                                             |
 
 **Decision.** One NestJS application organised into modules that own their tables and expose services. An architecture test fails the build if a module imports another's internals or queries its tables.
 
@@ -148,19 +148,19 @@ Each record states the context, the options considered, the decision, and the co
 
 ## Decision summary
 
-| ADR | Decision | Quality attribute served |
-|---|---|---|
-| 001 | Modular monolith | Modifiability, simplicity |
-| 002 | Persist, ack, enqueue | Reliability, latency |
-| 003 | Human closes sale | Safety |
-| 004 | Tools plus guardrails | Correctness |
-| 005 | Deterministic policy and purchase code | Safety, testability |
-| 006 | One writer per state | Integrity |
-| 007 | Pooled tenancy with layers | Security, cost |
-| 008 | Postgres + pgvector, Redis | Simplicity |
-| 009 | Lock for turns, DB for stock | Correctness |
-| 010 | Provider-agnostic LLM | Availability, cost |
-| 011 | Approval by default | Trust |
-| 012 | Realtime as accelerator | Resilience |
-| 013 | Order snapshots | Auditability |
-| 014 | Four KPIs | Focus |
+| ADR | Decision                               | Quality attribute served  |
+| --- | -------------------------------------- | ------------------------- |
+| 001 | Modular monolith                       | Modifiability, simplicity |
+| 002 | Persist, ack, enqueue                  | Reliability, latency      |
+| 003 | Human closes sale                      | Safety                    |
+| 004 | Tools plus guardrails                  | Correctness               |
+| 005 | Deterministic policy and purchase code | Safety, testability       |
+| 006 | One writer per state                   | Integrity                 |
+| 007 | Pooled tenancy with layers             | Security, cost            |
+| 008 | Postgres + pgvector, Redis             | Simplicity                |
+| 009 | Lock for turns, DB for stock           | Correctness               |
+| 010 | Provider-agnostic LLM                  | Availability, cost        |
+| 011 | Approval by default                    | Trust                     |
+| 012 | Realtime as accelerator                | Resilience                |
+| 013 | Order snapshots                        | Auditability              |
+| 014 | Four KPIs                              | Focus                     |

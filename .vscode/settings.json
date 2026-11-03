@@ -1,0 +1,132 @@
+{
+  // ── Editor core ─────────────────────────────────────────────────────────────
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.rulers": [100],
+  "editor.linkedEditing": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.suggestSelection": "first",
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "editor.unicodeHighlight.ambiguousCharacters": true,
+  "editor.unicodeHighlight.invisibleCharacters": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.minimap.enabled": false,
+
+  // ── Save pipeline: Oxlint fixes, then Oxfmt formats ────────────────────────
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.formatOnSaveTimeout": 7500,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+
+  // ── Oxfmt & Oxlint (Oxc VS Code extension) ──────────────────────────────────
+  "oxc.enable.oxfmt": true,
+  "oxc.enable.oxlint": true,
+
+  // ── TypeScript (workspace 6.x + project references) ─────────────────────────
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.suggest.autoImports": true,
+  "js/ts.preferences.quoteStyle": "double",
+  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.preferences.includePackageJsonAutoImports": "auto",
+  "js/ts.preferences.autoImportFileExcludePatterns": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/dist/**"
+  ],
+
+  // ── Tailwind CSS v4 (scoped to apps/web in this monorepo) ─────────────────
+  "tailwindCSS.experimental.configFile": {
+    "apps/web/src/index.css": "apps/web/**"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.classAttributes": ["class", "className", "classList", "ngClass"],
+  "tailwindCSS.emmetCompletions": true,
+  "css.validate": false,
+  "scss.validate": false,
+
+  // ── Per-language formatters ─────────────────────────────────────────────────
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "files.trimTrailingWhitespace": false
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+
+  // ── Files (match .editorconfig) ─────────────────────────────────────────────
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.encoding": "utf8",
+  "files.autoSave": "off",
+
+  // ── Ignore build artifacts (performance + cleaner search) ───────────────────
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/dist/**": true,
+    "**/.output/**": true,
+    "**/coverage/**": true,
+    "**/graphify-out/**": true,
+    "**/playwright-report/**": true,
+    "**/test-results/**": true,
+    "**/*.tsbuildinfo": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/.output": true,
+    "**/coverage": true,
+    "**/graphify-out": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "pnpm-lock.yaml": true
+  },
+
+  // ── Built-in formatters off (Oxfmt owns formatting) ─────────────────────────
+  "json.format.enable": false,
+  "yaml.format.enable": false,
+
+  // ── Workspace tooling ─────────────────────────────────────────────────────
+  "npm.packageManager": "pnpm",
+  "git.ignoreLimitWarning": true
+}

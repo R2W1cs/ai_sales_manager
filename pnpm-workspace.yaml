@@ -1,0 +1,30 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  "@parcel/watcher": true
+  "@prisma/engines": true
+  "@swc/core": true
+  argon2: true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  unrs-resolver: true
+catalog:
+  dotenv: ^17.4.2
+  zod: ^4.4.3
+  "@types/node": ^26.2.0
+  "@playwright/test": ^1.62.1
+  playwright: ^1.62.1
+  "@prisma/client": ^7.9.1
+  "jest": ^29.7.0
+  "ts-jest": ^29.2.6
+  "@types/jest": ^29.5.14
+  react-hook-form: ^7.54.2
+  "@hookform/resolvers": ^5.9.1
+  ai: ^7.0.77
+  "@ai-sdk/gateway": ^4.0.62
+overrides:
+  fast-uri: ">=3.1.6"
+  deepmerge-ts: ">=8.0.0"
+  mysql2: ">=3.22.0"

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { cookies } from "next/headers";
-
 import "@fontsource-variable/noto-sans";
 
 import "../index.css";
@@ -26,7 +25,10 @@ export default async function RootLayout({
 
   return (
     <html lang={canonicalLocale} dir={dir} className="light" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background text-foreground" suppressHydrationWarning>
+      <body
+        className="bg-background font-sans text-foreground antialiased"
+        suppressHydrationWarning
+      >
         <NextIntlClientProvider key={canonicalLocale} locale={canonicalLocale} messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

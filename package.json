@@ -1,0 +1,62 @@
+{
+  "name": "ai-sales-manager",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "dev:web": "pnpm --filter @app/web dev",
+    "dev:api": "pnpm --filter @app/api dev",
+    "dev:worker": "pnpm --filter @app/worker dev",
+    "tunnel": "pnpx ngrok start --config ngrok.yml web",
+    "db:push": "pnpm --filter @app/api db:push",
+    "db:studio": "pnpm --filter @app/api db:studio",
+    "db:generate": "pnpm --filter @app/api db:generate",
+    "db:migrate": "pnpm --filter @app/api db:migrate",
+    "db:seed": "pnpm --filter @app/api db:seed",
+    "db:start": "pnpm --filter @app/api db:start",
+    "db:watch": "pnpm --filter @app/api db:watch",
+    "db:stop": "pnpm --filter @app/api db:stop",
+    "db:down": "pnpm --filter @app/api db:down",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt --check",
+    "format:fix": "oxfmt",
+    "check:types:root": "tsc -p tsconfig.root.json",
+    "check:types": "pnpm -r --if-present check-types && pnpm check:types:root",
+    "check:forbidden-addons": "node scripts/check-forbidden-addons.mjs",
+    "check:tokens": "node scripts/find-tailwind-colors.js apps/web/src",
+    "check:radius": "node scripts/check-corner-radius.js apps/web/src",
+    "check": "pnpm check:forbidden-addons && pnpm check:tokens && pnpm check:radius && pnpm lint && pnpm format && pnpm check:types",
+    "check:full": "pnpm check && pnpm test",
+    "check:ci": "pnpm check:full && pnpm build",
+    "bench": "node scripts/bench-http.mjs",
+    "eval:golden": "pnpm --filter @app/api eval:golden",
+    "eval:bench": "pnpm --filter @app/api eval:bench",
+    "eval:bench:live": "pnpm --filter @app/api eval:bench:live",
+    "test": "pnpm -r --if-present test",
+    "test:e2e": "playwright test --project=chromium --workers=1",
+    "test:everything": "node scripts/test-everything.mjs",
+    "fix": "pnpm lint:fix && pnpm format:fix",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@app/shared": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@app/config": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "husky": "^9.1.7",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

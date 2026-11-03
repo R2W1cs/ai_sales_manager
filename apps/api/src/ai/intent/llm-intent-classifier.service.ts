@@ -140,124 +140,96 @@ export class LlmIntentClassifierService {
   }
 
   /**
-   * Deterministic semantic heuristic fallback for testing & offline mode
+   * Deterministic semantic heuristic fallback for testing & offline mode.
+   * Phrase lists stay in declaration order so the first match wins, matching
+   * the previous else-if chain.
    */
   private classifyDeterministicFallback(text: string, startTime: number): IntentClassification {
     const lower = normalizeMessage(text);
-    const entities: ExtractedEntities = extractRuleEntities(lower);
-
-    let intent: CanonicalIntent = "unknown";
-    let confidence = 0.5;
-    const secondary: CanonicalIntent[] = [];
-
-    // Complex / multi-intent disambiguation heuristics
-    if (
-      lower.includes("personne") ||
-      lower.includes("humain") ||
-      lower.includes("3abd") ||
-      lower.includes("responsable")
-    ) {
-      intent = "human_request";
-      confidence = 0.95;
-    } else if (
-      lower.includes("reclamation") ||
-      lower.includes("mouch behi") ||
-      lower.includes("khed3ouni") ||
-      lower.includes("defectueux")
-    ) {
-      intent = "complaint";
-      confidence = 0.92;
-    } else if (
-      lower.includes("nechri") ||
-      lower.includes("commander") ||
-      lower.includes("validi") ||
-      lower.includes("acheter")
-    ) {
-      intent = "purchase_intent";
-      confidence = 0.9;
-    } else if (lower.includes("retour") || lower.includes("baddel") || lower.includes("échange")) {
-      intent = "return_inquiry";
-      confidence = 0.88;
-    } else if (
-      lower.includes("livraison") ||
-      lower.includes("delivery") ||
-      lower.includes("twaslou")
-    ) {
-      intent = "delivery_inquiry";
-      confidence = 0.88;
-    } else if (
-      lower.includes("suivi") ||
-      lower.includes("woslet") ||
-      lower.includes("commande mte3i")
-    ) {
-      intent = "order_status";
-      confidence = 0.88;
-    } else if (
-      lower.includes("promo") ||
-      lower.includes("remise") ||
-      lower.includes("reduction") ||
-      lower.includes("solde")
-    ) {
-      intent = "discount_inquiry";
-      confidence = 0.85;
-    } else if (
-      lower.includes("kifech n5ales") ||
-      lower.includes("paiement") ||
-      lower.includes("espece") ||
-      lower.includes("carte")
-    ) {
-      intent = "payment_inquiry";
-      confidence = 0.85;
-    } else if (
-      lower.includes("dispo") ||
-      lower.includes("stock") ||
-      lower.includes("famma") ||
-      lower.includes("mawjoud")
-    ) {
-      intent = "stock_check";
-      confidence = 0.82;
-      if (lower.includes("prix") || lower.includes("9addeh") || lower.includes("soum")) {
-        secondary.push("price_question");
-      }
-    } else if (
-      lower.includes("prix") ||
-      lower.includes("combien") ||
-      lower.includes("9addeh") ||
-      lower.includes("b9adech") ||
-      lower.includes("soum")
-    ) {
-      intent = "price_question";
-      confidence = 0.82;
-      if (lower.includes("dispo") || lower.includes("taille")) {
-        secondary.push("stock_check");
-      }
-    } else if (
-      lower.includes("robe") ||
-      lower.includes("hoodie") ||
-      lower.includes("modele") ||
-      lower.includes("article")
-    ) {
-      intent = "product_inquiry";
-      confidence = 0.8;
-    } else if (
-      lower.includes("3aslema") ||
-      lower.includes("bonjour") ||
-      lower.includes("salut") ||
-      lower.includes("salam") ||
-      lower.includes("ahla")
-    ) {
-      intent = "greeting";
-      confidence = 0.85;
-    }
+    const matched = matchFallbackIntent(lower);
 
     return {
-      intent,
-      confidence,
-      secondary,
-      entities,
+      intent: matched.intent,
+      confidence: matched.confidence,
+      secondary: matched.secondary,
+      entities: extractRuleEntities(lower),
       source: "llm",
       latencyMs: Date.now() - startTime,
       model: CLASSIFIER_MODEL,
     };
   }
+}
+
+interface FallbackRule {
+  intent: CanonicalIntent;
+  confidence: number;
+  phrases: readonly string[];
+  secondary?: { intent: CanonicalIntent; phrases: readonly string[] };
+}
+
+const FALLBACK_RULES: readonly FallbackRule[] = [
+  {
+    intent: "human_request",
+    confidence: 0.95,
+    phrases: ["personne", "humain", "3abd", "responsable"],
+  },
+  {
+    intent: "complaint",
+    confidence: 0.92,
+    phrases: ["reclamation", "mouch behi", "khed3ouni", "defectueux"],
+  },
+  {
+    intent: "purchase_intent",
+    confidence: 0.9,
+    phrases: ["nechri", "commander", "validi", "acheter"],
+  },
+  { intent: "return_inquiry", confidence: 0.88, phrases: ["retour", "baddel", "échange"] },
+  { intent: "delivery_inquiry", confidence: 0.88, phrases: ["livraison", "delivery", "twaslou"] },
+  { intent: "order_status", confidence: 0.88, phrases: ["suivi", "woslet", "commande mte3i"] },
+  {
+    intent: "discount_inquiry",
+    confidence: 0.85,
+    phrases: ["promo", "remise", "reduction", "solde"],
+  },
+  {
+    intent: "payment_inquiry",
+    confidence: 0.85,
+    phrases: ["kifech n5ales", "paiement", "espece", "carte"],
+  },
+  {
+    intent: "stock_check",
+    confidence: 0.82,
+    phrases: ["dispo", "stock", "famma", "mawjoud"],
+    secondary: { intent: "price_question", phrases: ["prix", "9addeh", "soum"] },
+  },
+  {
+    intent: "price_question",
+    confidence: 0.82,
+    phrases: ["prix", "combien", "9addeh", "b9adech", "soum"],
+    secondary: { intent: "stock_check", phrases: ["dispo", "taille"] },
+  },
+  { intent: "product_inquiry", confidence: 0.8, phrases: ["robe", "hoodie", "modele", "article"] },
+  {
+    intent: "greeting",
+    confidence: 0.85,
+    phrases: ["3aslema", "bonjour", "salut", "salam", "ahla"],
+  },
+];
+
+function includesAny(text: string, phrases: readonly string[]): boolean {
+  return phrases.some((phrase) => text.includes(phrase));
+}
+
+function matchFallbackIntent(text: string): {
+  intent: CanonicalIntent;
+  confidence: number;
+  secondary: CanonicalIntent[];
+} {
+  for (const rule of FALLBACK_RULES) {
+    if (!includesAny(text, rule.phrases)) continue;
+    const secondary =
+      rule.secondary && includesAny(text, rule.secondary.phrases) ? [rule.secondary.intent] : [];
+    return { intent: rule.intent, confidence: rule.confidence, secondary };
+  }
+  return { intent: "unknown", confidence: 0.5, secondary: [] };
 }

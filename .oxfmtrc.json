@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxfmt/configuration_schema.json",
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "endOfLine": "lf",
+  "insertFinalNewline": true,
+  "sortPackageJson": true,
+  "sortImports": {
+    "internalPattern": ["@/", "@app/", "~/", "#"]
+  },
+  "sortTailwindcss": {
+    "stylesheet": "apps/web/src/index.css",
+    "functions": ["cn", "cva", "clsx"]
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".output",
+    "coverage",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "apps/web/src/routeTree.gen.ts",
+    "apps/web/next-env.d.ts",
+    ".agents",
+    "graphify-out",
+    "playwright-report",
+    "test-results",
+    "*.tsbuildinfo"
+  ]
+}

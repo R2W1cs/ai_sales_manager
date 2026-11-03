@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { prisma } from "../lib/prisma";
+import { fillDailySeries, toCountMap } from "./platform-series";
 
 export interface PlatformBusinessRow {
   id: string;
@@ -111,73 +112,69 @@ export class PlatformAdminService {
       recentAiTurns,
       feedRows,
     ] = await Promise.all([
-        prisma.business.findMany({
-          where: { deleted_at: null },
-          orderBy: { created_at: "desc" },
-          include: {
-            subscription: { include: { plan: true } },
-            members: {
-              where: { removed_at: null },
-              include: { user: true, role: true },
-            },
+      prisma.business.findMany({
+        where: { deleted_at: null },
+        orderBy: { created_at: "desc" },
+        include: {
+          subscription: { include: { plan: true } },
+          members: {
+            where: { removed_at: null },
+            include: { user: true, role: true },
           },
-        }),
-        prisma.conversation.groupBy({
-          by: ["business_id"],
-          where: { is_test: false },
-          _count: { _all: true },
-          _max: { last_message_at: true },
-        }),
-        prisma.message.groupBy({
-          by: ["business_id"],
-          where: { created_at: { gte: startOfDay } },
-          _count: { _all: true },
-        }),
-        prisma.channelAccount.groupBy({
-          by: ["business_id", "channel"],
-          where: { status: "active" },
-          _count: { _all: true },
-        }),
-        prisma.aiUsage.aggregate({
-          where: { created_at: { gte: since30d } },
-          _sum: { estimated_cost_usd: true },
-          _count: { _all: true },
-        }),
-        prisma.conversation.count({
-          where: { is_test: false, last_message_at: { gte: activeSince } },
-        }),
-        prisma.conversation.count({
-          where: { is_test: false, status: "HUMAN_REQUIRED" },
-        }),
-        prisma.conversation.count({
-          where: { is_test: false, lead_temperature: "hot" },
-        }),
-        prisma.order.count({
-          where: { is_test: false, status: "PENDING_CONFIRMATION" },
-        }),
-        prisma.message.findMany({
-          where: { created_at: { gte: since14d } },
-          select: { created_at: true },
-        }),
-        prisma.aiUsage.findMany({
-          where: { created_at: { gte: since14d } },
-          select: { created_at: true },
-        }),
-        prisma.conversation.findMany({
-          where: { is_test: false, last_message_at: { not: null } },
-          orderBy: { last_message_at: "desc" },
-          take: 8,
-          include: {
-            customer: { select: { name: true } },
-            business: { select: { id: true, name: true } },
-          },
-        }),
-      ]);
+        },
+      }),
+      prisma.conversation.groupBy({
+        by: ["business_id"],
+        where: { is_test: false },
+        _count: { _all: true },
+        _max: { last_message_at: true },
+      }),
+      prisma.message.groupBy({
+        by: ["business_id"],
+        where: { created_at: { gte: startOfDay } },
+        _count: { _all: true },
+      }),
+      prisma.channelAccount.groupBy({
+        by: ["business_id", "channel"],
+        where: { status: "active" },
+        _count: { _all: true },
+      }),
+      prisma.aiUsage.aggregate({
+        where: { created_at: { gte: since30d } },
+        _sum: { estimated_cost_usd: true },
+        _count: { _all: true },
+      }),
+      prisma.conversation.count({
+        where: { is_test: false, last_message_at: { gte: activeSince } },
+      }),
+      prisma.conversation.count({
+        where: { is_test: false, status: "HUMAN_REQUIRED" },
+      }),
+      prisma.conversation.count({
+        where: { is_test: false, lead_temperature: "hot" },
+      }),
+      prisma.order.count({
+        where: { is_test: false, status: "PENDING_CONFIRMATION" },
+      }),
+      countByLocalDay("messages", since14d),
+      countByLocalDay("ai_usage", since14d),
+      prisma.conversation.findMany({
+        where: { is_test: false, last_message_at: { not: null } },
+        orderBy: { last_message_at: "desc" },
+        take: 8,
+        include: {
+          customer: { select: { name: true } },
+          business: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
 
     const conversationsByBusiness = new Map(
       conversationGroups.map((row) => [row.business_id, row]),
     );
-    const messagesByBusiness = new Map(messageGroups.map((row) => [row.business_id, row._count._all]));
+    const messagesByBusiness = new Map(
+      messageGroups.map((row) => [row.business_id, row._count._all]),
+    );
     const channelsByBusiness = new Map<string, string[]>();
     for (const row of channelGroups) {
       const list = channelsByBusiness.get(row.business_id) ?? [];
@@ -227,7 +224,7 @@ export class PlatformAdminService {
         hotLeads,
         ordersPending,
       },
-      series: buildSeries(since14d, recentMessages, recentAiTurns),
+      series: fillDailySeries(since14d, toCountMap(recentMessages), toCountMap(recentAiTurns)),
       feed: feedRows.map((conversation) => ({
         id: conversation.id,
         businessId: conversation.business.id,
@@ -311,35 +308,33 @@ export class PlatformAdminService {
   }
 }
 
-function dayKey(value: Date): string {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+const SERIES_TABLES = {
+  messages: true,
+  ai_usage: true,
+} as const;
 
-function buildSeries(
-  since: Date,
-  messages: { created_at: Date }[],
-  aiTurns: { created_at: Date }[],
-): PlatformDayPoint[] {
-  const points: PlatformDayPoint[] = [];
-  const cursor = new Date(since);
-  cursor.setHours(0, 0, 0, 0);
-  const end = new Date();
-  end.setHours(0, 0, 0, 0);
-  while (cursor.getTime() <= end.getTime()) {
-    points.push({ date: dayKey(cursor), messages: 0, aiTurns: 0 });
-    cursor.setDate(cursor.getDate() + 1);
+type DayCount = { day: string; count: number };
+
+/**
+ * Counts rows per local calendar day. Callers pass a fixed table key, and each
+ * key maps to its own query so a request cannot choose the SQL identifier.
+ */
+function countByLocalDay(table: keyof typeof SERIES_TABLES, since: Date): Promise<DayCount[]> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (table === "ai_usage") {
+    return prisma.$queryRaw<DayCount[]>`
+      SELECT to_char(created_at AT TIME ZONE ${timeZone}, 'YYYY-MM-DD') AS day,
+             COUNT(*)::int AS count
+      FROM ai_usage
+      WHERE created_at >= ${since}
+      GROUP BY 1
+    `;
   }
-  const byDate = new Map(points.map((point) => [point.date, point]));
-  for (const message of messages) {
-    const point = byDate.get(dayKey(message.created_at));
-    if (point) point.messages += 1;
-  }
-  for (const turn of aiTurns) {
-    const point = byDate.get(dayKey(turn.created_at));
-    if (point) point.aiTurns += 1;
-  }
-  return points;
+  return prisma.$queryRaw<DayCount[]>`
+    SELECT to_char(created_at AT TIME ZONE ${timeZone}, 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM messages
+    WHERE created_at >= ${since}
+    GROUP BY 1
+  `;
 }

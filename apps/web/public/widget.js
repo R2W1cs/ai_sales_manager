@@ -7,7 +7,8 @@
   var origin = new URL(script.src, window.location.href).origin;
   var root = document.createElement("div");
   root.setAttribute("data-ai-sales-widget", key);
-  root.style.cssText = "all: initial; position: fixed; z-index: 2147483000; inset: auto 20px 20px auto;";
+  root.style.cssText =
+    "all: initial; position: fixed; z-index: 2147483000; inset: auto 20px 20px auto;";
 
   var frame = document.createElement("iframe");
   frame.title = "Chat";

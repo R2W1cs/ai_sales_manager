@@ -5,7 +5,7 @@ import { Compass } from "lucide-react";
 import type { Route } from "next";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { getFilteredNavItems } from "./nav-items";
 import { useTenant } from "./tenant-context";
@@ -21,10 +21,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps): Rea
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) setQuery("");
+    if (open) inputRef.current?.focus();
   }, [open]);
+
+  function handleOpenChange(next: boolean) {
+    if (!next) setQuery("");
+    onOpenChange(next);
+  }
 
   const items = useMemo(() => {
     const nav = getFilteredNavItems(currentRole).map((item) => ({
@@ -52,7 +58,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps): Rea
   }
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-background/70 backdrop-blur-xs" />
         <DialogPrimitive.Popup
@@ -61,7 +67,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps): Rea
         >
           <DialogPrimitive.Title className="sr-only">{tCommon("search")}</DialogPrimitive.Title>
           <input
-            autoFocus
+            ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tCommon("search")}
