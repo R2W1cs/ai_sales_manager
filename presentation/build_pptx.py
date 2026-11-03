@@ -272,7 +272,7 @@ section_title(
     prs.slides.add_slide(prs.slide_layouts[6]),
     "Testing",
     "Evidence, not ambition",
-    "Asma’s dossier lives in docs/04-testing. Suites run in CI.",
+    "Asma’s dossier: components, endpoints, whole-app as asma@example.com.",
 )
 slide = prs.slides[-1]
 metric_card(slide, Inches(0.7), Inches(2.7), Inches(3.95), Inches(1.7), "API tests", "1,452", "89 suites passed")
@@ -286,9 +286,9 @@ multiline(
     Inches(11.5),
     Inches(1.7),
     [
-        "Wave plans W0–W10 plus manual QA for orders and the pipeline",
-        "Jest next to Nest modules · Playwright for auth, inbox, admin, and the core journey",
-        "Golden evaluation: 104 Tunisian commerce scenarios · commercial safety violations at 0%",
+        "Components + endpoint matrix · whole-app Playwright with Asma’s seeded admin account",
+        "Jest next to Nest modules · Playwright auth, inbox, admin, core journey, whole-app-asma",
+        "Golden set: 104 scenarios · commercial safety 0% · ethics reflection in docs/06-ethics",
     ],
     size=15,
     color=TEXT,
@@ -396,9 +396,9 @@ multiline(
     [
         "demo@example.com",
         "admin@example.com",
+        "asma@example.com  (testing)",
         "agent@example.com",
         "operator@example.com",
-        "",
         "Password123!",
     ],
     size=14,
@@ -430,7 +430,7 @@ textbox(
     Inches(6.0),
     Inches(11),
     Inches(0.35),
-    "Presentation · docs/demo.mp4 · docs/04-testing · docs/05-refactoring",
+    "Presentation · docs/demo.mp4 · docs/04-testing · docs/05-refactoring · docs/06-ethics",
     size=13,
     color=MUTED,
 )

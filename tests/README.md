@@ -16,12 +16,15 @@ k6 run docs/04-testing/perf/k6-load.js
 
 ## Suites
 
-| Location                           | Runner                             |
-| ---------------------------------- | ---------------------------------- |
-| `apps/api/src/**/*.spec.ts`        | Jest                               |
-| `apps/api/test/`                   | Jest (golden eval, HTTP, security) |
-| `packages/shared/src/**/*.spec.ts` | Jest                               |
-| `apps/web/e2e/`                    | Playwright                         |
-| `docs/04-testing/perf/*.js`        | k6 (load, stress, spike, soak)     |
+| Location                              | Runner                             |
+| ------------------------------------- | ---------------------------------- |
+| `apps/api/src/**/*.spec.ts`           | Jest                               |
+| `apps/api/test/`                      | Jest (golden eval, HTTP, security) |
+| `packages/shared/src/**/*.spec.ts`    | Jest                               |
+| `apps/web/e2e/`                       | Playwright                         |
+| `apps/web/e2e/whole-app-asma.spec.ts` | Whole-app smoke (Asma seed user)   |
+| `docs/04-testing/perf/*.js`           | k6 (load, stress, spike, soak)     |
 
-Last recorded automated result: **1,452** API tests + **39** shared tests passed. Details and performance lab numbers: the PDF above.
+Last recorded automated result: **1,452** API tests + **39** shared tests passed. Component / endpoint / whole-app matrix (Asma): [`docs/04-testing/plans/COMPONENT_ENDPOINT_WHOLE_APP.md`](../docs/04-testing/plans/COMPONENT_ENDPOINT_WHOLE_APP.md). Ethics companion: [`docs/06-ethics/`](../docs/06-ethics/). Details and performance lab numbers: the PDF above.
+
+**Seeded testing login:** `asma@example.com` / `Password123!` (Admin on Maison Alyssa).
