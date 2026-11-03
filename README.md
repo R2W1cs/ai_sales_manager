@@ -1,59 +1,65 @@
 # AI Sales Manager
 
-Tunisian ecommerce sales workspace. A merchant loads a catalog and business rules, then an AI answers customers in French, Arabic, and Derja using only that data. Staff work a triage inbox, confirm pending orders, and watch four KPIs.
+**Catalog-grounded AI sales workspace for Tunisian ecommerce.**
 
-> Course project (Software Engineering, AI-assisted development). Phases are owned by team members. The runnable monorepo matches the working demo: website widget, AI playground, operator console, measured refactor, and testing dossier.
+Merchants load products and business rules. An assistant answers customers in French, Modern Standard Arabic, Tunisian Arabic (Derja), and Arabizi — using only that shop’s data. When a buyer is ready to purchase, the conversation is handed to a human as a pending order. Staff work a triage inbox, confirm orders, and track four operating KPIs.
 
-## Demo
+This repository is the course delivery for Software Engineering (AI-assisted development): a runnable monorepo, full documentation, measured refactoring, a testing dossier with a PDF report, a defense presentation, and a product demo video.
 
-[Watch the full walkthrough](docs/demo.mp4) (about 3 and a half minutes). Captions explain each part. The playground and the website bubble are both tried in Tunisian Derja (`slm, andkom pntallon blue`), then the video continues through the inbox, pipeline, catalog, analytics, every settings tab, the six setup steps, the live startup console, and the employee menu.
+---
 
-## Presentation
+## Highlights
 
-Open the defense deck:
+| Area                 | What you get                                                       |
+| -------------------- | ------------------------------------------------------------------ |
+| Multilingual AI      | Derja-first replies grounded in catalog, stock, and policy tools   |
+| Sales command center | Inbox, pipeline, playground, analytics, settings                   |
+| Channels (MVP)       | Instagram, Messenger, and an embeddable website chat widget        |
+| Human handoff        | Purchase intent → pending order with staff briefing                |
+| Platform ops         | Startup operator console across all businesses                     |
+| Quality              | 1,452 API tests, golden AI evaluation gates, k6 lab profiles       |
+| Delivery artifacts   | Demo video, PPTX + HTML presentation, testing PDF, refactor report |
 
-- PowerPoint: [`presentation/AI-Sales-Manager.pptx`](presentation/AI-Sales-Manager.pptx)
-- Browser slides: [`presentation/index.html`](presentation/index.html)
+---
 
-## Testing
+## Quick links
 
-Asma’s dossier is under [`docs/04-testing/`](docs/04-testing/README.md).
+| Resource                          | Path                                                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Demo video (~3.5 min)             | [`docs/demo.mp4`](docs/demo.mp4)                                                                             |
+| Defense presentation (PowerPoint) | [`presentation/AI-Sales-Manager.pptx`](presentation/AI-Sales-Manager.pptx)                                   |
+| Defense presentation (browser)    | [`presentation/index.html`](presentation/index.html)                                                         |
+| Testing PDF report                | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) |
+| Refactoring & optimization report | [`docs/05-refactoring/report.md`](docs/05-refactoring/report.md)                                             |
+| Requirements                      | [`docs/01-requirements/`](docs/01-requirements/)                                                             |
+| Methodology                       | [`docs/02-methodology/`](docs/02-methodology/)                                                               |
+| Design & architecture             | [`docs/03-design/`](docs/03-design/)                                                                         |
 
-| Artifact                                                                                                                   | Link                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Testing PDF report** (unit, integration, E2E, golden AI, smoke, security, **k6 load / stress / spike**, **soak**, chaos) | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) |
-| Wave plans W0–W10 + manual QA                                                                                              | [`docs/04-testing/plans/`](docs/04-testing/plans/)                                                           |
-| k6 lab scripts                                                                                                             | [`docs/04-testing/perf/`](docs/04-testing/perf/)                                                             |
-| Automated test index                                                                                                       | [`tests/README.md`](tests/README.md)                                                                         |
+---
 
-Latest automated run recorded in the dossier: **1,452** API Jest tests and **39** shared tests passed; golden-set gates PASS.
+## Architecture
 
-```bash
-pnpm test
-pnpm eval:golden
-pnpm test:e2e
-k6 run docs/04-testing/perf/k6-load.js
+```
+apps/web          Next.js 16  — merchant UI, widget embed, operator console   :3000
+apps/api          NestJS + Fastify — auth, AI, orders, channels, billing      :4000
+packages/shared   Shared Zod schemas and types
+Postgres + pgvector · Redis · optional MinIO
+LLM routing: Groq → OrcaRouter → Vercel AI Gateway
 ```
 
-## Team and phase ownership
+**MVP channels:** Instagram and Messenger. WhatsApp is stubbed. Fashion ecommerce is the first vertical.
 
-| Member    | Phase                                              | Folder                                                                                                                           |
-| --------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Rayen** | Requirements, methodology, design and architecture | [`docs/01-requirements`](docs/01-requirements), [`docs/02-methodology`](docs/02-methodology), [`docs/03-design`](docs/03-design) |
-| Aymen     | Frontend and ethics                                | `apps/web`, `docs/06-ethics` (to be added)                                                                                       |
-| Moataz    | Backend, optimization and refactoring              | `apps/api`, [`docs/05-refactoring`](docs/05-refactoring)                                                                         |
-| Asma      | Testing of the whole application                   | [`tests/`](tests), [`docs/04-testing`](docs/04-testing)                                                                          |
+---
 
-## Stack
+## Getting started
 
-- Next.js web app (`apps/web`) on port 3000
-- NestJS API (`apps/api`) on port 4000
-- PostgreSQL with pgvector, Redis, and optional MinIO
-- Chat models through Groq, OrcaRouter, or the Vercel AI Gateway
+### Requirements
 
-## Run locally
+- Node.js 22+
+- [pnpm](https://pnpm.io/) 11+
+- Docker (Postgres and Redis)
 
-Requirements: Node.js 22+, pnpm, and Docker.
+### Install and run
 
 ```bash
 pnpm install
@@ -62,7 +68,9 @@ cp .env.example apps/api/.env
 cp .env.example apps/web/.env
 ```
 
-Set `PORT=4000` in `apps/api/.env` and `PORT=3000` in `apps/web/.env`. For local Redis published on 6380, set `REDIS_URL=redis://localhost:6380`. If MinIO is unavailable, set `ALLOW_LOCAL_STORAGE_FALLBACK=true`.
+In `apps/api/.env` set `PORT=4000`. In `apps/web/.env` set `PORT=3000`.  
+If Redis is published on host port `6380`, set `REDIS_URL=redis://localhost:6380`.  
+If MinIO is not available, set `ALLOW_LOCAL_STORAGE_FALLBACK=true`.
 
 ```bash
 docker compose up -d postgres redis
@@ -73,22 +81,22 @@ pnpm dev:api
 pnpm dev:web
 ```
 
-Open http://localhost:3000.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Demo login
+### Demo accounts
 
-| Email                  | Password       | Role                              |
-| ---------------------- | -------------- | --------------------------------- |
-| `demo@example.com`     | `Password123!` | Owner                             |
-| `admin@example.com`    | `Password123!` | Admin                             |
-| `agent@example.com`    | `Password123!` | Employee                          |
-| `operator@example.com` | `Password123!` | Startup operator (all businesses) |
+Seeded business: **Maison Alyssa Tunis**. Password for all accounts: `Password123!`
 
-The seeded shop is **Maison Alyssa Tunis**. Sign in as `operator@example.com` to open the startup console at `/operator`.
+| Email                  | Role                                            |
+| ---------------------- | ----------------------------------------------- |
+| `demo@example.com`     | Owner                                           |
+| `admin@example.com`    | Admin                                           |
+| `agent@example.com`    | Employee                                        |
+| `operator@example.com` | Startup operator (all businesses) → `/operator` |
 
-## Talk to the AI
+### AI provider (optional for live Derja chat)
 
-Put a key in `apps/api/.env`. Groq is used when `GROQ_API_KEY` is set.
+Add to `apps/api/.env`, then restart the API:
 
 ```bash
 GROQ_API_KEY=your-key
@@ -96,45 +104,90 @@ GROQ_BASE_URL=https://api.groq.com/openai/v1
 GROQ_MODEL=openai/gpt-oss-120b
 ```
 
-- **AI Playground** (`/playground`)
-- **Website widget** (`/website`)
-- **Inbox** for takeover, reply, attachments, and suggestions
+Try Derja in **Playground** (`/playground`) or the **Website** widget (`/website`), for example: `slm, andkom pntallon blue`.
 
-## Workspace
+---
 
-| Path          | What it is                                  |
-| ------------- | ------------------------------------------- |
-| `/inbox`      | Sales command center                        |
-| `/playground` | Customer simulator                          |
-| `/pipeline`   | Read-only sales pipeline                    |
-| `/products`   | Catalog, variants, CSV import               |
-| `/analytics`  | Four KPIs                                   |
-| `/settings`   | Personality, rules, team, channels, billing |
-| `/website`    | Chat bubble a shop pastes on its own site   |
-| `/onboarding` | Store setup through go-live                 |
-| `/operator`   | Startup console across all businesses       |
+## Product surfaces
 
-## Course reading order
+| Route         | Description                                                 |
+| ------------- | ----------------------------------------------------------- |
+| `/inbox`      | Sales command center — triage, takeover, reply, attachments |
+| `/playground` | Safe customer simulator against the live catalog            |
+| `/website`    | Public key + install snippet for the shop’s site            |
+| `/pipeline`   | Pending and in-progress orders                              |
+| `/products`   | Catalog, variants, CSV import                               |
+| `/analytics`  | Four KPIs                                                   |
+| `/settings`   | Personality, rules, team, channels, billing                 |
+| `/onboarding` | Go-live checklist                                           |
+| `/operator`   | Cross-tenant startup console                                |
 
-1. [Project proposal](docs/01-requirements/01-project-proposal.md)
-2. [User stories](docs/01-requirements/02-user-stories.md) and [backlog](docs/01-requirements/03-product-backlog.md)
-3. [Functional requirements](docs/01-requirements/06-functional-requirements.md) and [NFRs](docs/01-requirements/04-non-functional-requirements.md)
-4. [Methodology](docs/02-methodology/01-methodology.md)
-5. [Design overview](docs/03-design/00-design-overview.md)
-6. [Testing dossier](docs/04-testing/README.md) and the [testing PDF report](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf)
-7. [Refactoring report](docs/05-refactoring/report.md)
-8. [Presentation](presentation/README.md) and [demo video](docs/demo.mp4)
+Header search and `Ctrl+K` / `Cmd+K` jump between pages.
 
-Detailed product and engineering specs also live under `docs/00_product`, `docs/10_engineering`, `docs/20_design`, `docs/30_execution`, and `docs/40_project_management`.
+---
 
-## Status
+## Quality & verification
 
-| Phase                     | State                                              |
-| ------------------------- | -------------------------------------------------- |
-| Requirements              | Present                                            |
-| Methodology               | Present                                            |
-| Design                    | Present                                            |
-| Frontend                  | Present (runnable app)                             |
-| Backend / refactoring     | Present (`docs/05-refactoring`)                    |
-| Testing                   | Present (`docs/04-testing` + PDF report, `tests/`) |
-| Presentation + demo video | Present                                            |
+| Check                        | Command / artifact                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Unit & integration           | `pnpm test` — 1,452 API + 39 shared tests (last recorded run)                                                |
+| AI golden set                | `pnpm eval:golden` — 104 Tunisian commerce scenarios; gates PASS                                             |
+| End-to-end UI                | `pnpm test:e2e` (Playwright; app must be running)                                                            |
+| Full gate                    | `pnpm check:ci` (lint, types, tests, production build)                                                       |
+| Load / stress / spike / soak | `k6 run docs/04-testing/perf/k6-load.js` (see [`perf/`](docs/04-testing/perf/))                              |
+| Full testing write-up        | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) |
+
+Unset `GROQ_API_KEY` / `ORCA_API_KEY` when you want Jest to stay offline.
+
+---
+
+## Documentation map
+
+| Phase                 | Owner  | Location                                                             |
+| --------------------- | ------ | -------------------------------------------------------------------- |
+| Requirements          | Rayen  | [`docs/01-requirements`](docs/01-requirements)                       |
+| Methodology           | Rayen  | [`docs/02-methodology`](docs/02-methodology)                         |
+| Design                | Rayen  | [`docs/03-design`](docs/03-design)                                   |
+| Testing               | Asma   | [`docs/04-testing`](docs/04-testing), [`tests/`](tests)              |
+| Backend / refactoring | Moataz | [`apps/api`](apps/api), [`docs/05-refactoring`](docs/05-refactoring) |
+| Frontend              | Aymen  | [`apps/web`](apps/web)                                               |
+
+**Suggested reading order for graders:** proposal → user stories & backlog → FRs / NFRs → methodology → design overview → [testing PDF](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) → [refactor report](docs/05-refactoring/report.md) → [presentation](presentation/README.md) → [demo video](docs/demo.mp4).
+
+Extended product and engineering specifications also live under `docs/00_product`, `docs/10_engineering`, `docs/20_design`, `docs/30_execution`, and `docs/40_project_management`.
+
+---
+
+## Repository layout
+
+```
+apps/api/                 NestJS API, Prisma, Jest, golden eval
+apps/web/                 Next.js app, Playwright e2e
+packages/shared/          Shared contracts
+docs/01-requirements/     Course requirements
+docs/02-methodology/      Scrum / DoD / contributing
+docs/03-design/           UML, ERD, ADRs, diagram PNGs
+docs/04-testing/          Testing dossier + PDF + k6 scripts
+docs/05-refactoring/      Measured complexity & performance report
+docs/demo.mp4             Product walkthrough
+presentation/             Defense deck (PPTX + HTML)
+backlog/                  Task cards and wave board
+docker-compose.yml        Postgres, Redis, MinIO
+```
+
+---
+
+## Team
+
+| Member | Responsibility                                     |
+| ------ | -------------------------------------------------- |
+| Rayen  | Requirements, methodology, design and architecture |
+| Aymen  | Frontend and ethics                                |
+| Moataz | Backend, optimization, and refactoring             |
+| Asma   | Testing of the whole application                   |
+
+---
+
+## License
+
+Course project — all rights reserved by the authors unless otherwise stated.
