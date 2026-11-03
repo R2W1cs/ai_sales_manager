@@ -1,6 +1,8 @@
 # Tests
 
-Automated tests live next to the code they protect. The written testing dossier for the course is in [`docs/04-testing/`](../docs/04-testing/README.md).
+Automated tests live next to the code they protect. The full testing dossier for the course (PDF report, wave plans, k6 scripts) is in [`docs/04-testing/`](../docs/04-testing/README.md).
+
+**PDF report:** [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](../docs/04-testing/AI-Sales-Manager-Testing-Report.pdf)
 
 ## Quick commands
 
@@ -9,6 +11,7 @@ pnpm test                 # API + shared Jest suites
 pnpm eval:golden          # Tunisian commerce golden set
 pnpm test:e2e             # Playwright (app must be running)
 pnpm check:full           # lint + types + tests
+k6 run docs/04-testing/perf/k6-load.js
 ```
 
 ## Suites
@@ -19,5 +22,6 @@ pnpm check:full           # lint + types + tests
 | `apps/api/test/`                   | Jest (golden eval, HTTP, security) |
 | `packages/shared/src/**/*.spec.ts` | Jest                               |
 | `apps/web/e2e/`                    | Playwright                         |
+| `docs/04-testing/perf/*.js`        | k6 (load, stress, spike, soak)     |
 
-Wave plans and the last measured results: [`docs/04-testing/`](../docs/04-testing/README.md).
+Last recorded automated result: **1,452** API tests + **39** shared tests passed. Details and performance lab numbers: the PDF above.
