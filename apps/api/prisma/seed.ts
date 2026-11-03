@@ -207,6 +207,13 @@ async function main() {
       role: employeeRole,
       orgRole: "employee",
     },
+    {
+      id: "a1000000-0000-0000-0000-000000000005",
+      email: "asma@example.com",
+      name: "Asma Testing",
+      role: adminRole,
+      orgRole: "admin",
+    },
   ];
 
   const seededUsers = await Promise.all(
@@ -2394,6 +2401,7 @@ Les frais de transport pour le premier échange de taille sont pris en charge pa
   console.log(`🏢 Business:        Maison Alyssa Tunis (${demoBusiness.id})`);
   console.log(`👤 Owner Account:   demo@example.com (Password: Password123!)`);
   console.log(`👤 Admin Account:   admin@example.com (Password: Password123!)`);
+  console.log(`👤 Testing Account: asma@example.com (Password: Password123!)`);
   console.log(`👤 Agent Account:   agent@example.com (Password: Password123!)`);
   console.log(`👤 Startup console: operator@example.com (Password: Password123!)`);
   console.log(

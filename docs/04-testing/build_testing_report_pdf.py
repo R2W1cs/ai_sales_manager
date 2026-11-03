@@ -215,15 +215,16 @@ def build():
     story.append(Paragraph("Comprehensive Testing Report", s["cover_title"]))
     story.append(
         Paragraph(
-            "Unit · Integration · End-to-end · Golden AI evaluation · Smoke · Regression · "
-            "Security · Accessibility · Contract · Load (k6) · Stress · Spike · Soak · Chaos",
+            "Unit · Component · Endpoints · Whole-app (Asma account) · Integration · End-to-end · "
+            "Golden AI evaluation · Smoke · Regression · Security · Accessibility · Contract · "
+            "Load (k6) · Stress · Spike · Soak · Chaos · Ethics cross-check",
             s["cover_sub"],
         )
     )
     story.append(Spacer(1, 0.6 * cm))
     story.append(Paragraph("Owner: Asma (Testing phase)", s["cover_sub"]))
     story.append(Paragraph("Repository: github.com/R2W1cs/ai_sales_manager", s["cover_sub"]))
-    story.append(Paragraph("Document version: 1.0  ·  Date: 2026-11-03", s["cover_sub"]))
+    story.append(Paragraph("Document version: 1.1  ·  Date: 2026-11-03", s["cover_sub"]))
     story.append(Spacer(1, 1.2 * cm))
     story.append(
         Paragraph(
@@ -305,12 +306,13 @@ def build():
 
     # 3 Functional automated
     story.append(Paragraph("3. Functional automated testing", s["h1"]))
-    story.append(Paragraph("3.1 Unit and controller (Jest)", s["h2"]))
+    story.append(Paragraph("3.1 Component and unit (Jest) — BL-X1", s["h2"]))
     story.append(
         Paragraph(
             "Modules under <font face='Courier'>apps/api/src/**/*.spec.ts</font> cover auth, billing, catalog, "
             "conversations, handoff, media/SSRF, orchestrator, playground, platform-admin series, quota, and more. "
-            "Shared schemas live in <font face='Courier'>packages/shared</font>.",
+            "Shared schemas live in <font face='Courier'>packages/shared</font>. Full matrix: "
+            "<font face='Courier'>docs/04-testing/plans/COMPONENT_ENDPOINT_WHOLE_APP.md</font>.",
             s["body"],
         )
     )
@@ -324,7 +326,29 @@ def build():
             [4 * cm, 3 * cm, 3 * cm, 6.2 * cm],
         )
     )
-    story.append(Paragraph("3.2 Integration and HTTP", s["h2"]))
+    story.append(Paragraph("3.2 Endpoint tests — BL-X2", s["h2"]))
+    story.append(
+        Paragraph(
+            "Controller specs plus W1 / HTTP suites exercise success, validation, auth, and tenancy on health, "
+            "auth, workspace, catalog, knowledge, inbox, orders, customers, AI playground, integrations, "
+            "analytics, and platform-admin routes. Negative fuzz and throttling live in "
+            "<font face='Courier'>apps/api/test/w1-*.spec.ts</font>.",
+            s["body"],
+        )
+    )
+    story.append(
+        table(
+            [
+                ["Group", "Examples", "Focus"],
+                ["Health", "GET /health · /ready", "Public liveness"],
+                ["Inbox / orders", "messages, takeover, confirm-order", "RBAC + tenant scope"],
+                ["AI", "POST playground · agents · feedback", "Permission + safety path"],
+                ["Integrations", "Meta OAuth · webhooks", "Signature + binding"],
+            ],
+            [3.5 * cm, 7 * cm, 5.7 * cm],
+        )
+    )
+    story.append(Paragraph("3.3 Integration and HTTP", s["h2"]))
     story.append(
         Paragraph(
             "Real-Postgres suites exercise purchase handoff concurrency, handoff claim races, and W1 security / "
@@ -332,12 +356,14 @@ def build():
             s["body"],
         )
     )
-    story.append(Paragraph("3.3 End-to-end (Playwright)", s["h2"]))
+    story.append(Paragraph("3.4 Whole-app testing with Asma’s account — BL-X3", s["h2"]))
     story.append(
         Paragraph(
-            "Specs under <font face='Courier'>apps/web/e2e/</font>: authentication, inbox command center, admin "
-            "flows, and the core merchant journey. Chromium, one worker. Wired in GitHub Actions "
-            "(<font face='Courier'>.github/workflows/ci.yml</font>).",
+            "Seeded tester <font face='Courier'>asma@example.com</font> / <font face='Courier'>Password123!</font> "
+            "(Admin on Maison Alyssa). Manual defense walk plus Playwright "
+            "<font face='Courier'>apps/web/e2e/whole-app-asma.spec.ts</font> covers login, inbox, pipeline, "
+            "catalog, playground, and analytics. Other E2E specs: auth, inbox, admin flows, core journey. "
+            "Wired in GitHub Actions (<font face='Courier'>.github/workflows/ci.yml</font>).",
             s["body"],
         )
     )
@@ -383,7 +409,7 @@ def build():
         table(
             [
                 ["Type", "What was checked", "Result"],
-                ["Smoke", "GET /health, web :3000, login seed accounts", "PASS"],
+                ["Smoke", "GET /health, web :3000, demo + asma seed logins", "PASS"],
                 ["Regression", "Full Jest + golden gates on every push", "PASS"],
                 ["Security", "Tenancy isolation, RBAC matrix, SSRF media URL table, throttling", "PASS"],
                 ["Accessibility", "oxlint jsx-a11y rules; operator chart aria-label; no autofocus lint debt", "PASS"],
@@ -553,14 +579,28 @@ def build():
         )
     )
 
-    # 13 Sign-off
-    story.append(Paragraph("13. Sign-off", s["h1"]))
+    # 13 Ethics cross-check
+    story.append(Paragraph("13. Ethics cross-check (with docs/06-ethics)", s["h1"]))
+    story.append(
+        Paragraph(
+            "Aymen’s ethics reflection (<font face='Courier'>docs/06-ethics/</font>) claims categorical commercial "
+            "duties (no invented price, no discount/refund/payment promise, human closes the sale) and virtues of "
+            "responsibility and examined AI use. Testing verifies the empirical side: golden commercial-safety "
+            "violations = 0%, guardrail unit suites, tenancy on every sensitive endpoint, and whole-app walks as "
+            "Asma confirming handoff and playground grounding paths remain reachable.",
+            s["body"],
+        )
+    )
+
+    # 14 Sign-off
+    story.append(Paragraph("14. Sign-off", s["h1"]))
     story.append(
         table(
             [
                 ["Role", "Name", "Decision"],
-                ["Testing owner", "Asma", "Approve for defense"],
-                ["Backend / refactor", "Moataz", "Metrics cross-checked"],
+                ["Testing owner", "Asma", "Approve for defense (components, endpoints, whole-app)"],
+                ["Ethics owner", "Aymen", "Reflection cross-checked against this report"],
+                ["Backend / refactor", "Moataz", "Metrics and endpoint list cross-checked"],
                 ["Frontend", "Aymen", "E2E paths acknowledged"],
                 ["Product / docs", "Rayen", "Report filed under docs/04-testing"],
             ],
@@ -570,7 +610,8 @@ def build():
     story.append(Spacer(1, 0.5 * cm))
     story.append(
         Paragraph(
-            "End of report. Companion files: wave plans, perf scripts, and this PDF under docs/04-testing/.",
+            "End of report. Companion files: wave plans, COMPONENT_ENDPOINT_WHOLE_APP.md, perf scripts, "
+            "docs/06-ethics, and this PDF under docs/04-testing/.",
             s["small"],
         )
     )

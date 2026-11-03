@@ -10,15 +10,15 @@ This repository is the course delivery for Software Engineering (AI-assisted dev
 
 ## Highlights
 
-| Area                 | What you get                                                       |
-| -------------------- | ------------------------------------------------------------------ |
-| Multilingual AI      | Derja-first replies grounded in catalog, stock, and policy tools   |
-| Sales command center | Inbox, pipeline, playground, analytics, settings                   |
-| Channels (MVP)       | Instagram, Messenger, and an embeddable website chat widget        |
-| Human handoff        | Purchase intent → pending order with staff briefing                |
-| Platform ops         | Startup operator console across all businesses                     |
-| Quality              | 1,452 API tests, golden AI evaluation gates, k6 lab profiles       |
-| Delivery artifacts   | Demo video, PPTX + HTML presentation, testing PDF, refactor report |
+| Area                 | What you get                                                             |
+| -------------------- | ------------------------------------------------------------------------ |
+| Multilingual AI      | Derja-first replies grounded in catalog, stock, and policy tools         |
+| Sales command center | Inbox, pipeline, playground, analytics, settings                         |
+| Channels (MVP)       | Instagram, Messenger, and an embeddable website chat widget              |
+| Human handoff        | Purchase intent → pending order with staff briefing                      |
+| Platform ops         | Startup operator console across all businesses                           |
+| Quality              | 1,452 API tests, golden AI evaluation gates, k6 lab profiles             |
+| Delivery artifacts   | Demo video, PPTX + HTML, testing PDF, ethics reflection, refactor report |
 
 ---
 
@@ -167,8 +167,9 @@ packages/shared/          Shared contracts
 docs/01-requirements/     Course requirements
 docs/02-methodology/      Scrum / DoD / contributing
 docs/03-design/           UML, ERD, ADRs, diagram PNGs
-docs/04-testing/          Testing dossier + PDF + k6 scripts
+docs/04-testing/          Testing dossier + PDF + k6 scripts (Asma)
 docs/05-refactoring/      Measured complexity & performance report
+docs/06-ethics/           Ethics reflection + AI usage log link (Aymen)
 docs/demo.mp4             Product walkthrough
 presentation/             Defense deck (PPTX + HTML)
 backlog/                  Task cards and wave board

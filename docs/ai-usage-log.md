@@ -46,6 +46,40 @@ Required by the course. Every meaningful use of an AI tool is recorded here: the
 
 ---
 
+## Entry 002. Ethics reflection and Asma whole-app testing dossier
+
+|                              |                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Date**                     | 2026-11-03                                                                                                                                              |
+| **Member**                   | Aymen (ethics) · Asma (testing matrix) · assisted drafting via Cursor                                                                                   |
+| **Tool**                     | Cursor agent                                                                                                                                            |
+| **Phase**                    | Ethics (BL-X6) and testing expansion (BL-X1 / X2 / X3)                                                                                                  |
+| **Purpose**                  | Fill missing `docs/06-ethics`, expand Asma’s testing matrix for components / endpoints / whole-app, seed `asma@example.com`, regenerate the testing PDF |
+| **Inputs given to the tool** | Course Kant + virtue-ethics chapters, existing testing PDF builder, presentation ownership slides, product backlog BL-X*                                |
+
+**Prompt (summarised)**
+
+> Add the ethics part with the other testing components and endpoints and whole-app testing with Asma’s account to the R2W1cs/ai_sales_manager repository.
+
+**Output flags**
+
+| Artefact                              | Flag   | Notes                                                               |
+| ------------------------------------- | ------ | ------------------------------------------------------------------- |
+| `docs/06-ethics/ethics-reflection.md` | edited | Grounded in course Ch.5–6; team must confirm wording before defense |
+| Component / endpoint / whole-app plan | edited | Asma owns ongoing updates                                           |
+| `whole-app-asma.spec.ts` + seed user  | kept   | Skips if seed missing                                               |
+| Testing PDF v1.1                      | kept   | Regenerated from `build_testing_report_pdf.py`                      |
+
+**Human review still required**
+
+- [ ] Aymen reviews the ethics reflection against the course chapters
+- [ ] Asma runs the whole-app walk as `asma@example.com` on a seeded stack
+- [ ] Moataz confirms the endpoint groups match the Nest controllers
+
+**Risks considered:** AI-drafted ethics prose can sound plausible but misstate Kant/Aristotle. Mitigation: cite course formulas explicitly; tie every claim to a test or code path.
+
+---
+
 ## Entry template
 
 ```

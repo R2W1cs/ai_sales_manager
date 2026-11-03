@@ -13,4 +13,4 @@ Regenerate the PowerPoint after edits:
 python presentation/build_pptx.py
 ```
 
-The deck covers the problem, MVP, architecture, product surfaces, Derja AI behaviour, testing numbers, measured refactoring, the demo video, team ownership, and how to run the app.
+The deck covers the problem, MVP, architecture, product surfaces, Derja AI behaviour, testing numbers (including Asma’s whole-app account), measured refactoring, the demo video, team ownership (`docs/06-ethics` for Aymen), and how to run the app.
