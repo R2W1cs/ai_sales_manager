@@ -4,12 +4,14 @@ Asma’s phase dossier for AI Sales Manager. Automated suites stay next to the c
 
 ## Start here
 
-| Artifact                                                                           | What it is                                                                                                                                                  |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[`AI-Sales-Manager-Testing-Report.pdf`](./AI-Sales-Manager-Testing-Report.pdf)** | Full testing report: unit, integration, E2E, golden AI eval, smoke, regression, security, a11y, contract, **k6 load / stress / spike**, **soak**, and chaos |
-| [`plans/`](./plans/)                                                               | Wave plans W0–W10 plus manual QA checklists                                                                                                                 |
-| [`perf/`](./perf/)                                                                 | k6 scripts used for the performance sections of the PDF                                                                                                     |
-| [`../../tests/README.md`](../../tests/README.md)                                   | Short index of where the automated tests live                                                                                                               |
+| Artifact                                                                           | What it is                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[`AI-Sales-Manager-Testing-Report.pdf`](./AI-Sales-Manager-Testing-Report.pdf)** | Full testing report: unit, **components**, **endpoints**, **whole-app (Asma account)**, integration, E2E, golden AI eval, smoke, regression, security, a11y, contract, **k6**, soak, chaos, ethics cross-check |
+| [`plans/COMPONENT_ENDPOINT_WHOLE_APP.md`](./plans/COMPONENT_ENDPOINT_WHOLE_APP.md) | Asma’s matrix for BL-X1 / BL-X2 / BL-X3 (components, endpoints, whole-app with `asma@example.com`)                                                                                                             |
+| [`plans/`](./plans/)                                                               | Wave plans W0–W10 plus manual QA checklists                                                                                                                                                                    |
+| [`perf/`](./perf/)                                                                 | k6 scripts used for the performance sections of the PDF                                                                                                                                                        |
+| [`../06-ethics/`](../06-ethics/)                                                   | Ethics reflection (Aymen) — commercial duties verified by this dossier                                                                                                                                         |
+| [`../../tests/README.md`](../../tests/README.md)                                   | Short index of where the automated tests live                                                                                                                                                                  |
 
 Regenerate the PDF after edits:
 
@@ -19,23 +21,25 @@ python docs/04-testing/build_testing_report_pdf.py
 
 ## Test types covered
 
-| Type                 | Tool / location                          | Status                              |
-| -------------------- | ---------------------------------------- | ----------------------------------- |
-| Unit / controller    | Jest `apps/api/src/**/*.spec.ts`         | 1,452 passed                        |
-| Shared schemas       | Jest `packages/shared`                   | 39 passed                           |
-| Integration / HTTP   | Jest `apps/api/test/`                    | Included in API suite               |
-| AI golden evaluation | `pnpm eval:golden` (104 scenarios)       | Gates PASS                          |
-| End-to-end UI        | Playwright `apps/web/e2e/`               | CI job                              |
-| Smoke                | `/health`, web `:3000`, seed logins      | PASS                                |
-| Regression           | Husky + GitHub `check:ci`                | PASS                                |
-| Security / tenancy   | `w1-*` suites, SSRF media tests          | PASS                                |
-| Accessibility        | oxlint jsx-a11y + manual checks          | PASS                                |
-| Contract / schema    | Zod + Prisma validate                    | PASS                                |
-| Load                 | k6 `perf/k6-load.js`                     | Lab PASS (p95 &lt; 300 ms @ 50 VUs) |
-| Stress               | k6 `perf/k6-stress.js`                   | Lab documented                      |
-| Spike                | k6 `perf/k6-spike.js`                    | Lab PASS with notes                 |
-| Soak                 | k6 `perf/k6-soak.js` (2 h steady)        | Lab PASS                            |
-| Chaos / resilience   | Redis down, LLM fallback, webhook dedupe | PASS                                |
+| Type                 | Tool / location                                     | Status                              |
+| -------------------- | --------------------------------------------------- | ----------------------------------- |
+| Unit / components    | Jest `apps/api/src/**/*.spec.ts`                    | 1,452 passed                        |
+| Shared schemas       | Jest `packages/shared`                              | 39 passed                           |
+| Endpoint / HTTP      | Controller specs + `apps/api/test/w1-*`             | Included in API suite               |
+| Integration / HTTP   | Jest `apps/api/test/`                               | Included in API suite               |
+| AI golden evaluation | `pnpm eval:golden` (104 scenarios)                  | Gates PASS                          |
+| Whole-app (Asma)     | Playwright `whole-app-asma.spec.ts` + seed account  | Documented + automated              |
+| End-to-end UI        | Playwright `apps/web/e2e/`                          | CI job                              |
+| Smoke                | `/health`, web `:3000`, demo + **asma** seed logins | PASS                                |
+| Regression           | Husky + GitHub `check:ci`                           | PASS                                |
+| Security / tenancy   | `w1-*` suites, SSRF media tests                     | PASS                                |
+| Accessibility        | oxlint jsx-a11y + manual checks                     | PASS                                |
+| Contract / schema    | Zod + Prisma validate                               | PASS                                |
+| Load                 | k6 `perf/k6-load.js`                                | Lab PASS (p95 &lt; 300 ms @ 50 VUs) |
+| Stress               | k6 `perf/k6-stress.js`                              | Lab documented                      |
+| Spike                | k6 `perf/k6-spike.js`                               | Lab PASS with notes                 |
+| Soak                 | k6 `perf/k6-soak.js` (2 h steady)                   | Lab PASS                            |
+| Chaos / resilience   | Redis down, LLM fallback, webhook dedupe            | PASS                                |
 
 Jest and golden-set numbers come from the last full offline pre-push run. k6 / soak / stress / spike figures in the PDF are **course lab profiles** on the local Docker stack (see the evidence policy on page 1 of the PDF).
 
@@ -69,15 +73,17 @@ Refactor slice coverage (not whole-repo): [`../05-refactoring/report.md`](../05-
 
 ## Where the automated tests live
 
-| Location                           | Role                                                |
-| ---------------------------------- | --------------------------------------------------- |
-| `apps/api/src/**/*.spec.ts`        | Unit and controller tests                           |
-| `apps/api/test/golden-eval/`       | Golden dataset and runner                           |
-| `apps/api/test/http/`              | Health, body limit, Fastify adapter                 |
-| `apps/api/test/w1-*.spec.ts`       | Security, throttling, concurrency, fuzz             |
-| `packages/shared/src/**/*.spec.ts` | Shared schemas                                      |
-| `apps/web/e2e/`                    | Playwright journeys                                 |
-| `apps/web/src/**/*.spec.ts`        | Web component specs (Playwright is the CI web gate) |
+| Location                                | Role                                                |
+| --------------------------------------- | --------------------------------------------------- |
+| `apps/api/src/**/*.spec.ts`             | Unit and controller tests                           |
+| `apps/api/test/golden-eval/`            | Golden dataset and runner                           |
+| `apps/api/test/http/`                   | Health, body limit, Fastify adapter                 |
+| `apps/api/test/w1-*.spec.ts`            | Security, throttling, concurrency, fuzz             |
+| `packages/shared/src/**/*.spec.ts`      | Shared schemas                                      |
+| `apps/web/e2e/`                         | Playwright journeys                                 |
+| `apps/web/e2e/whole-app-asma.spec.ts`   | Whole-app smoke as `asma@example.com`               |
+| `apps/web/src/**/*.spec.ts`             | Web component specs (Playwright is the CI web gate) |
+| `plans/COMPONENT_ENDPOINT_WHOLE_APP.md` | BL-X1 / X2 / X3 matrix                              |
 
 ## Wave plans
 
@@ -96,3 +102,4 @@ Refactor slice coverage (not whole-repo): [`../05-refactoring/report.md`](../05-
 | [`plans/W10_OPS_LAUNCH_TESTING.md`](./plans/W10_OPS_LAUNCH_TESTING.md)               | Launch and operations                           |
 | [`plans/MANUAL_QA_PLAN.md`](./plans/MANUAL_QA_PLAN.md)                               | Manual pass across the product                  |
 | [`plans/MANUAL_QA_PLAN_W6.md`](./plans/MANUAL_QA_PLAN_W6.md)                         | Manual pass for orders, stock, and the pipeline |
+| [`plans/COMPONENT_ENDPOINT_WHOLE_APP.md`](./plans/COMPONENT_ENDPOINT_WHOLE_APP.md)   | Components, endpoints, whole-app (Asma account) |
