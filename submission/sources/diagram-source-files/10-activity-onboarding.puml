@@ -1,0 +1,49 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam ActivityBorderColor #1B3A4B
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #E7EEF4
+skinparam ActivityDiamondBorderColor #1B3A4B
+skinparam NoteBackgroundColor #FFF8E8
+skinparam NoteBorderColor #1B3A4B
+
+title Activation gates
+
+start
+:Owner asks to activate;
+if (No priced variant?) then (yes)
+  :Reject. Gate G1;
+  stop
+else (G1 met)
+endif
+if (Delivery, payment, or returns missing?) then (yes)
+  :Reject. Gate G2;
+  stop
+else (G2 met)
+endif
+if (No active channel?) then (yes)
+  :Reject. Gate G3;
+  stop
+else (G3 met)
+endif
+if (Playground and approval trial both unfinished?) then (yes)
+  :Reject. Gate G4;
+  stop
+else (G4 met)
+endif
+if (Handoff not acknowledged?) then (yes)
+  :Reject. Gate G5;
+  stop
+else (G5 met)
+endif
+:Agent is on;
+note right
+  G4 does not change reply mode.
+  A new business starts in approval_required.
+end note
+stop
+@enduml

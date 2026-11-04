@@ -1,0 +1,42 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam ActivityBorderColor #1B3A4B
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #E7EEF4
+skinparam ActivityDiamondBorderColor #1B3A4B
+skinparam NoteBackgroundColor #FFF8E8
+skinparam NoteBorderColor #1B3A4B
+
+title Accept the webhook and show the message
+
+start
+:Receive the Meta webhook;
+if (Signature invalid?) then (yes)
+  :401. Store nothing;
+  stop
+else (valid)
+endif
+:Store the delivery once;
+:Queue mapping;
+:Return 200 before the model;
+note right
+  Target: p95 under 500 ms.
+end note
+if (Account inactive or not a customer message?) then (yes)
+  :Mark processed. No inbox row;
+  stop
+else (customer message)
+endif
+:Resolve the customer;
+:Insert the message once;
+if (New thread?) then (yes)
+  :NEW to AI_ACTIVE;
+else (open)
+endif
+:Show it in the inbox;
+stop
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+skinparam dpi 110
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 12
+skinparam ArrowColor #1B3A4B
+skinparam nodesep 16
+skinparam ranksep 18
+skinparam NodeBorderColor #1B3A4B
+skinparam NodeBackgroundColor #F7FBFA
+skinparam DatabaseBorderColor #1B3A4B
+skinparam DatabaseBackgroundColor #E7F0F2
+
+title Phase 1 runtime in AWS eu-west-3
+
+node "Merchant browser" as Browser
+node "Shopper" as Phone
+cloud "Meta" as Meta
+cloud "LLM APIs" as LLM
+
+node "Cloudflare" as CF
+node "AWS — one account" as AWS {
+  node "Load balancer\nTLS, idle 4000s" as ALB
+  node "Public subnets\nECS tasks, no NAT" as PUB {
+    artifact "frontend\nNext.js :3000" as WEB
+    artifact "backend\nNestJS :3000\nREST + Socket.IO" as API
+    artifact "worker\nBullMQ, no port" as WORK
+  }
+  node "Private subnets" as PRIV {
+    database "RDS PostgreSQL 16\n+ pgvector" as RDS
+    database "ElastiCache Redis 7" as REDIS
+  }
+  storage "S3 private" as S3
+  storage "Secrets Manager" as SM
+}
+
+Browser --> CF : HTTPS app and api
+Phone --> Meta
+Meta --> CF : HTTPS hooks\nDNS only
+CF --> ALB
+ALB --> WEB
+ALB --> API
+API --> RDS
+WORK --> RDS
+API --> REDIS
+WORK --> REDIS
+WORK --> S3
+API --> SM
+WORK --> Meta
+WORK --> LLM
+
+note bottom of PUB
+  Task public addresses are for egress.
+  Inbound is only from the load balancer.
+  Desired count is 1 until load is real.
+  The apex domain is still open (OQ-49).
+end note
+@enduml

@@ -1,0 +1,56 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 14
+skinparam nodesep 16
+skinparam ranksep 22
+skinparam actorBorderColor #1B3A4B
+skinparam actorBackgroundColor #E7F0F2
+skinparam usecaseBorderColor #1B3A4B
+skinparam usecaseBackgroundColor #F4F7F8
+skinparam rectangleBorderColor #1B3A4B
+skinparam rectangleBackgroundColor #F7FBFA
+
+title Sales loop — inbox, replies, and orders
+
+actor "End customer" as Customer
+actor "Meta" as Meta
+actor "Staff" as Staff
+
+rectangle "AI Sales Agent" {
+  together {
+    usecase "Receive a\ncustomer message" as UC1
+    usecase "Verify signature\nand persist" as UC2
+    usecase "Answer from catalog\nand rules" as UC3
+  }
+  together {
+    usecase "Escalate\nto a human" as UC4
+    usecase "Reserve stock and\ncreate a pending order" as UC5
+    usecase "Work the\nprioritised inbox" as UC6
+  }
+  together {
+    usecase "Take over\nand reply" as UC7
+    usecase "Confirm or cancel\nthe order" as UC8
+    usecase "Record offline\npayment" as UC9
+  }
+  UC1 ..> UC2 : <<include>>
+  UC3 ..> UC4 : <<extend>>
+  UC5 ..> UC4 : <<include>>
+  UC8 ..> UC9 : <<extend>>
+}
+
+Customer --> UC1
+Meta --> UC1
+Staff --> UC6
+Staff --> UC7
+Staff --> UC8
+
+note right of UC5
+  No payment gateway.
+  Order is PENDING_CONFIRMATION.
+  Payment stays NOT_COMPLETED
+  until staff record it.
+end note
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam ArrowColor #1B3A4B
+skinparam packageBorderColor #1B3A4B
+skinparam packageBackgroundColor #F7FBFA
+
+title Module dependencies
+
+package "Integrations" as INT
+package "AI" as AI
+package "Orders" as ORD
+package "Conversations" as CONV
+package "Products" as PROD
+package "Customers" as CUST
+package "Businesses" as BIZ
+package "Auth" as AUTH
+package "Notifications" as NOTIF
+package "Analytics" as ANL
+package "Realtime" as RT
+
+INT --> CONV
+AI --> CONV
+AI --> PROD
+AI --> ORD
+AI --> CUST
+AI --> BIZ
+ORD --> PROD
+ORD --> CUST
+ORD ..> CONV : order.confirmed
+CONV --> CUST
+CONV --> BIZ
+CONV --> AUTH
+BIZ --> AUTH
+PROD --> BIZ
+CUST --> BIZ
+NOTIF --> AUTH
+ANL --> CONV
+ANL --> ORD
+RT --> CONV
+
+note bottom of AI
+  AI does not call Meta and does not transition status itself.
+  No module joins another module's tables.
+  Realtime stores nothing. Audit is a platform log.
+end note
+@enduml

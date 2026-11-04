@@ -1,0 +1,97 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam nodesep 28
+skinparam ranksep 28
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1B3A4B
+  HeaderBackgroundColor #1B3A4B
+  HeaderFontColor #FFFFFF
+}
+
+class User <<entity>> {
+  +id : UUID
+  +email : citext
+  +password_hash : text
+  +name : text
+  +email_verified_at : timestamptz
+  --
+  +register()
+  +login()
+}
+
+class RefreshToken <<entity>> {
+  +token_hash : text
+  +family_id : UUID
+  +expires_at : timestamptz
+  +revoked_at : timestamptz
+  --
+  +rotate()
+  +revokeFamily()
+}
+
+class Role <<entity>> {
+  +name : owner | admin | employee
+}
+
+class Business <<aggregate>> {
+  +id : UUID
+  +name : text
+  +industry : text
+  +country : text
+  +default_language : text
+  +timezone : text
+  +currency : text
+  +deleted_at : timestamptz
+}
+
+class BusinessMember <<entity>> {
+  +business_id : UUID
+  +user_id : UUID
+  +role_id : UUID
+  +joined_at : timestamptz
+  +removed_at : timestamptz
+  --
+  +invite()
+  +remove()
+}
+
+class BusinessOnboarding <<entity>> {
+  +channel_connected : boolean
+  +products_imported : boolean
+  +playground_passed : boolean
+  +approval_trial_passed : boolean
+  +handoff_acknowledged : boolean
+  +ai_activated : boolean
+  --
+  +activationReady() : boolean
+}
+
+class BusinessRule <<entity>> {
+  +rule_type : RuleType
+  +payload : jsonb
+  +priority : integer
+  +enabled : boolean
+  +effective_from : timestamptz
+  --
+  +supersede()
+}
+
+User "1" -- "0..*" RefreshToken
+Business "1" -- "1..*" BusinessMember
+User "1" -- "0..*" BusinessMember
+Role "1" -- "0..*" BusinessMember
+Business "1" -- "1" BusinessOnboarding
+Business "1" -- "0..*" BusinessRule
+
+note bottom of BusinessRule
+  Editing a rule inserts a new row.
+  History is kept.
+end note
+@enduml

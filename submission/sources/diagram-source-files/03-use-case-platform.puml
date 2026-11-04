@@ -1,0 +1,56 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 14
+skinparam nodesep 16
+skinparam ranksep 22
+skinparam actorBorderColor #1B3A4B
+skinparam actorBackgroundColor #E7F0F2
+skinparam usecaseBorderColor #1B3A4B
+skinparam usecaseBackgroundColor #F4F7F8
+skinparam rectangleBorderColor #1B3A4B
+skinparam rectangleBackgroundColor #F7FBFA
+
+title Oversight — customers, analytics, and controls
+
+actor "Employee" as Employee
+actor "Admin" as Admin
+actor "Owner" as Owner
+actor "Platform operator" as Operator
+
+rectangle "AI Sales Agent" {
+  together {
+    usecase "Maintain a\ncustomer profile" as UC1
+    usecase "Merge duplicate\ncustomers" as UC2
+    usecase "Read the four KPIs" as UC3
+  }
+  together {
+    usecase "Inspect an AI\ndecision trace" as UC4
+    usecase "Rate an AI answer" as UC5
+    usecase "See AI cost" as UC6
+  }
+  together {
+    usecase "Watch plan usage" as UC7
+    usecase "Manage tenant flags" as UC8
+    usecase "Manage platform\nflags and prompts" as UC9
+  }
+}
+
+Employee --> UC1
+Employee --> UC3
+Employee --> UC5
+Admin --> UC2
+Admin --> UC4
+Admin --> UC8
+Owner --> UC6
+Owner --> UC7
+Operator --> UC9
+
+note bottom of UC6
+  Cost is Owner-only.
+  At the AI cap, autonomous replies pause.
+  Staff can still reply.
+end note
+@enduml

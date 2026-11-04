@@ -1,0 +1,38 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam sequenceMessageAlign center
+hide footbox
+title Takeover and order confirmation
+
+actor "Staff" as S
+participant "API" as API
+participant "Conversations" as Conv
+participant "Orders" as Ord
+queue "Outbound" as Out
+participant "Realtime" as RT
+
+S -> API : Take over
+API -> Conv : HUMAN_REQUIRED\nto HUMAN_HANDLING
+Conv -> RT : inbox status update
+
+S -> API : send a reply
+API --> S : 201 queued
+API -> Out : deliver, do not wait
+Out -> Out : sent, or failed with retry
+
+S -> API : Confirm order
+API -> Ord : status CONFIRMED
+API -> Conv : ORDER_CONFIRMED
+API -> RT : pipeline updates
+
+S -> API : Resume AI
+alt a pending order remains
+  API --> S : 409
+else no pending order
+  API -> Conv : AI_ACTIVE\nai_enabled = true
+end
+@enduml

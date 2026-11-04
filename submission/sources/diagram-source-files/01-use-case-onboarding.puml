@@ -1,0 +1,59 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 14
+skinparam nodesep 16
+skinparam ranksep 22
+skinparam actorBorderColor #1B3A4B
+skinparam actorBackgroundColor #E7F0F2
+skinparam usecaseBorderColor #1B3A4B
+skinparam usecaseBackgroundColor #F4F7F8
+skinparam rectangleBorderColor #1B3A4B
+skinparam rectangleBackgroundColor #F7FBFA
+
+title Preparation — identity, catalog, and channels
+
+actor "Visitor" as Visitor
+actor "Owner" as Owner
+actor "Admin" as Admin
+actor "Employee" as Employee
+
+rectangle "AI Sales Agent" {
+  together {
+    usecase "Register\nand sign in" as UC1
+    usecase "Create the\nbusiness" as UC2
+    usecase "Invite or remove\na teammate" as UC3
+  }
+  together {
+    usecase "Manage products\nand variants" as UC4
+    usecase "Import a\nCSV catalog" as UC5
+    usecase "Set rules and\nknowledge" as UC6
+  }
+  together {
+    usecase "Test the AI\nin the playground" as UC7
+    usecase "Connect Instagram\nand Messenger" as UC8
+    usecase "Activate\nthe agent" as UC9
+  }
+}
+
+Visitor --> UC1
+Employee --> UC1
+Owner --> UC2
+Owner --> UC3
+Admin --> UC3
+Owner --> UC4
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Owner --> UC7
+Admin --> UC7
+Admin --> UC8
+Owner --> UC9
+
+note bottom of UC9
+  Activation is rejected unless gates G1 to G5
+  are already true. Employees cannot activate.
+end note
+@enduml

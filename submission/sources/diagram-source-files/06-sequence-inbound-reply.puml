@@ -1,0 +1,37 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+hide footbox
+title Inbound message to a grounded reply
+
+actor "Customer" as C
+participant "Meta" as M
+participant "API" as API
+database "PostgreSQL" as DB
+queue "Worker" as W
+participant "Realtime" as RT
+
+C -> M : direct message
+M -> API : POST webhook
+API -> API : verify signature
+API -> DB : persist event once
+API --> M : 200
+API -> W : enqueue processing
+
+W -> DB : insert canonical message
+W -> RT : show it in the inbox
+W -> W : lock, classify, call tools
+
+alt handoff or approval
+  W -> DB : store the briefing
+  W -> RT : notify staff
+else auto_send
+  W -> M : send reply
+  M -> C : deliver
+end
+@enduml
