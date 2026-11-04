@@ -1,0 +1,7 @@
+version: 3
+agent:
+  authtoken: ${NGROK_AUTHTOKEN}
+endpoints:
+  - name: web
+    upstream:
+      url: 3000
