@@ -1,0 +1,61 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 12
+skinparam ArrowColor #1B3A4B
+skinparam ComponentBorderColor #1B3A4B
+skinparam ComponentBackgroundColor #F4F7F8
+skinparam PackageBorderColor #1B3A4B
+skinparam PackageBackgroundColor #F7FBFA
+
+title Modular monolith and its clients
+
+package "Browser" {
+  [Sales command center\nNext.js] as Web
+}
+
+package "Backend and worker\n(one NestJS image)" {
+  [Auth] as Auth
+  [Businesses] as Biz
+  [Integrations] as Int
+  [Conversations] as Conv
+  [AI orchestrator] as AI
+  [Orders] as Ord
+  [Products] as Prod
+  [Customers] as Cust
+  [Analytics] as Anl
+  [Notifications] as Notif
+  [Realtime] as RT
+}
+
+database "PostgreSQL\n+ pgvector" as PG
+database "Redis\nqueues and locks" as RD
+cloud "Meta" as Meta
+cloud "LLM providers" as LLM
+
+Web --> Auth : REST
+Web --> RT : WebSocket
+Meta --> Int : signed webhook
+Int --> Conv : canonical message
+Int --> RD : enqueue
+AI --> Prod : search and reserve
+AI --> Biz : effective rules
+AI --> Ord : createPending
+Ord --> Prod : commit or release
+Ord ..> Conv : order.confirmed
+Conv --> Notif : state changed
+RT ..> Conv : translate events
+Anl ..> Conv : rollups
+Auth --> PG
+Conv --> PG
+AI --> LLM
+Int --> Meta : outbound
+
+note bottom of AI
+  The orchestrator returns an intended transition.
+  It does not write conversation status and it does not call Meta.
+  The browser does not open PostgreSQL or Redis.
+end note
+@enduml

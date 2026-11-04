@@ -1,0 +1,79 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam nodesep 40
+skinparam ranksep 36
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1B3A4B
+  HeaderBackgroundColor #1B3A4B
+  HeaderFontColor #FFFFFF
+}
+
+class Business <<aggregate>> {
+  +id : UUID
+}
+
+class ProductCategory <<entity>> {
+  +name : text
+  +parent_id : UUID
+  +sort_order : integer
+}
+
+class Product <<entity>> {
+  +name : text
+  +description : text
+  +status : draft | active | archived
+  +currency : text
+  --
+  +archive()
+}
+
+class ProductVariant <<entity>> {
+  +sku : text
+  +attributes : jsonb
+  +price : numeric(12,3)
+  +discount_price : numeric(12,3)
+  +stock : integer
+  +is_default : boolean
+  --
+  +availableStock() : integer
+}
+
+class ProductImage <<entity>> {
+  +s3_key : text
+  +alt_text : text
+  +sort_order : integer
+  +is_primary : boolean
+}
+
+class KnowledgeDocument <<entity>> {
+  +title : text
+  +source_type : text
+  +content_hash : text
+  +indexing_status : IndexingStatus
+  --
+  +reindex()
+}
+
+Business "1" -down- "0..*" ProductCategory : categories >
+Business "1" -down- "0..*" Product : products >
+Business "1" -right- "0..*" KnowledgeDocument : knowledge >
+ProductCategory "0..1" -down- "0..*" Product : classifies >
+Product "1" -down- "1..*" ProductVariant : variants >
+Product "1" -down- "0..*" ProductImage : images >
+
+note bottom of ProductVariant
+  Price and stock live only on the variant.
+  available_stock = stock minus active,
+  unexpired reservations.
+  Search returns variants, not an unpriced parent.
+  parent_id is the category tree.
+  A variant may have its own images.
+end note
+@enduml

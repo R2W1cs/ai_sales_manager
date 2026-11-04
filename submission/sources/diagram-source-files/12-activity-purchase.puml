@@ -1,0 +1,35 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam ActivityBorderColor #1B3A4B
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #E7EEF4
+skinparam ActivityDiamondBorderColor #1B3A4B
+
+title Purchase collection
+
+start
+:Confirm the variant;
+:Lock the variant row and check stock;
+if (Enough stock?) then (yes)
+  :Active reservation, 30 min;
+else (short)
+  :No order. Offer another variant\nor escalate inventory_conflict;
+  stop
+endif
+:Status becomes ORDER_INTENT_DETECTED;
+:Collect one field per turn\n(name, phone, address, quantity);
+:Check stock again;
+if (Still available?) then (yes)
+  :Pending order, payment NOT_COMPLETED;
+  :Reservation becomes committed;
+  :HUMAN_REQUIRED, AI off, notify staff;
+  :Tell the customer a person will confirm;
+else (short)
+  :No order. Offer another variant\nor escalate inventory_conflict;
+endif
+stop
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam sequenceMessageAlign center
+hide footbox
+title Purchase collection and human handoff
+
+actor "Customer" as C
+participant "Orchestrator" as AI
+participant "Inventory" as Inv
+participant "Orders" as Ord
+participant "Conversations" as Conv
+actor "Staff" as S
+
+C -> AI : buying intent for a variant
+AI -> Inv : check and reserve\n(row lock, 30 min)
+
+alt not enough stock
+  AI -> Conv : inventory_conflict\nno order
+else reserved
+  AI -> Conv : ORDER_INTENT_DETECTED
+  loop one field per turn
+    AI --> C : name, phone, address, or quantity
+    C -> AI : next field
+  end
+  AI -> Inv : re-check stock
+  AI -> Ord : createPending()
+  Ord -> Inv : reservation becomes committed
+  AI -> Conv : purchase_handoff\nai_enabled = false
+  AI -> S : ORDER_REQUEST
+  AI --> C : a teammate will confirm
+end
+@enduml

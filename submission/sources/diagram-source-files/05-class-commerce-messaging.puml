@@ -1,0 +1,98 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam nodesep 46
+skinparam ranksep 40
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1B3A4B
+  HeaderBackgroundColor #1B3A4B
+  HeaderFontColor #FFFFFF
+}
+
+class Business <<aggregate>> {
+  +id : UUID
+}
+
+class Customer <<aggregate>> {
+  +business_id : UUID
+  +phone : text
+  +lifecycle_stage : LifecycleStage
+  +merged_into_customer_id : UUID
+  +erased_at : timestamptz
+  --
+  +mergeInto(target)
+  +erase()
+}
+
+class CustomerIdentity <<entity>> {
+  +platform : Channel
+  +platform_user_id : text
+  +phone_number : text
+  +verified_at : timestamptz
+}
+
+class ChannelAccount <<entity>> {
+  +channel : instagram | messenger | whatsapp
+  +status : ChannelAccountStatus
+  +credentials_ref : text
+  +token_expires_at : timestamptz
+  --
+  +connect()
+  +disconnect()
+}
+
+class Conversation <<aggregate>> {
+  +source : ConversationSource
+  +status : ConversationStatus
+  +ai_enabled : boolean
+  +handoff_priority : critical | high | normal
+  +lead_score : integer
+  +is_test : boolean
+  --
+  +transition(to, reason)
+  +assign(user)
+}
+
+class Message <<entity>> {
+  +direction : inbound | outbound
+  +sender_type : customer | ai | human | system
+  +delivery_status : MessageDeliveryStatus
+  +idempotency_key : text
+}
+
+class AiAgent <<entity>> {
+  +name : text
+  +personality : text
+  +language : text
+  +tone : text
+  +enabled : boolean
+}
+
+class AiSettings <<entity>> {
+  +reply_mode : auto_send | approval_required | draft_only
+  +model_primary : text
+  +model_fallback : text
+  +reservation_ttl_minutes : integer
+}
+
+Business "1" -down- "0..*" Customer : customers >
+Business "1" -down- "0..*" ChannelAccount : channels >
+Business "1" -right- "1" AiAgent : agent >
+Business "1" -right- "1" AiSettings : settings >
+Customer "1" -down- "1..*" CustomerIdentity : identities >
+Customer "1" -down- "0..*" Conversation : threads >
+ChannelAccount "1" -down- "0..*" Conversation : carries >
+Conversation "1" -down- "0..*" Message : transcript >
+
+note bottom of ChannelAccount
+  The token is a Secrets Manager reference.
+  WhatsApp is in the enum and is not connectable in MVP.
+  One agent and one settings row per business.
+end note
+@enduml

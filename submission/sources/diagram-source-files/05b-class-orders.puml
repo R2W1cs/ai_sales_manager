@@ -1,0 +1,81 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam classFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam nodesep 50
+skinparam ranksep 42
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1B3A4B
+  HeaderBackgroundColor #1B3A4B
+  HeaderFontColor #FFFFFF
+}
+
+class Customer <<aggregate>> {
+  +id : UUID
+}
+
+class Conversation <<aggregate>> {
+  +id : UUID
+  +status : ConversationStatus
+}
+
+class ProductVariant <<entity>> {
+  +id : UUID
+  +sku : text
+  +price : numeric(12,3)
+  +stock : integer
+}
+
+class Order <<aggregate>> {
+  +status : OrderStatus
+  +payment_status : NOT_COMPLETED | COMPLETED
+  +currency : text
+  +subtotal : numeric(12,3)
+  +delivery_fee : numeric(12,3)
+  +total : numeric(12,3)
+  +created_by_type : ai | user
+  +is_test : boolean
+  --
+  +createPending()
+  +confirm()
+  +cancel(reason)
+  +recordPayment()
+}
+
+class OrderItem <<entity>> {
+  +quantity : integer
+  +unit_price : numeric(12,3)
+  +name_snapshot : text
+  +sku_snapshot : text
+}
+
+class StockReservation <<entity>> {
+  +quantity : integer
+  +status : active | committed | released | expired
+  +expires_at : timestamptz
+  --
+  +reserve()
+  +commit()
+  +release()
+}
+
+Customer "1" -down- "0..*" Order : places >
+Conversation "1" -down- "0..*" Order : may produce >
+Order "1" -down- "1..*" OrderItem : lines >
+ProductVariant "1" -down- "0..*" StockReservation : holds >
+Conversation "0..1" -down- "0..*" StockReservation : during collection >
+
+note bottom of StockReservation
+  Active during collection.
+  Committed when the pending order is created.
+  Only active, unexpired rows reduce available_stock.
+  Each order line snapshots one variant.
+  The committed reservation points at the order.
+  conversation_id and order_id are pointers, not cross-module joins.
+end note
+@enduml

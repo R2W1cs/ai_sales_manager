@@ -1,0 +1,43 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 14
+skinparam ArrowColor #1B3A4B
+skinparam ActivityBorderColor #1B3A4B
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #E7EEF4
+skinparam ActivityDiamondBorderColor #1B3A4B
+skinparam NoteBackgroundColor #FFF8E8
+skinparam NoteBorderColor #1B3A4B
+
+title Decide whether the model may answer
+
+start
+if (AI off, over the cap, or mode blocks the turn?) then (yes)
+  :Keep the message. Do not call the model;
+  stop
+else (model may run)
+endif
+:Take the conversation lock;
+if (Lock already held?) then (yes)
+  :Delay and retry. Do not drop the job;
+  stop
+else (acquired)
+endif
+:Classify, then call catalog, stock, and rules;
+if (A human-required trigger matches?) then (yes)
+  :Save the briefing first;
+  :HUMAN_REQUIRED and ai_enabled false;
+  :Notify staff by priority;
+  stop
+else (no trigger)
+endif
+if (Reply mode?) then (auto_send)
+  :Queue the reply and send it;
+else (approval or draft)
+  :Store a draft. Staff must send it;
+endif
+:Release the lock only if the token matches;
+stop
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+skinparam dpi 120
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam sequenceMessageAlign center
+hide footbox
+title Connect Instagram and Messenger
+
+actor "Owner or Admin" as Owner
+participant "UI" as UI
+participant "Integrations" as Int
+participant "Meta" as Meta
+database "PostgreSQL" as DB
+participant "Secrets" as Sec
+
+Owner -> UI : start connection
+UI -> Int : begin OAuth
+Int -> Int : store CSRF state in Redis
+Int --> UI : redirect
+Owner -> Meta : grant Page access
+Meta -> Int : authorization code
+Int -> Meta : exchange the code
+Int -> Sec : store the token by reference
+Int -> DB : channel account becomes active
+Int --> UI : connection is healthy
+
+alt token later revoked
+  Int -> DB : status = error
+  Int --> Owner : notify Owner and Admin
+end
+@enduml

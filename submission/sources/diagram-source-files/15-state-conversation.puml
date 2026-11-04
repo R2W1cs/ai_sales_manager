@@ -1,0 +1,29 @@
+@startuml
+skinparam dpi 130
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Noto Sans
+skinparam defaultFontSize 13
+skinparam ArrowColor #1B3A4B
+skinparam StateBorderColor #1B3A4B
+skinparam StateBackgroundColor #F4F7F8
+left to right direction
+
+title Conversation status
+
+[*] --> NEW
+NEW --> AI_ACTIVE : first inbound
+AI_ACTIVE --> ORDER_INTENT_DETECTED : collection starts
+ORDER_INTENT_DETECTED --> HUMAN_REQUIRED : pending order\nor exception
+AI_ACTIVE --> HUMAN_REQUIRED : exception or timeout
+HUMAN_REQUIRED --> HUMAN_HANDLING : take over or reply
+HUMAN_HANDLING --> ORDER_CONFIRMED : staff confirms
+HUMAN_REQUIRED --> ORDER_CONFIRMED : confirm without chat
+HUMAN_HANDLING --> AI_ACTIVE : resume, no pending order
+HUMAN_REQUIRED --> AI_ACTIVE : resume, no pending order
+ORDER_CONFIRMED --> RESOLVED : close
+AI_ACTIVE --> RESOLVED : close or 30-day auto-close
+HUMAN_REQUIRED --> RESOLVED : close, no pending order
+HUMAN_HANDLING --> RESOLVED : close, no pending order
+ORDER_INTENT_DETECTED --> RESOLVED : close, no pending order
+@enduml
