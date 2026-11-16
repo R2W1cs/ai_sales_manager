@@ -79,6 +79,12 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
 
+      - name: Enable pgvector extension
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          PGPASSWORD=password psql -h localhost -U postgres -d ai_sales -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+
       - name: Push database schema
         run: pnpm db:push
 
