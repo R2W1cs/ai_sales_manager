@@ -9,6 +9,8 @@
     "./web": "./src/web.ts"
   },
   "scripts": {
+    "build": "tsc -b",
+    "check-types": "tsc -b --pretty false",
     "test": "jest"
   },
   "dependencies": {

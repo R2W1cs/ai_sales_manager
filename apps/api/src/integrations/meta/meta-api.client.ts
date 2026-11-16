@@ -88,7 +88,7 @@ export class MetaApiClient {
   }
 
   /**
-   * WhatsApp Cloud API outbound dispatcher.
+   * WhatsApp Cloud API outbound dispatcher (session text/image or approved templates).
    */
   async sendWhatsAppMessage(input: CanonicalOutbound, token: string): Promise<SendResult> {
     const phoneNumberId = input.pageId ?? env.META_WA_PHONE_NUMBER_ID ?? "me";
@@ -102,9 +102,29 @@ export class MetaApiClient {
 
     const imageUrl = input.imageUrl || input.imageS3Key;
 
-    if (input.text) {
+    if (input.templateName) {
+      const components: Record<string, unknown>[] = [];
+      if (input.templateBodyParams && input.templateBodyParams.length > 0) {
+        components.push({
+          type: "body",
+          parameters: input.templateBodyParams.map((text) => ({ type: "text", text })),
+        });
+      }
+      bodyPayload.type = "template";
+      bodyPayload.template = {
+        name: input.templateName,
+        language: { code: input.templateLanguage ?? "fr" },
+        ...(components.length > 0 ? { components } : {}),
+      };
+    } else if (input.text) {
       bodyPayload.type = "text";
-      bodyPayload.text = { body: input.text };
+      bodyPayload.text = {
+        body: input.text,
+        ...(input.externalReplyToId ? { preview_url: false } : { preview_url: true }),
+      };
+      if (input.externalReplyToId) {
+        bodyPayload.context = { message_id: input.externalReplyToId };
+      }
     } else if (imageUrl) {
       bodyPayload.type = "image";
       bodyPayload.image = { link: imageUrl };
@@ -112,7 +132,7 @@ export class MetaApiClient {
       return {
         ok: false,
         retryable: false,
-        message: "WhatsApp payload has neither text nor media link",
+        message: "WhatsApp payload has neither text, template, nor media link",
       };
     }
 

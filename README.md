@@ -4,21 +4,23 @@
 
 Merchants load products and business rules. An assistant answers customers in French, Modern Standard Arabic, Tunisian Arabic (Derja), and Arabizi — using only that shop’s data. When a buyer is ready to purchase, the conversation is handed to a human as a pending order. Staff work a triage inbox, confirm orders, and track four operating KPIs.
 
-This repository is the course delivery for Software Engineering (AI-assisted development): a runnable monorepo, full documentation, measured refactoring, a testing dossier with a PDF report, a defense presentation, and a product demo video.
+**Product status:** managed pilots for fashion/beauty shops (Instagram, Messenger, website widget; WhatsApp Cloud API behind `WHATSAPP_ENABLED`). Human confirms COD — no payment gateway until conversion is proven.
+
+Academic delivery artifacts (docs, demo video, defense deck, testing PDF) remain in-repo for the Software Engineering course package; the live product path is `docs/30_execution/PILOT_PLAYBOOK.md` + `docker-compose.prod.yml`.
 
 ---
 
 ## Highlights
 
-| Area                 | What you get                                                             |
-| -------------------- | ------------------------------------------------------------------------ |
-| Multilingual AI      | Derja-first replies grounded in catalog, stock, and policy tools         |
-| Sales command center | Inbox, pipeline, playground, analytics, settings                         |
-| Channels (MVP)       | Instagram, Messenger, and an embeddable website chat widget              |
-| Human handoff        | Purchase intent → pending order with staff briefing                      |
-| Platform ops         | Startup operator console across all businesses                           |
-| Quality              | 1,452 API tests, golden AI evaluation gates, k6 lab profiles             |
-| Delivery artifacts   | Demo video, PPTX + HTML, testing PDF, ethics reflection, refactor report |
+| Area                 | What you get                                                               |
+| -------------------- | -------------------------------------------------------------------------- |
+| Multilingual AI      | Derja-first replies grounded in catalog, stock, and policy tools           |
+| Sales command center | Inbox, pipeline, playground, analytics, settings                           |
+| Channels             | Instagram, Messenger, website widget; WhatsApp Cloud API (feature-flagged) |
+| Human handoff        | Purchase intent → pending order with staff briefing                        |
+| Platform ops         | Startup operator console across all businesses                             |
+| Quality              | 1,452 API tests, golden AI evaluation gates, k6 lab profiles               |
+| Delivery artifacts   | Demo video, PPTX + HTML, testing PDF, ethics reflection, refactor report   |
 
 ---
 
@@ -50,6 +52,17 @@ LLM routing: Groq → OrcaRouter → Vercel AI Gateway
 **MVP channels:** Instagram and Messenger. WhatsApp is stubbed. Fashion ecommerce is the first vertical.
 
 ---
+
+## Production (VPS pilots)
+
+```bash
+cp .env.production.example .env.production
+# fill secrets, APP_DOMAIN, API_DOMAIN, Meta + LLM keys
+chmod +x scripts/deploy-vps.sh
+./scripts/deploy-vps.sh
+```
+
+See `docs/30_execution/META_LIVE_LOOP.md` (Meta webhooks + purchase handoff) and `docs/30_execution/PILOT_PLAYBOOK.md` (Ben Arous / Ezzahra outreach).
 
 ## Getting started
 

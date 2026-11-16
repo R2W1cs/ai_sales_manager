@@ -1,5 +1,9 @@
 # Documentation & architecture changelog
 
+## 2026-11-16 (Real-product launch path)
+
+**Added — `ADR-026`:** WhatsApp Cloud API for pilots (official Meta only; supersedes ADR-009 timing). **Added — `ADR-027`:** defer Shopify/Woo sync and payment gateways until handoff→confirm is proven. **Changed —** `meta-whatsapp.adapter` + `meta-api.client` implement Cloud API text/image/template send; stub delegates when `WHATSAPP_ENABLED=true`. **Added —** `docker-compose.prod.yml`, `deploy/Caddyfile`, `.env.production.example`, `scripts/deploy-vps.sh`, pilot + Meta live-loop docs, webhook/handoff smoke scripts. **Changed —** CI uses pinned pnpm 11.17 standalone; product landing at `/`; README product framing.
+
 ## 2026-09-04 (Public landing page scope & backlog addition)
 
 **Added — `01_PRODUCT_REQUIREMENTS.md` (FR-AUTH-013):** Public commercial landing page requirement at `/` presenting value proposition, bilingual (Tunisian Derja / French) chat qualification preview, 4-KPI ROI, and navigation to `/login` and `/register`.

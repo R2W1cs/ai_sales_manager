@@ -1,11 +1,11 @@
 ---
 id: phase-2-catalog-whatsapp
-status: blocked
+status: partial
 ---
 
 # Phase 2 — Catalog connectivity + WhatsApp
 
-**Blocked.** Do not split into cards until Phase 1 exit (`04` §4.4) and Phase 2 specs exist (`13` / `16` / `01` for this phase). Do not invent Shopify, Woo, or WhatsApp Cloud API `T-*` here.
+**Partial.** WhatsApp Cloud API is **unblocked for pilots** (`ADR-026`). Shopify/WooCommerce sync and payment gateways remain **blocked** (`ADR-027`) until handoff → confirmed conversion is proven.
 
 ## Goal
 
@@ -13,7 +13,8 @@ Remove the two post-launch blockers: catalog load and WhatsApp-first merchants (
 
 ## Headline capability
 
-Shopify/Woo sync, CSV hardening, **WhatsApp Cloud API** (`04` §3).
+- **Active now:** WhatsApp Cloud API (official Meta only) behind `WHATSAPP_ENABLED`
+- **Still deferred:** Shopify/Woo sync, Sheets import, payment gateways
 
 ## Exit signal
 
@@ -21,8 +22,15 @@ Time-to-first-AI-reply < 1 day; ≥50% merchants connect a catalog source; Whats
 
 ## Entry
 
-Phase 1 launch gate (`03` §10) plus `04` §4.4. WhatsApp work starts when `04` §5.4 is true. Reordering requires an ADR in `40`.
+- WhatsApp: pilot demand or founder pull-forward (`ADR-026`) — **met for implementation**
+- Catalog sync platforms: Phase 1 launch gate + CSV pain evidence (`ADR-027`) — **not met**
 
 ## Cards
 
-None until unblocked. MVP already ships the WhatsApp **adapter stub** (`T-INT-06`) and `whatsapp_enabled` false — do not duplicate that work here.
+WhatsApp implementation lands in:
+
+- `apps/api/src/integrations/adapters/meta-whatsapp.adapter.ts`
+- `apps/api/src/integrations/meta/meta-api.client.ts`
+- Feature gate: `WHATSAPP_ENABLED` + existing `whatsapp` channel enum
+
+Do **not** invent Stripe/Konnect/D17 or unofficial WhatsApp clients. Do **not** invent Shopify/Woo `T-*` until `ADR-027` revisit triggers fire.
