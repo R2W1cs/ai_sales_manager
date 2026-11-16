@@ -239,12 +239,12 @@ export function parseMetaMessagingEvents(
 
 /**
  * 16 §6 Meta Graph API outbound dispatcher with 10s timeout and transient error detection.
- * Delegates to unified MetaApiClient.
+ * Delegates to unified MetaApiClient (Instagram, Messenger, WhatsApp Cloud API).
  */
 export async function sendMetaGraphMessage(
   input: CanonicalOutbound,
   token: string,
-  channel: "instagram" | "messenger",
+  channel: "instagram" | "messenger" | "whatsapp",
 ): Promise<SendResult> {
   const client = new MetaApiClient();
   return client.sendMessage({ ...input, channel }, token);

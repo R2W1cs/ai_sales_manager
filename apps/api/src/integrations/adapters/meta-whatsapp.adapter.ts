@@ -11,16 +11,20 @@ import type {
 import { env } from "@app/shared/server";
 
 import { logger } from "../../lib/logger";
-import { parseMetaTimestamp } from "./meta-common";
+import { parseMetaTimestamp, sendMetaGraphMessage } from "./meta-common";
 
 @Injectable()
 export class MetaWhatsappAdapter implements ChannelAdapter {
   readonly channel = "whatsapp" as const;
 
   /**
-   * 16 §7 Outbound rate limiter: 0 / n/a until flag in MVP (Phase 2 Cloud API)
+   * WhatsApp Cloud API outbound rate limiter (conservative default when enabled).
    */
-  readonly outboundLimiter = { max: 0, durationMs: 1000 };
+  get outboundLimiter() {
+    return env.WHATSAPP_ENABLED === "true"
+      ? { max: 80, durationMs: 1000 }
+      : { max: 0, durationMs: 1000 };
+  }
 
   /**
    * 16 §3 / §8 Inbound Normalization for WhatsApp Cloud API (stub / no-op map when WHATSAPP_ENABLED is false)
@@ -242,25 +246,19 @@ export class MetaWhatsappAdapter implements ChannelAdapter {
   }
 
   /**
-   * 16 §8 WhatsApp stub in MVP
+   * Official WhatsApp Cloud API outbound (gated by WHATSAPP_ENABLED).
    */
-  send(_input: CanonicalOutbound, _token: string): Promise<SendResult> {
+  send(input: CanonicalOutbound, token: string): Promise<SendResult> {
     const whatsappEnabled = env.WHATSAPP_ENABLED === "true";
     if (!whatsappEnabled) {
       return Promise.resolve({
         ok: false,
         retryable: false,
         providerCode: "feature_disabled",
-        message: "feature_disabled: WhatsApp Cloud API outbound is disabled in MVP",
+        message: "feature_disabled: WhatsApp Cloud API outbound is disabled",
       });
     }
 
-    // Phase 2 implementation stub
-    return Promise.resolve({
-      ok: false,
-      retryable: false,
-      providerCode: "not_implemented",
-      message: "WhatsApp outbound not yet implemented",
-    });
+    return sendMetaGraphMessage(input, token, "whatsapp");
   }
 }

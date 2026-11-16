@@ -105,23 +105,56 @@ describe("WhatsApp integration adapter stub & feature gate (T-INT-06)", () => {
     expect(outboundResult.message).toContain("feature_disabled");
   });
 
-  it("should return not_implemented when WHATSAPP_ENABLED is true in Phase 1 stub", async () => {
+  it("should delegate to Cloud API when WHATSAPP_ENABLED is true", async () => {
     process.env.WHATSAPP_ENABLED = "true";
 
-    const inbound = adapter.mapInbound({ entry: [] });
-    expect(Array.isArray(inbound)).toBe(true);
+    const inbound = adapter.mapInbound({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          id: "WABA_1",
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: "PHONE_1" },
+                messages: [
+                  {
+                    from: "21650000000",
+                    id: "wamid.TEST",
+                    timestamp: "1700000000",
+                    type: "text",
+                    text: { body: "salem" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expect(inbound).toHaveLength(1);
+    expect(inbound[0]?.text).toBe("salem");
+
+    const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{ id: "wamid.OUT" }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
 
     const outboundResult = await adapter.send(
       {
         channel: "whatsapp",
-        recipientPlatformUserId: "user_456",
+        recipientPlatformUserId: "21650000000",
         text: "Hello",
+        pageId: "PHONE_1",
       },
       "dummy_token",
     );
 
-    expect(outboundResult.ok).toBe(false);
-    expect(outboundResult.retryable).toBe(false);
-    expect(outboundResult.providerCode).toBe("not_implemented");
+    expect(outboundResult.ok).toBe(true);
+    expect(outboundResult.externalMessageId).toBe("wamid.OUT");
+    expect(fetchMock).toHaveBeenCalled();
+    fetchMock.mockRestore();
   });
 });

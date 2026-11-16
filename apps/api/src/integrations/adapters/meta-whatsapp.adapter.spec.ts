@@ -246,5 +246,65 @@ describe("MetaWhatsappAdapter (T-INT-03)", () => {
       expect(result.providerCode).toBe("feature_disabled");
       expect(result.retryable).toBe(false);
     });
+
+    it("Sends Cloud API text when WHATSAPP_ENABLED is true", async () => {
+      process.env.WHATSAPP_ENABLED = "true";
+      const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ messages: [{ id: "wamid.SENT_1" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const result = await adapter.send(
+        {
+          channel: "whatsapp",
+          recipientPlatformUserId: "15559876543",
+          text: "Test outbound",
+          pageId: "PHONE_ID_999",
+        },
+        "token_123",
+      );
+
+      expect(result.ok).toBe(true);
+      expect(result.externalMessageId).toBe("wamid.SENT_1");
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/PHONE_ID_999/messages"),
+        expect.objectContaining({ method: "POST" }),
+      );
+      fetchMock.mockRestore();
+    });
+
+    it("Sends approved template when templateName is set", async () => {
+      process.env.WHATSAPP_ENABLED = "true";
+      const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ messages: [{ id: "wamid.TPL_1" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const result = await adapter.send(
+        {
+          channel: "whatsapp",
+          recipientPlatformUserId: "15559876543",
+          pageId: "PHONE_ID_999",
+          templateName: "order_confirmation",
+          templateLanguage: "fr",
+          templateBodyParams: ["Amina", "ORD-12"],
+        },
+        "token_123",
+      );
+
+      expect(result.ok).toBe(true);
+      const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+      const body = JSON.parse(String(init.body)) as {
+        type: string;
+        template: { name: string };
+      };
+      expect(body.type).toBe("template");
+      expect(body.template.name).toBe("order_confirmation");
+      fetchMock.mockRestore();
+    });
   });
 });

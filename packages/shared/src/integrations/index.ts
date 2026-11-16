@@ -66,6 +66,12 @@ export const CanonicalOutboundSchema = z.object({
   imageUrl: z.string().optional(),
   externalReplyToId: z.string().optional(),
   pageId: z.string().optional(),
+  /** WhatsApp Cloud API template name (outside 24h customer-care window). */
+  templateName: z.string().optional(),
+  /** WhatsApp template language code, e.g. `fr` or `ar`. Defaults to `fr`. */
+  templateLanguage: z.string().optional(),
+  /** Ordered body parameter strings for the template. */
+  templateBodyParams: z.array(z.string()).optional(),
 });
 export type CanonicalOutbound = z.infer<typeof CanonicalOutboundSchema>;
 

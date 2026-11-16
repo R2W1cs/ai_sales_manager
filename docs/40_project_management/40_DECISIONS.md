@@ -67,33 +67,35 @@ Numbers are zero-padded, never reused. Status is `Accepted` | `Superseded by ADR
 
 ## 4. Index
 
-| ID        | Decision                                                                      | Canonical                            | Status   |
-| --------- | ----------------------------------------------------------------------------- | ------------------------------------ | -------- |
-| `ADR-001` | Grounding over generation                                                     | `00` §5.1, `05`                      | Accepted |
-| `ADR-002` | Explicit conversation state machine                                           | `00` §5.2, `14`                      | Accepted |
-| `ADR-003` | Human closes the sale; no payment provider in MVP                             | `00` §5.3, `06`, `03`                | Accepted |
-| `ADR-004` | All fifteen `HUMAN_REQUIRED` triggers in MVP                                  | `00` §5.4, `06`                      | Accepted |
-| `ADR-005` | Multi-tenant from line one; RLS **off**                                       | `00` §5.5, `17`                      | Accepted |
-| `ADR-006` | Modular monolith, not microservices                                           | `00` §5.6, `10`                      | Accepted |
-| `ADR-007` | AI observability is a product feature                                         | `00` §5.7, `15`                      | Accepted |
-| `ADR-008` | Triage over transcript (sales command center)                                 | `00` §5.8, `22`                      | Accepted |
-| `ADR-009` | Official Meta APIs only; WhatsApp Cloud API = Phase 2 (Option C)              | `00` §5.9, `16`                      | Accepted |
-| `ADR-010` | Async at the channel boundary (persist, 200, then AI job)                     | `00` §5.10, `16`                     | Accepted |
-| `ADR-011` | Context-rich, not clutter-rich                                                | `00` §5.11, `20`, `21`               | Accepted |
-| `ADR-012` | HTTP API is REST `/api/v1`                                                    | `13`, Brain Dump `# Final Decisions` | Accepted |
-| `ADR-013` | PostgreSQL 16 + pgvector; no second vector DB                                 | `11`, `12`                           | Accepted |
-| `ADR-014` | Redis + BullMQ; Socket.IO + Redis adapter; REST remains SoT                   | `11`, `14`, `13` §14                 | Accepted |
-| `ADR-015` | AWS ECS Fargate ×3 from day one; Compose locally                              | `18`                                 | Accepted |
-| `ADR-016` | Nest 11 + Next 16 + Prisma 7 + pnpm; BFS pins in `11` §2.1                    | `11`                                 | Accepted |
-| `ADR-017` | shadcn **Base UI** (not Radix); no Storybook / MSW / Zustand                  | `11`, `20`, `23`                     | Accepted |
-| `ADR-018` | Exact model ids; golden set on any change                                     | `11` §9                              | Accepted |
-| `ADR-019` | RAG in Postgres; knowledge graph is post-MVP                                  | `15`, Brain Dump `# Final Decisions` | Accepted |
-| `ADR-020` | New businesses default `approval_required`; G4 does **not** flip `reply_mode` | `01` FR-AI-011, `22`                 | Accepted |
-| `ADR-021` | Exactly four analytics KPIs; no fifth tile                                    | `01` §15                             | Accepted |
-| `ADR-022` | `GET /usage` Owner-only; Employee has no playground                           | `13`, `17`, `23`                     | Accepted |
-| `ADR-023` | Unofficial WhatsApp automation prohibited at every phase                      | `16`, FR-INT-032                     | Accepted |
-| `ADR-024` | No NAT Gateway, no Kubernetes, no Vercel in MVP                               | `18`                                 | Accepted |
-| `ADR-025` | Nest HTTP runs on the **Fastify** adapter (supersedes the Fastify reject)     | `11` §5.1, §5.3                      | Accepted |
+| ID        | Decision                                                                      | Canonical                            | Status                         |
+| --------- | ----------------------------------------------------------------------------- | ------------------------------------ | ------------------------------ |
+| `ADR-001` | Grounding over generation                                                     | `00` §5.1, `05`                      | Accepted                       |
+| `ADR-002` | Explicit conversation state machine                                           | `00` §5.2, `14`                      | Accepted                       |
+| `ADR-003` | Human closes the sale; no payment provider in MVP                             | `00` §5.3, `06`, `03`                | Accepted                       |
+| `ADR-004` | All fifteen `HUMAN_REQUIRED` triggers in MVP                                  | `00` §5.4, `06`                      | Accepted                       |
+| `ADR-005` | Multi-tenant from line one; RLS **off**                                       | `00` §5.5, `17`                      | Accepted                       |
+| `ADR-006` | Modular monolith, not microservices                                           | `00` §5.6, `10`                      | Accepted                       |
+| `ADR-007` | AI observability is a product feature                                         | `00` §5.7, `15`                      | Accepted                       |
+| `ADR-008` | Triage over transcript (sales command center)                                 | `00` §5.8, `22`                      | Accepted                       |
+| `ADR-009` | Official Meta APIs only; WhatsApp Cloud API = Phase 2 (Option C)              | `00` §5.9, `16`                      | Superseded by ADR-026 (timing) |
+| `ADR-010` | Async at the channel boundary (persist, 200, then AI job)                     | `00` §5.10, `16`                     | Accepted                       |
+| `ADR-011` | Context-rich, not clutter-rich                                                | `00` §5.11, `20`, `21`               | Accepted                       |
+| `ADR-012` | HTTP API is REST `/api/v1`                                                    | `13`, Brain Dump `# Final Decisions` | Accepted                       |
+| `ADR-013` | PostgreSQL 16 + pgvector; no second vector DB                                 | `11`, `12`                           | Accepted                       |
+| `ADR-014` | Redis + BullMQ; Socket.IO + Redis adapter; REST remains SoT                   | `11`, `14`, `13` §14                 | Accepted                       |
+| `ADR-015` | AWS ECS Fargate ×3 from day one; Compose locally                              | `18`                                 | Accepted                       |
+| `ADR-016` | Nest 11 + Next 16 + Prisma 7 + pnpm; BFS pins in `11` §2.1                    | `11`                                 | Accepted                       |
+| `ADR-017` | shadcn **Base UI** (not Radix); no Storybook / MSW / Zustand                  | `11`, `20`, `23`                     | Accepted                       |
+| `ADR-018` | Exact model ids; golden set on any change                                     | `11` §9                              | Accepted                       |
+| `ADR-019` | RAG in Postgres; knowledge graph is post-MVP                                  | `15`, Brain Dump `# Final Decisions` | Accepted                       |
+| `ADR-020` | New businesses default `approval_required`; G4 does **not** flip `reply_mode` | `01` FR-AI-011, `22`                 | Accepted                       |
+| `ADR-021` | Exactly four analytics KPIs; no fifth tile                                    | `01` §15                             | Accepted                       |
+| `ADR-022` | `GET /usage` Owner-only; Employee has no playground                           | `13`, `17`, `23`                     | Accepted                       |
+| `ADR-023` | Unofficial WhatsApp automation prohibited at every phase                      | `16`, FR-INT-032                     | Accepted                       |
+| `ADR-024` | No NAT Gateway, no Kubernetes, no Vercel in MVP                               | `18`                                 | Accepted                       |
+| `ADR-025` | Nest HTTP runs on the **Fastify** adapter (supersedes the Fastify reject)     | `11` §5.1, §5.3                      | Accepted                       |
+| `ADR-026` | WhatsApp Cloud API enabled for pilots (official API only; pull forward)       | `16`, adapters, Phase 2 WhatsApp     | Accepted                       |
+| `ADR-027` | Defer Shopify/Woo sync and payment gateways until handoff conversion proven   | `03` §6, `04` Phase 2/4, ADR-003     | Accepted                       |
 
 ---
 
@@ -351,6 +353,26 @@ Each record is the decision and the rejects. Behaviour, pins, and diagrams stay 
 | **Why now**   | The original reject cited "a second adapter, a second file-upload story". Neither applies: uploads are S3 presigned `PUT` plus CSV-in-JSON, so no multipart parser exists to port, and Socket.IO attaches to Fastify's raw `http.Server` unchanged. |
 | **Rejected**  | Staying on Express; a community Nest↔Better Auth wrapper (an in-repo ~40-line Fastify adapter is smaller, tested, and not coupled to two release cadences)                                                                                          |
 | **Revisit**   | If a true multipart upload surface, a Fastify-incompatible Nest plugin, or a measured regression appears. Rollback path is in `42_TECH_DEBT.md`.                                                                                                    |
+
+### ADR-026 — WhatsApp Cloud API for pilots (timing pull-forward)
+
+|               |                                                                                                                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**    | Accepted — supersedes **timing** of `ADR-009` only (official Meta APIs remain mandatory; unofficial clients stay forbidden)                                                                                     |
+| **Canonical** | `apps/api/src/integrations/adapters/meta-whatsapp.adapter.ts`, `meta-api.client.ts`, `backlog/phase-2-catalog-whatsapp`                                                                                         |
+| **Decision**  | Ship **WhatsApp Cloud API** send/receive + optional templates behind `WHATSAPP_ENABLED`, for Tunisian pilots whose customers live on WhatsApp. Still gated per tenant/env; Meta Business verification required. |
+| **Rejected**  | Unofficial WhatsApp (Baileys, whatsapp-web.js, etc.); waiting for 10 IG-only paying shops before any WhatsApp work                                                                                              |
+| **Revisit**   | After per-conversation WhatsApp margin is known; rich interactive message types stay Phase 3                                                                                                                    |
+
+### ADR-027 — Defer catalog sync platforms and payment gateways
+
+|               |                                                                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**    | Accepted — reaffirms `ADR-003` and Phase 2/4 sequencing for Shopify/Woo and payments                                                                                                                                            |
+| **Canonical** | `03_MVP_SCOPE.md` §6, `04_ROADMAP.md` Phases 2 & 4, `docs/30_execution/PILOT_PLAYBOOK.md`                                                                                                                                       |
+| **Decision**  | Do **not** build Shopify/WooCommerce sync, Konnect/Flouci/D17/Stripe, or AI checkout until design partners show pending-order → confirmed conversion. CSV + manual catalog + human COD confirm are enough for the first pilots. |
+| **Rejected**  | Building payment or Shopify “because competitors have it” before the handoff thesis is proven                                                                                                                                   |
+| **Revisit**   | Strong H2 conversion + merchant demand (roadmap dotted line to Phase 4); CSV failure rate high enough to justify Shopify/Woo                                                                                                    |
 
 ---
 

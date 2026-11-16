@@ -12,6 +12,7 @@ build
 .env
 .env.*
 !.env.example
+!.env.production.example
 .env*.local
 ngrok.yml
 
@@ -76,3 +77,7 @@ backlog/LOG.md
 
 # Labs
 labs/
+
+# Production secrets
+.env.production
+
