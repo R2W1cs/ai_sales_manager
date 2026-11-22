@@ -2,7 +2,7 @@
 
 import { Check, Copy, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,16 @@ interface WidgetInstall {
   publicKey: string;
   enabled: boolean;
   businessName: string;
+}
+
+function emptySubscribe() {
+  return () => {};
+}
+function getWindowOrigin() {
+  return window.location.origin;
+}
+function getServerOrigin() {
+  return "";
 }
 
 export function WebsiteInstallPanel({
@@ -24,30 +34,30 @@ export function WebsiteInstallPanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
-  const origin = useSyncExternalStore(
-    () => () => {},
-    () => window.location.origin,
-    () => "",
-  );
+  const origin = useSyncExternalStore(emptySubscribe, getWindowOrigin, getServerOrigin);
 
-  const load = useCallback(() => {
+  useEffect(() => {
     if (!businessId) return;
+    let cancelled = false;
     apiClient
       .get<WidgetInstall>("/api/v1/website-widget", {
         headers: { "x-business-id": businessId },
       })
       .then((data) => {
-        setInstall(data);
-        setError(null);
+        if (!cancelled) {
+          setError(null);
+          setInstall(data);
+        }
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : t("loadError"));
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : t("loadError"));
+        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [businessId, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const snippet =
     origin && install
@@ -99,7 +109,7 @@ export function WebsiteInstallPanel({
             <CardDescription>{t("snippetHelp")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-5 break-words whitespace-pre-wrap">
+            <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-5 wrap-break-word whitespace-pre-wrap">
               {snippet || t("loading")}
             </pre>
             <div className="flex flex-wrap gap-2">
@@ -136,10 +146,10 @@ export function WebsiteInstallPanel({
               <iframe
                 title={t("previewTitle")}
                 src={`/embed/preview?key=${encodeURIComponent(install.publicKey)}`}
-                className="h-[640px] w-full border-0 bg-muted"
+                className="h-160 w-full border-0 bg-muted/40"
               />
             ) : (
-              <div className="h-[640px] bg-muted" />
+              <div className="h-160 bg-muted" />
             )}
           </CardContent>
         </Card>

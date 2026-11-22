@@ -325,12 +325,13 @@ export class MessagesService implements OnModuleDestroy {
     if (conversation.source === "website") {
       deliveryStatus = "sent";
     } else if (process.env.NODE_ENV !== "production") {
-      const account = conversation.channel_account_id
-        ? await this.prisma.channelAccount.findFirst({
-            where: { id: conversation.channel_account_id },
-            select: { status: true, credentials_ref: true },
-          })
-        : null;
+      const account =
+        conversation.channel_account_id && this.prisma.channelAccount
+          ? await this.prisma.channelAccount.findFirst({
+              where: { id: conversation.channel_account_id },
+              select: { status: true, credentials_ref: true },
+            })
+          : null;
       if (!account || account.status !== "active" || !account.credentials_ref) {
         deliveryStatus = "sent";
       }

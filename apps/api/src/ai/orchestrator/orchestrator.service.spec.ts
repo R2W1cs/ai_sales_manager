@@ -3,6 +3,7 @@ import { ProductStatus, type PrismaClient } from "@prisma/client";
 
 import { HandoffContextSchema } from "@app/shared";
 
+import { AiGatewayService } from "../gateway/ai-gateway.service";
 import { ModelFallbackService } from "../gateway/model-fallback.service";
 import { IntentClassifierService } from "../intent/intent-classifier.service";
 import { PromptBuilderService } from "../prompts/prompt-builder.service";
@@ -198,6 +199,11 @@ describe("AI Sales Agent core orchestrator & tool execution pipeline (T-AI-01)",
       validateToken: jest.fn().mockResolvedValue(true),
     };
 
+    const mockAiGateway = {
+      isConfigured: () => false,
+      generateText: jest.fn().mockResolvedValue(null),
+    } as unknown as AiGatewayService;
+
     orchestratorService = new OrchestratorService(
       promptBuilder,
       catalogSearchTool,
@@ -206,6 +212,7 @@ describe("AI Sales Agent core orchestrator & tool execution pipeline (T-AI-01)",
       intentClassifier,
       mockLockValidator,
       mockPrisma as unknown as PrismaClient,
+      mockAiGateway,
     );
   });
 

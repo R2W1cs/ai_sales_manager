@@ -5,7 +5,7 @@ import React, { useEffect } from "react";
 
 export default function EmbedPreviewPage(): React.ReactElement {
   return (
-    <React.Suspense fallback={<div className="min-h-dvh bg-muted" />}>
+    <React.Suspense fallback={<div className="min-h-dvh bg-muted/40" />}>
       <StorefrontPreview />
     </React.Suspense>
   );
@@ -32,7 +32,7 @@ function StorefrontPreview(): React.ReactElement {
   }, [publicKey]);
 
   return (
-    <main className="min-h-dvh bg-muted text-foreground">
+    <main className="min-h-dvh bg-muted/40 text-foreground">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <p className="text-sm font-semibold tracking-wide">Sample shop</p>
         <p className="text-xs text-muted-foreground">Your website</p>
@@ -47,7 +47,7 @@ function StorefrontPreview(): React.ReactElement {
           </p>
           <p className="mt-6 text-lg font-medium">189 TND</p>
         </div>
-        <div className="aspect-4/5 rounded-lg bg-secondary" />
+        <div className="aspect-4/5 rounded-lg bg-muted" />
       </section>
     </main>
   );
