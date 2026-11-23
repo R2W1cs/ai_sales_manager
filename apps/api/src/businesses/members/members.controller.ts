@@ -11,13 +11,20 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 
+import { AuthThrottlerGuard } from "../../auth";
 import { RequirePermission } from "../../platform/security/permissions";
 import { PermissionsGuard } from "../../platform/security/permissions.guard";
-import { CurrentBusinessId, CurrentUser, TenantGuard } from "../../platform/security/tenant.guard";
-import type { AuthenticatedUser } from "../../platform/security/tenant.guard";
+import {
+  type AuthenticatedUser,
+  CurrentBusinessId,
+  CurrentUser,
+  TenantGuard,
+  type TenantRequest,
+} from "../../platform/security/tenant.guard";
 import type { InviteMemberDto, InvitationResponse } from "../dto/invite-member.dto";
 import type { MemberResponse, UpdateMemberRoleDto } from "../dto/update-member-role.dto";
 import { MembersService } from "./members.service";
@@ -27,11 +34,6 @@ import { MembersService } from "./members.service";
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
-  /**
-   * 13 §5 GET /api/v1/businesses/:id/members
-   * List active team members and roles.
-   * Accessible by any business member.
-   */
   @Get("members")
   async listMembers(
     @CurrentBusinessId() businessId: string,
@@ -48,11 +50,6 @@ export class MembersController {
     return this.membersService.listMembers(businessId);
   }
 
-  /**
-   * 13 §5 GET /api/v1/businesses/:id/invitations
-   * List pending invitations for the workspace.
-   * Guarded by members.manage permission.
-   */
   @Get("invitations")
   @RequirePermission("members.manage")
   async listInvitations(
@@ -70,13 +67,9 @@ export class MembersController {
     return this.membersService.listPendingInvitations(businessId);
   }
 
-  /**
-   * 13 §5 POST /api/v1/businesses/:id/invitations
-   * Create an invitation token for a teammate.
-   * Guarded by members.manage permission.
-   */
   @Post("invitations")
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthThrottlerGuard)
   @RequirePermission("members.manage")
   async createInvitation(
     @CurrentBusinessId() businessId: string,
@@ -84,6 +77,7 @@ export class MembersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: InviteMemberDto,
     @Headers("idempotency-key") idempotencyKey?: string,
+    @Req() req?: TenantRequest,
   ): Promise<InvitationResponse> {
     if (businessId !== paramBusinessId) {
       throw new ForbiddenException({
@@ -111,14 +105,10 @@ export class MembersController {
       user.id || user.sub,
       body,
       idempotencyKey,
+      req?.session?.id,
     );
   }
 
-  /**
-   * 13 §5 DELETE /api/v1/businesses/:id/invitations/:inviteId
-   * Revoke a pending invitation.
-   * Guarded by members.manage permission.
-   */
   @Delete("invitations/:inviteId")
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission("members.manage")
@@ -126,6 +116,8 @@ export class MembersController {
     @CurrentBusinessId() businessId: string,
     @Param("businessId") paramBusinessId: string,
     @Param("inviteId") inviteId: string,
+    @CurrentUser() user?: AuthenticatedUser,
+    @Req() req?: TenantRequest,
   ): Promise<void> {
     if (businessId !== paramBusinessId) {
       throw new ForbiddenException({
@@ -135,14 +127,14 @@ export class MembersController {
         },
       });
     }
-    return this.membersService.revokeInvitation(businessId, inviteId);
+    return this.membersService.revokeInvitation(
+      businessId,
+      inviteId,
+      user?.id || user?.sub,
+      req?.session?.id,
+    );
   }
 
-  /**
-   * 13 §5 PATCH /api/v1/businesses/:id/members/:userId/role
-   * Update role of a team member.
-   * Guarded by members.manage permission.
-   */
   @Patch("members/:userId/role")
   @HttpCode(HttpStatus.OK)
   @RequirePermission("members.manage")
@@ -151,6 +143,8 @@ export class MembersController {
     @Param("businessId") paramBusinessId: string,
     @Param("userId") targetUserId: string,
     @Body() body: UpdateMemberRoleDto,
+    @CurrentUser() user?: AuthenticatedUser,
+    @Req() req?: TenantRequest,
   ): Promise<MemberResponse> {
     if (businessId !== paramBusinessId) {
       throw new ForbiddenException({
@@ -160,14 +154,15 @@ export class MembersController {
         },
       });
     }
-    return this.membersService.updateMemberRole(businessId, targetUserId, body);
+    return this.membersService.updateMemberRole(
+      businessId,
+      targetUserId,
+      body,
+      user?.id || user?.sub,
+      req?.session?.id,
+    );
   }
 
-  /**
-   * 13 §5 DELETE /api/v1/businesses/:id/members/:userId
-   * Remove a member from the workspace.
-   * Guarded by members.manage permission.
-   */
   @Delete("members/:userId")
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission("members.manage")
@@ -175,6 +170,8 @@ export class MembersController {
     @CurrentBusinessId() businessId: string,
     @Param("businessId") paramBusinessId: string,
     @Param("userId") targetUserId: string,
+    @CurrentUser() user?: AuthenticatedUser,
+    @Req() req?: TenantRequest,
   ): Promise<void> {
     if (businessId !== paramBusinessId) {
       throw new ForbiddenException({
@@ -184,6 +181,11 @@ export class MembersController {
         },
       });
     }
-    return this.membersService.removeMember(businessId, targetUserId);
+    return this.membersService.removeMember(
+      businessId,
+      targetUserId,
+      user?.id || user?.sub,
+      req?.session?.id,
+    );
   }
 }

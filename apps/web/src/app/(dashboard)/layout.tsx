@@ -31,7 +31,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const { isAuthenticated, isLoading, user, memberships } = useAuth();
+  const { isAuthenticated, isLoading, user, memberships, mfaSetupRequired, mfaChallengeRequired } =
+    useAuth();
 
   if (isLoading) {
     return (
@@ -48,6 +49,14 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) {
     redirect("/login" as Route);
+  }
+
+  if (mfaSetupRequired) {
+    redirect("/2fa/setup" as Route);
+  }
+
+  if (mfaChallengeRequired) {
+    redirect("/2fa" as Route);
   }
 
   if (user?.platformAdmin && memberships.length === 0) {

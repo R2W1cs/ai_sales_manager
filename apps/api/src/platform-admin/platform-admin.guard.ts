@@ -1,44 +1,54 @@
 import type { CanActivate, ExecutionContext } from "@nestjs/common";
-import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 
-import { env } from "@app/shared/server";
-
+import { requireBetterAuthSession } from "../auth";
 import { prisma } from "../lib/prisma";
-import { extractBearerToken, verifyAccessToken } from "../platform/security/jwt";
+import { assertPrivilegedMfaSession } from "../platform/security/membership-lookup";
 import type { TenantRequest } from "../platform/security/tenant.guard";
 
 @Injectable()
 export class PlatformAdminGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<TenantRequest>();
-    const token = extractBearerToken(req.headers.authorization);
-    if (!token) {
-      throw new UnauthorizedException({
-        error: { code: "unauthorized", message: "Missing access token" },
-      });
-    }
 
-    let userId: string;
-    try {
-      userId = verifyAccessToken(token, env.BETTER_AUTH_SECRET).sub;
-    } catch {
-      throw new UnauthorizedException({
-        error: { code: "unauthorized", message: "Invalid or expired access token" },
-      });
-    }
+    const session = await requireBetterAuthSession(req.headers);
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, platform_admin: true },
+      where: { id: session.user.id },
+      select: { id: true, platform_admin: true, twoFactorEnabled: true },
     });
-    // platform_admin is stored on the user, not on a shop membership.
+
     if (!user?.platform_admin) {
       throw new ForbiddenException({
         error: { code: "forbidden", message: "Platform admin access is required" },
       });
     }
 
-    req.user = { id: user.id, sub: user.id };
+    const sessionRecord = session.session as Record<string, unknown>;
+    const mfaVerified = Boolean(sessionRecord.mfaVerified);
+
+    assertPrivilegedMfaSession({
+      session: { mfaVerified },
+      twoFactorEnabled: Boolean(user.twoFactorEnabled),
+      enforceAlways: true,
+      enrollmentMessage: "Two-factor authentication enrollment is required for platform operators.",
+      challengeMessage: "A verified two-factor session is required for platform operator access.",
+    });
+
+    req.user = {
+      id: user.id,
+      sub: user.id,
+      email: session.user.email,
+      name: session.user.name,
+      twoFactorEnabled: Boolean(user.twoFactorEnabled),
+      platformAdmin: true,
+    };
+    req.session = {
+      id: session.session.id,
+      mfaVerified,
+      activeOrganizationId: session.session.activeOrganizationId ?? null,
+    };
+
     return true;
   }
 }

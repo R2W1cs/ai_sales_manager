@@ -9,6 +9,8 @@ export const UserSchema = z.object({
   id: z.string(),
   email: z.email(),
   name: z.string(),
+  emailVerified: z.boolean().optional(),
+  twoFactorEnabled: z.boolean().optional(),
   emailVerifiedAt: z.union([z.date(), z.iso.datetime()]).nullable().optional(),
   createdAt: z.union([z.date(), z.iso.datetime()]),
   platformAdmin: z.boolean().optional(),
@@ -21,6 +23,7 @@ export type UserDto = z.infer<typeof UserSchema>;
  */
 export const MembershipSchema = z.object({
   businessId: z.string(),
+  businessName: z.string().optional(),
   role: MemberRoleSchema,
   joinedAt: z.union([z.date(), z.iso.datetime()]),
   lastActiveAt: z.union([z.date(), z.iso.datetime()]).nullable().optional(),
@@ -34,6 +37,9 @@ export type MembershipDto = z.infer<typeof MembershipSchema>;
 export const SessionSchema = z.object({
   user: UserSchema,
   memberships: z.array(MembershipSchema),
+  mfaVerified: z.boolean().optional(),
+  mfaSetupRequired: z.boolean().optional(),
+  mfaChallengeRequired: z.boolean().optional(),
   accessToken: z.string().optional(),
   tokenType: z.literal("Bearer").default("Bearer"),
   expiresIn: z.number().default(900),

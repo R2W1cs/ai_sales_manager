@@ -97,6 +97,15 @@ export function hasPermission(
   return false;
 }
 
+export function roleHasPermission(roleName: unknown, permission: PermissionCode): boolean {
+  if (!isRoleName(roleName)) return false;
+  return hasPermission(getRolePermissions(roleName), permission);
+}
+
+export function isPrivilegedRole(roleName: unknown): boolean {
+  return roleHasPermission(roleName, "members.manage");
+}
+
 export const PERMISSIONS_KEY = "permissions";
 
 /**

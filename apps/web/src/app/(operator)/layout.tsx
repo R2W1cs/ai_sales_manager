@@ -14,7 +14,8 @@ export default function OperatorLayout({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, mfaSetupRequired, mfaChallengeRequired } =
+    useAuth();
   const t = useTranslations("operator");
 
   if (isLoading) {
@@ -27,6 +28,14 @@ export default function OperatorLayout({
 
   if (!isAuthenticated) {
     redirect("/login" as Route);
+  }
+
+  if (mfaSetupRequired) {
+    redirect("/2fa/setup" as Route);
+  }
+
+  if (mfaChallengeRequired) {
+    redirect("/2fa" as Route);
   }
 
   if (!user?.platformAdmin) {

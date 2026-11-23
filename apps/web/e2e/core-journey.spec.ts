@@ -45,7 +45,6 @@ function cleanupTestUser(email: string) {
 /* ------------------------------------------------------------------ */
 
 const TEST_EMAIL = `e2e_journey_${Date.now()}@example.com`;
-const TEST_PASSWORD = "Password123!Secure";
 const TEST_NAME = "E2E Journey Merchant";
 
 const mockBusiness = {
@@ -153,63 +152,31 @@ test.describe("Core User Journey E2E (T-WEB-06)", () => {
     clearAuthRateLimits(TEST_EMAIL);
   });
 
-  /* ======== PHASE 1: Signup & Authentication ======== */
+  /* ======== PHASE 1: Invite-only Signup & Authentication ======== */
 
-  test("1. Signup: Register new merchant and redirect to onboarding", async ({ page }) => {
+  test("1. Signup: Invite-only gate on /register and invited signup flow", async ({ page }) => {
     await page.goto("/register");
 
-    // Fill registration form
-    await page.getByLabel("Nom complet").fill(TEST_NAME);
-    await page.getByLabel("Adresse e-mail").fill(TEST_EMAIL);
-    await page.getByLabel(/Mot de passe/i).fill(TEST_PASSWORD);
-
-    // Intercept register API
-    const registerResponsePromise = page.waitForResponse(
-      (res) => res.url().includes("/api/v1/auth/register") && res.request().method() === "POST",
-    );
-
-    await page.getByRole("button", { name: "Créer mon compte" }).click();
-
-    const registerResponse = await registerResponsePromise;
-    expect(registerResponse.status()).toBe(201);
-
-    const body = await registerResponse.json();
-    expect(body.user.email).toBe(TEST_EMAIL.toLowerCase());
-    expect(body.accessToken).toBeTruthy();
-
-    // Should redirect to onboarding
-    await page.waitForURL(/.*onboarding.*/, { timeout: 15000 });
-    expect(page.url()).toContain("onboarding");
+    await expect(page.getByText("Invitation requise")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retourner à la connexion" })).toBeVisible();
   });
 
-  /* ======== PHASE 2: Onboarding Steps ======== */
+  /* ======== PHASE 2: Authenticated Onboarding Wizard ======== */
 
-  test("2. Onboarding: Step through store setup, channel connect, and catalog upload", async ({
-    page,
-    context,
-  }) => {
-    // Login first to get authenticated session
-    await page.goto("/login");
-    await page.getByLabel("Adresse e-mail").fill(TEST_EMAIL);
-    await page.getByLabel("Mot de passe").fill(TEST_PASSWORD);
-    await page.getByRole("button", { name: "Se connecter" }).click();
-    await page.waitForURL(/.*onboarding.*/, { timeout: 15000 });
+  test("2. Onboarding: Store setup renders cleanly with Better Auth session", async ({ page }) => {
+    await setupMockedAuth(page);
+    await page.route("**/api/v1/businesses/*/onboarding", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockOnboardingStatus),
+      });
+    });
 
-    // Capture the business ID from the auth response if available
-    const cookies = await context.cookies();
-    const refreshCookie = cookies.find((c) => c.name === "aisales_refresh");
-    expect(refreshCookie).toBeDefined();
+    await page.goto("/onboarding");
 
     // Wait for onboarding wizard to render
     await expect(page.locator('[data-slot="onboarding-wizard"]')).toBeVisible({ timeout: 10000 });
-
-    // Onboarding Step 1 (Store Setup) should be visible
-    // The wizard shows the first step by default
-    const wizard = page.locator('[data-slot="onboarding-wizard"]');
-    await expect(wizard).toBeVisible();
-
-    // Verify the onboarding step 1 (Store Setup) is rendered
-    // The card title is "Profil de votre entreprise"
     await expect(page.getByText("Profil de votre entreprise")).toBeVisible({ timeout: 10000 });
   });
 
@@ -354,9 +321,30 @@ async function setupMockedAuth(page: Page) {
     id: "journey-user-1",
     email: TEST_EMAIL.toLowerCase(),
     name: TEST_NAME,
+    platformAdmin: false,
+    emailVerified: true,
+    twoFactorEnabled: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
   };
 
-  await page.route("**/api/v1/auth/refresh", async (route) => {
+  await page.route("**/api/auth/get-session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: mockUser,
+        session: {
+          id: "sess-journey-1",
+          userId: mockUser.id,
+          expiresAt: "2099-01-01T00:00:00.000Z",
+          mfaVerified: true,
+          activeOrganizationId: mockBusiness.id,
+        },
+      }),
+    });
+  });
+
+  await page.route("**/api/v1/workspaces", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -364,12 +352,17 @@ async function setupMockedAuth(page: Page) {
         user: mockUser,
         memberships: [
           {
-            id: "journey-mem-1",
             businessId: mockBusiness.id,
             role: "owner",
+            businessName: mockBusiness.name,
+            joinedAt: "2026-01-01T00:00:00.000Z",
           },
         ],
-        accessToken: "mock-journey-jwt-token",
+        mfaVerified: true,
+        mfaSetupRequired: false,
+        mfaChallengeRequired: false,
+        tokenType: "Bearer",
+        expiresIn: 604800,
       }),
     });
   });
@@ -379,6 +372,30 @@ async function setupMockedAuth(page: Page) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(mockBusiness),
+    });
+  });
+
+  await page.route("**/api/v1/notifications*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [], unreadCount: 0, nextCursor: null }),
+    });
+  });
+
+  await page.route(/.*\/api\/v1\/(billing\/)?usage.*/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        cycleStart: "2026-09-01T00:00:00.000Z",
+        cycleEnd: "2026-10-01T00:00:00.000Z",
+        planCode: "starter",
+        limits: { aiMessages: 500, seats: 2, channels: 1 },
+        current: { aiMessages: 210, seats: 2, channels: 1 },
+        percentUsed: 42,
+        aiPaused: false,
+      }),
     });
   });
 

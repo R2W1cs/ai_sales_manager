@@ -69,9 +69,8 @@ function validateCsvFile(selectedFile: File, t: (key: string) => string): string
 
 async function downloadCsvTemplateFile(): Promise<void> {
   try {
-    const token = apiClient.getAccessToken();
     const res = await fetch("/api/v1/products/import/template", {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      credentials: "include",
     });
     if (res.ok) {
       const blob = await res.blob();

@@ -15,9 +15,13 @@ export default {
     "^@app/shared/server$": "<rootDir>/../../packages/shared/src/server.ts",
     "^@app/shared/web$": "<rootDir>/../../packages/shared/src/web.ts",
     "^better-auth/adapters/prisma$": "<rootDir>/test/__mocks__/better-auth-prisma-adapter.ts",
+    "^better-auth/api$": "<rootDir>/test/__mocks__/better-auth-api.ts",
+    "^better-auth/crypto$": "<rootDir>/test/__mocks__/better-auth-crypto.ts",
     "^better-auth/plugins/access$": "<rootDir>/test/__mocks__/better-auth-access.ts",
     "^better-auth/plugins/organization/access$":
       "<rootDir>/test/__mocks__/better-auth-org-access.ts",
+    "^better-auth/plugins/organization$": "<rootDir>/test/__mocks__/better-auth-plugins.ts",
+    "^better-auth/plugins/two-factor$": "<rootDir>/test/__mocks__/better-auth-two-factor.ts",
     "^better-auth/plugins$": "<rootDir>/test/__mocks__/better-auth-plugins.ts",
     "^better-auth$": "<rootDir>/test/__mocks__/better-auth.ts",
   },

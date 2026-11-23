@@ -7,13 +7,33 @@ const logLevel = typeof env.LOG_LEVEL === "string" ? env.LOG_LEVEL : "info";
 const isDevelopment = env.NODE_ENV !== "production";
 
 // Create logger options
-const loggerOptions: LoggerOptions = {
+export const loggerOptions: LoggerOptions = {
   level: logLevel,
   // Add timestamp formatting
   timestamp: pino.stdTimeFunctions.isoTime,
   // Base context for all logs
   base: {
     env: typeof env.NODE_ENV === "string" ? env.NODE_ENV : "development",
+  },
+  // Redact authentication credentials, cookies, and invitation/reset tokens
+  redact: {
+    paths: [
+      "req.headers.cookie",
+      "req.headers.authorization",
+      "req.headers['x-invitation-id']",
+      "headers.cookie",
+      "headers.authorization",
+      "headers['x-invitation-id']",
+      "token",
+      "password",
+      "newPassword",
+      "secret",
+      "backupCodes",
+      "*.token",
+      "*.password",
+      "*.newPassword",
+    ],
+    censor: "[REDACTED]",
   },
 };
 

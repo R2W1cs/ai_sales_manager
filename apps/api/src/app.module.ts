@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 
 import { AiModule } from "./ai/ai.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
@@ -16,6 +17,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { OrdersModule } from "./orders/orders.module";
 import { PlatformAdminModule } from "./platform-admin/platform-admin.module";
 import { PlatformModule } from "./platform/platform.module";
+import { CsrfGuard } from "./platform/security/csrf.guard";
 import { ProductsModule } from "./products/products.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { WidgetModule } from "./widget/widget.module";
@@ -41,6 +43,12 @@ import { WidgetModule } from "./widget/widget.module";
     PlatformAdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
+  ],
 })
 export class AppModule {}

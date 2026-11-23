@@ -101,6 +101,7 @@ describe("parseServerEnv", () => {
         {
           ...validServerEnv,
           NODE_ENV: "production",
+          BETTER_AUTH_SECRET: "prod-better-auth-secret-32-chars-minimum-value!",
           S3_ACCESS_KEY_ID: "minioadmin",
         },
         { skip: false },
@@ -109,8 +110,21 @@ describe("parseServerEnv", () => {
   });
 
   it("allows production without S3 keys (IAM task role)", () => {
-    const env = parseServerEnv({ ...validServerEnv, NODE_ENV: "production" }, { skip: false });
+    const env = parseServerEnv(
+      {
+        ...validServerEnv,
+        NODE_ENV: "production",
+        BETTER_AUTH_SECRET: "prod-better-auth-secret-32-chars-minimum-value!",
+      },
+      { skip: false },
+    );
     expect(env.S3_ACCESS_KEY_ID).toBeUndefined();
+  });
+
+  it("rejects the local fallback BETTER_AUTH_SECRET in production", () => {
+    expect(() =>
+      parseServerEnv({ ...validServerEnv, NODE_ENV: "production" }, { skip: false }),
+    ).toThrow(/BETTER_AUTH_SECRET/);
   });
 
   it("reads live process.env when skip is true so tests can mutate values", () => {

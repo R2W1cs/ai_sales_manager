@@ -205,6 +205,11 @@ One shape. Do not return Nest/Prisma dumps.
 | `not_implemented`             | 501  | no        | `none`          |
 | `internal_error`              | 500  | **yes**   | `retry`         |
 | `service_unavailable`         | 503  | **yes**   | `retry_after`   |
+| `csrf_rejected`               | 403  | no        | `none`          |
+| `mfa_required`                | 403  | no        | `none`          |
+| `mfa_setup_required`          | 403  | no        | `none`          |
+| `email_verification_required` | 403  | no        | `none`          |
+| `invite_email_mismatch`       | 403  | no        | `none`          |
 
 Field errors: `details.fields` = `{ "<path>": ["message"] }` (BAC-3).
 

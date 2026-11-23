@@ -115,7 +115,6 @@ export function NotificationPopover({ className }: NotificationPopoverProps): Re
     apiClient
       .get<PaginatedNotificationsResponse>("/api/v1/notifications?unread=true", {
         headers: { "x-business-id": currentBusinessId },
-        skipRefresh: true,
       })
       .then((res) => {
         if (mounted && res) {
@@ -179,7 +178,6 @@ export function NotificationPopover({ className }: NotificationPopoverProps): Re
         `/api/v1/notifications?unread=true&cursor=${encodeURIComponent(nextCursor)}`,
         {
           headers: { "x-business-id": currentBusinessId },
-          skipRefresh: true,
         },
       );
       if (res) {
@@ -203,7 +201,6 @@ export function NotificationPopover({ className }: NotificationPopoverProps): Re
     try {
       await apiClient.post("/api/v1/notifications/read-all", undefined, {
         headers: { "x-business-id": currentBusinessId },
-        skipRefresh: true,
       });
       setNotifications([]);
       setUnreadCount(0);
@@ -221,7 +218,6 @@ export function NotificationPopover({ className }: NotificationPopoverProps): Re
     try {
       await apiClient.patch(`/api/v1/notifications/${item.id}/read`, undefined, {
         headers: { "x-business-id": currentBusinessId },
-        skipRefresh: true,
       });
       setNotifications((prev) => prev.filter((n) => n.id !== item.id));
       setUnreadCount((prev) => Math.max(0, prev - 1));

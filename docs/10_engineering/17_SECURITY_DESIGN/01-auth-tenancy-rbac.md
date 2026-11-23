@@ -20,16 +20,17 @@ This document is **canonical for who is allowed to do what, and how secrets and 
 
 **Out of scope, and where it lives instead:**
 
-| Topic                                               | Canonical location                       |
-| --------------------------------------------------- | ---------------------------------------- |
-| Routes, error codes, permission _code list_         | `13_API_DESIGN.md`                       |
-| Tables (`users`, `refresh_tokens`, `audit_logs`, …) | `12_DATABASE_DESIGN.md`                  |
-| JWT _lifetimes_ (15 min / 14 d), argon2 package     | `11_TECH_STACK.md` §5.2                  |
-| Auth HTTP rate-limit **numbers**                    | `13` §2.9; AI/channel numbers in `14` §9 |
-| Meta HMAC / page tokens / OAuth user-token Redis    | `16_INTEGRATION_DESIGN.md`               |
-| TLS at the edge, SM paths, image scan, OIDC         | `18_DEPLOYMENT.md`                       |
-| Prompt-injection (data vs instructions)             | `15_AI_ARCHITECTURE.md`                  |
-| MFA, custom roles                                   | Won't (`01`)                             |
+| Topic                                               | Canonical location                                                                                      |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Routes, error codes, permission _code list_         | `13_API_DESIGN.md`                                                                                      |
+| Tables (`users`, `refresh_tokens`, `audit_logs`, …) | `12_DATABASE_DESIGN.md`                                                                                 |
+| JWT _lifetimes_ (15 min / 14 d), argon2 package     | `11_TECH_STACK.md` §5.2                                                                                 |
+| Auth HTTP rate-limit **numbers**                    | `13` §2.9; AI/channel numbers in `14` §9                                                                |
+| Meta HMAC / page tokens / OAuth user-token Redis    | `16_INTEGRATION_DESIGN.md`                                                                              |
+| TLS at the edge, SM paths, image scan, OIDC         | `18_DEPLOYMENT.md`                                                                                      |
+| Prompt-injection (data vs instructions)             | `15_AI_ARCHITECTURE.md`                                                                                 |
+| MFA, email verification                             | Better Auth `twoFactor` (TOTP) for privileged roles (Owner, Admin); verified email required for sign-up |
+| Custom roles                                        | Won't (`01`)                                                                                            |
 
 **References:** `§N` is this file. Sibling docs are filenames. This file has no competing §13.
 

@@ -1,41 +1,47 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
-import { AuthContext, type AuthContextValue } from "@/hooks/use-auth";
-import { apiClient, setAccessToken } from "@/lib/api-client";
-import type {
-  AcceptInvitationDto,
-  LoginRequest,
-  MembershipDto,
-  RegisterRequest,
-  SessionDto,
-  UserDto,
-} from "@app/shared";
+import { AuthContext, type AuthContextValue, type LoginResult } from "@/hooks/use-auth";
+import { apiClient, ApiClientError } from "@/lib/api-client";
+import { authClient } from "@/lib/auth-client";
+import { isPublicAuthRoute } from "@/lib/safe-redirect";
+import type { LoginRequest, MembershipDto, SessionDto, UserDto } from "@app/shared";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { data: betterAuthSession, isPending: sessionPending, refetch } = authClient.useSession();
+
   const [user, setUser] = useState<UserDto | null>(null);
   const [memberships, setMemberships] = useState<MembershipDto[]>([]);
-  const [accessTokenState, setAccessTokenState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mfaVerified, setMfaVerified] = useState<boolean>(false);
+  const [mfaSetupRequired, setMfaSetupRequired] = useState<boolean>(false);
+  const [mfaChallengeRequired, setMfaChallengeRequired] = useState<boolean>(false);
+  const [bootstrappedKey, setBootstrappedKey] = useState<string | null>(null);
 
-  function applySession(session: SessionDto | null) {
+  const sessionKey =
+    betterAuthSession?.user && betterAuthSession?.session
+      ? `${betterAuthSession.user.id}:${betterAuthSession.session.id}`
+      : null;
+
+  const applySession = useCallback((session: SessionDto | null) => {
     if (session) {
       setUser(session.user);
       setMemberships(session.memberships ?? []);
-      const token = session.accessToken ?? null;
-      setAccessTokenState(token);
-      setAccessToken(token);
+      setMfaVerified(Boolean(session.mfaVerified));
+      setMfaSetupRequired(Boolean(session.mfaSetupRequired));
+      setMfaChallengeRequired(Boolean(session.mfaChallengeRequired));
     } else {
       setUser(null);
       setMemberships([]);
-      setAccessTokenState(null);
-      setAccessToken(null);
+      setMfaVerified(false);
+      setMfaSetupRequired(false);
+      setMfaChallengeRequired(false);
     }
-  }
+  }, []);
 
-  async function refreshSession(): Promise<SessionDto | null> {
+  const refreshSession = useCallback(async (): Promise<SessionDto | null> => {
     try {
+      await refetch();
       const session = await apiClient.refreshSession();
       applySession(session);
       return session;
@@ -43,61 +49,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       applySession(null);
       return null;
     }
-  }
+  }, [applySession, refetch]);
 
-  async function login(credentials: LoginRequest): Promise<SessionDto> {
-    const session = await apiClient.post<SessionDto>("/api/v1/auth/login", credentials, {
-      skipAuth: true,
-      skipRefresh: true,
+  async function login(credentials: LoginRequest): Promise<LoginResult> {
+    const result = await authClient.signIn.email({
+      email: credentials.email.trim(),
+      password: credentials.password,
     });
-    applySession(session);
-    return session;
+
+    if (result.error) {
+      throw new ApiClientError(
+        result.error.status ?? 401,
+        result.error.code ?? "unauthorized",
+        result.error.message ?? "Invalid email or password",
+      );
+    }
+
+    const data = result.data as { twoFactorRedirect?: boolean } | null;
+    if (data?.twoFactorRedirect) {
+      return { twoFactorRedirect: true, session: null };
+    }
+
+    const session = await refreshSession();
+    return { twoFactorRedirect: false, session };
   }
 
-  async function register(data: RegisterRequest): Promise<SessionDto> {
-    const session = await apiClient.post<SessionDto>("/api/v1/auth/register", data, {
-      skipAuth: true,
-      skipRefresh: true,
-    });
-    applySession(session);
-    return session;
+  async function acceptInvite(invitationId: string): Promise<{ businessId: string; role: string }> {
+    const accepted = await apiClient.post<{ businessId: string; role: string }>(
+      `/api/v1/invitations/${encodeURIComponent(invitationId)}/accept`,
+    );
+    await refreshSession();
+    return accepted;
   }
 
-  async function acceptInvite(
-    data: AcceptInvitationDto,
-    options?: { skipAuth?: boolean },
-  ): Promise<SessionDto> {
-    const skipAuth = options?.skipAuth ?? !user;
-    const session = await apiClient.post<SessionDto>("/api/v1/auth/invitations/accept", data, {
-      skipRefresh: true,
-      skipAuth,
-    });
-    applySession(session);
-    return session;
-  }
-
-  async function logout(): Promise<void> {
+  async function logout(redirectTo = "/login"): Promise<void> {
     try {
-      await apiClient.post("/api/v1/auth/logout", undefined, {
-        skipRefresh: true,
-      });
+      await authClient.signOut();
     } catch {
-      // Ignored: cleanup session locally even if server call fails
+      // Clear local state even if remote signOut fails
     }
     applySession(null);
     if (typeof window !== "undefined") {
-      window.location.href = "/login";
+      window.location.href = redirectTo;
     }
   }
 
-  // Initial silent refresh to restore in-memory session from HTTP-only cookie
+  // Bootstrap full user + workspace memberships whenever Better Auth session changes
   useEffect(() => {
+    if (sessionPending || !sessionKey) {
+      return undefined;
+    }
+
     let mounted = true;
 
     apiClient
       .refreshSession()
       .then((session) => {
-        if (mounted && session) {
+        if (mounted) {
           applySession(session);
         }
       })
@@ -108,48 +116,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .finally(() => {
         if (mounted) {
-          setIsLoading(false);
+          setBootstrappedKey(sessionKey);
         }
       });
 
+    return () => {
+      mounted = false;
+    };
+  }, [sessionPending, sessionKey, applySession]);
+
+  useEffect(() => {
     const unsubscribeRefreshed = apiClient.onTokenRefreshed((session) => {
-      if (mounted) {
-        applySession(session);
-      }
+      applySession(session);
     });
 
     const unsubscribeExpired = apiClient.onSessionExpired(() => {
-      if (mounted) {
-        applySession(null);
-        if (typeof window !== "undefined") {
-          const pathname = window.location.pathname;
-          if (
-            !pathname.startsWith("/login") &&
-            !pathname.startsWith("/register") &&
-            !pathname.startsWith("/invite") &&
-            !pathname.startsWith("/embed")
-          ) {
-            window.location.href = "/login";
-          }
-        }
+      applySession(null);
+      if (typeof window !== "undefined" && !isPublicAuthRoute(window.location.pathname)) {
+        window.location.href = "/login";
+      }
+    });
+
+    const unsubscribeMfa = apiClient.onMfaRequired((kind) => {
+      if (typeof window !== "undefined" && !isPublicAuthRoute(window.location.pathname)) {
+        window.location.href = kind === "mfa_setup_required" ? "/2fa/setup" : "/2fa";
       }
     });
 
     return () => {
-      mounted = false;
       unsubscribeRefreshed();
       unsubscribeExpired();
+      unsubscribeMfa();
     };
-  }, []);
+  }, [applySession]);
+
+  const hasBetterAuthUser = Boolean(betterAuthSession?.user);
+  const exposedUser = hasBetterAuthUser ? user : null;
+  const exposedMemberships = hasBetterAuthUser ? memberships : [];
+  const exposedMfaVerified = hasBetterAuthUser ? mfaVerified : false;
+  const exposedMfaSetupRequired = hasBetterAuthUser ? mfaSetupRequired : false;
+  const exposedMfaChallengeRequired = hasBetterAuthUser ? mfaChallengeRequired : false;
+  const isBootstrapping = Boolean(sessionKey && bootstrappedKey !== sessionKey);
 
   const value: AuthContextValue = {
-    user,
-    memberships,
-    accessToken: accessTokenState,
-    isAuthenticated: !!user,
-    isLoading,
+    user: exposedUser,
+    memberships: exposedMemberships,
+    mfaVerified: exposedMfaVerified,
+    mfaSetupRequired: exposedMfaSetupRequired,
+    mfaChallengeRequired: exposedMfaChallengeRequired,
+    isAuthenticated: Boolean(exposedUser),
+    isLoading: sessionPending || isBootstrapping,
     login,
-    register,
     acceptInvite,
     logout,
     refreshSession,

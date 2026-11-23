@@ -55,7 +55,6 @@ function useBillingUsage(businessId: string | null, role: MemberRole | null) {
     apiClient
       .get<BillingUsageResponse>("/api/v1/billing/usage", {
         headers: { "x-business-id": businessId },
-        skipRefresh: true,
       })
       .then((res) => {
         if (mounted) setUsage(res);

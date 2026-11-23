@@ -105,7 +105,7 @@ Retention 365 days (`12` §2.12). `GET /audit-logs` is Should (`audit.read`).
 11. Erase is `customers.erase`, not a silent `DELETE FROM customers`.
 12. Socket `thread:open` must match handshake tenant. Clients never `join`.
 13. Worker: no JWT; still `businessId` on the job and a matching row.
-14. No MFA, no custom roles, no platform-admin user.
+14. Better Auth twoFactor (TOTP) is enforced for privileged roles (Owner, Admin); no custom roles.
 
 ---
 

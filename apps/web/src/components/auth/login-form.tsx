@@ -5,10 +5,11 @@ import type { Route } from "next";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import type { z } from "zod";
 
+import { createLoginSchema } from "@/components/auth/auth-schemas";
 import { ErrorBanner } from "@/components/auth/error-banner";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,28 +25,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Stack } from "@/components/ui/stack";
 import { useAuth } from "@/hooks/use-auth";
-import { getSafeRedirectUrl } from "@/lib/safe-redirect";
+import { getSafeAuthContinuationRedirect, resolvePostAuthDestination } from "@/lib/safe-redirect";
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, "Veuillez renseigner votre adresse e-mail.")
-    .max(255, "L'adresse e-mail ne doit pas dépasser 255 caractères.")
-    .pipe(z.email("Adresse e-mail invalide.")),
-  password: z
-    .string()
-    .min(1, "Veuillez renseigner votre mot de passe.")
-    .max(128, "Le mot de passe ne doit pas dépasser 128 caractères."),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>;
 
 export function LoginForm() {
   const tAuth = useTranslations("auth");
   const router = useRouter();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<unknown | null>(null);
+  const loginSchema = useMemo(() => createLoginSchema(tAuth), [tAuth]);
 
   const {
     register,
@@ -88,13 +77,34 @@ export function LoginForm() {
     setApiError(null);
 
     try {
-      const session = await login(data);
-      if (session.user.platformAdmin) {
-        router.push("/operator" as Route);
+      const result = await login(data);
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      const continuation = getSafeAuthContinuationRedirect(
+        new URLSearchParams(search).get("redirect"),
+      );
+
+      if (result.twoFactorRedirect || result.session?.mfaChallengeRequired) {
+        const target = continuation
+          ? (`/2fa?redirect=${encodeURIComponent(continuation)}` as Route)
+          : ("/2fa" as Route);
+        router.push(target);
         return;
       }
-      const hasMemberships = Boolean(session.memberships && session.memberships.length > 0);
-      const target = getSafeRedirectUrl(undefined, hasMemberships);
+
+      if (result.session?.mfaSetupRequired) {
+        const target = continuation
+          ? (`/2fa/setup?redirect=${encodeURIComponent(continuation)}` as Route)
+          : ("/2fa/setup" as Route);
+        router.push(target);
+        return;
+      }
+
+      const target = resolvePostAuthDestination({
+        platformAdmin: result.session?.user.platformAdmin,
+        membershipsCount: result.session?.memberships?.length ?? 0,
+        continuation,
+        search,
+      });
       router.push(target);
     } catch (err) {
       setApiError(err);
@@ -163,15 +173,28 @@ export function LoginForm() {
               {tAuth("loginSubmit")}
             </Button>
 
-            <p className="text-center text-xs text-muted-foreground">
-              {tAuth("dontHaveAccount")}{" "}
-              <Link
-                href={"/register" as Route}
-                className="font-medium text-primary hover:underline"
-              >
-                {tAuth("register")}
-              </Link>
-            </p>
+            <div className="flex flex-col gap-2 text-center text-xs text-muted-foreground">
+              {(apiError as { code?: unknown } | null)?.code === "EMAIL_NOT_VERIFIED" ? (
+                <p>
+                  {tAuth("verifyEmailRequiredHint")}{" "}
+                  <Link
+                    href={"/verify-email" as Route}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {tAuth("goToVerifyEmail")}
+                  </Link>
+                </p>
+              ) : null}
+              <p>
+                <Link
+                  href={"/forgot-password" as Route}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {tAuth("forgotPassword")}
+                </Link>
+              </p>
+              <p>{tAuth("inviteOnlyLoginHint")}</p>
+            </div>
           </Stack>
         </CardFooter>
       </form>

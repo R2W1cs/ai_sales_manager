@@ -4,109 +4,98 @@ import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 
-export interface ErrorBannerProps {
-  /** Error code from 13 §2.6 */
-  code?: string | null;
-  /** Custom translated copy. If omitted, mapped from code or status */
-  message?: string | null;
-  /** HTTP status code */
-  status?: number;
-  /** Direct error instance or string */
-  error?: unknown;
+import { ApiClientError } from "@/lib/api-client";
+
+interface ErrorBannerProps {
+  error: unknown;
+  title?: string;
   className?: string;
 }
 
-const STATUS_TO_CODE: Record<number, string> = {
+const CODE_TO_KEY: Record<string, string> = {
+  unauthorized: "unauthorized",
+  INVALID_EMAIL_OR_PASSWORD: "unauthorized",
+  EMAIL_NOT_VERIFIED: "emailNotVerified",
+  email_not_verified: "emailNotVerified",
+  email_verification_required: "emailNotVerified",
+  INVITATION_REQUIRED: "invitationRequired",
+  invitation_required: "invitationRequired",
+  invite_email_mismatch: "inviteEmailMismatch",
+  quota_exceeded: "quotaExceeded",
+  MFA_RESET_DISABLED: "mfaResetDisabled",
+  INVALID_TWO_FACTOR_CODE: "invalidTwoFactor",
+  INVALID_BACKUP_CODE: "invalidTwoFactor",
+  INVALID_INVITATION: "notFound",
+  INVALID_TOKEN: "invalidToken",
+  TOKEN_EXPIRED: "invalidToken",
+  csrf_invalid: "csrfInvalid",
+  csrf_rejected: "csrfInvalid",
+  rate_limited: "rateLimited",
+  TOO_MANY_REQUESTS: "rateLimited",
+  conflict: "conflict",
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "conflict",
+  not_found: "notFound",
+  validation_error: "validationError",
+  network_error: "networkError",
+  internal_error: "internalError",
+};
+
+const STATUS_TO_KEY: Record<number, string> = {
+  400: "validationError",
   401: "unauthorized",
-  404: "not_found",
+  403: "unauthorized",
+  404: "notFound",
   409: "conflict",
-  429: "rate_limited",
-  500: "internal_error",
-  502: "network_error",
-  503: "network_error",
-  504: "network_error",
+  422: "validationError",
+  429: "rateLimited",
+  500: "internalError",
+  502: "internalError",
+  503: "internalError",
 };
 
-const CODE_TO_KEY: Record<string, { title: string; desc: string }> = {
-  unauthorized: { title: "unauthorizedTitle", desc: "unauthorizedDesc" },
-  rate_limited: { title: "rateLimitedTitle", desc: "rateLimitedDesc" },
-  conflict: { title: "conflictTitle", desc: "conflictDesc" },
-  not_found: { title: "notFoundTitle", desc: "notFoundDesc" },
-  validation_error: { title: "validationErrorTitle", desc: "validationErrorDesc" },
-  network_error: { title: "networkErrorTitle", desc: "networkErrorDesc" },
-  internal_error: { title: "internalErrorTitle", desc: "internalErrorDesc" },
-};
-
-function resolveErrorInfo({ code, message, status, error }: ErrorBannerProps) {
-  let resolvedCode = code;
-  let resolvedMessage = message;
-  let resolvedStatus = status;
-
-  if (error) {
-    if (typeof error === "string") {
-      resolvedMessage = error;
-    } else if (typeof error === "object" && error !== null) {
-      const err = error as { code?: string; status?: number; message?: string };
-      resolvedCode = resolvedCode ?? err.code;
-      resolvedStatus = resolvedStatus ?? err.status;
-      resolvedMessage = resolvedMessage ?? err.message;
+function resolveTranslationKey(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    if (error.code && CODE_TO_KEY[error.code]) {
+      return CODE_TO_KEY[error.code];
+    }
+    if (error.status && STATUS_TO_KEY[error.status]) {
+      return STATUS_TO_KEY[error.status];
+    }
+  } else if (typeof error === "object" && error !== null) {
+    const record = error as { code?: unknown; status?: unknown };
+    if (typeof record.code === "string" && CODE_TO_KEY[record.code]) {
+      return CODE_TO_KEY[record.code];
+    }
+    if (typeof record.status === "number" && STATUS_TO_KEY[record.status]) {
+      return STATUS_TO_KEY[record.status];
     }
   }
 
-  if (!resolvedCode && resolvedStatus) {
-    resolvedCode = STATUS_TO_CODE[resolvedStatus];
-  }
-
-  if (
-    !resolvedCode &&
-    resolvedMessage &&
-    /failed to fetch|networkerror|network error|load failed/i.test(resolvedMessage)
-  ) {
-    resolvedCode = "network_error";
-  }
-
-  return { resolvedCode, resolvedMessage, resolvedStatus };
+  return "generic";
 }
 
-export function ErrorBanner(props: ErrorBannerProps) {
-  const { message, className } = props;
+export function ErrorBanner({ error, title, className = "" }: ErrorBannerProps) {
   const tErrors = useTranslations("errors");
-  const { resolvedCode, resolvedMessage, resolvedStatus } = resolveErrorInfo(props);
 
-  if (!resolvedCode && !resolvedMessage && !resolvedStatus) {
+  if (!error) {
     return null;
   }
 
-  const errorKeys = resolvedCode ? CODE_TO_KEY[resolvedCode] : undefined;
-  const title = errorKeys
-    ? tErrors(errorKeys.title as Parameters<typeof tErrors>[0])
-    : tErrors("genericTitle");
-
-  const displayMessage =
-    message ||
-    (errorKeys
-      ? tErrors(errorKeys.desc as Parameters<typeof tErrors>[0])
-      : resolvedMessage || tErrors("genericDesc"));
-
-  const detail =
-    !message && resolvedMessage && errorKeys && resolvedMessage !== displayMessage
-      ? resolvedMessage
-      : null;
+  const key = resolveTranslationKey(error);
+  const displayTitle = title ?? tErrors(`${key}Title`);
+  const displayDescription = tErrors(`${key}Desc`);
 
   return (
     <div
       role="alert"
-      aria-live="polite"
-      className={
-        className ??
-        "flex items-start gap-2.5 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/40 dark:bg-destructive/20"
-      }
+      className={`flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-3.5 text-sm text-destructive ${className}`}
     >
       <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
-      <div className="flex-1 space-y-0.5">
-        <p className="leading-none font-medium">{title}</p>
-        <p className="leading-relaxed text-destructive/90">{displayMessage}</p>
-        {detail && <p className="text-xs text-destructive/80">{detail}</p>}
+      <div className="flex flex-col gap-0.5 text-start">
+        <span className="leading-snug font-medium text-destructive">{displayTitle}</span>
+        {displayDescription ? (
+          <p className="text-xs leading-relaxed text-destructive/90">{displayDescription}</p>
+        ) : null}
       </div>
     </div>
   );

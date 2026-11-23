@@ -2,29 +2,24 @@
 
 import { createContext, useContext } from "react";
 
-import type {
-  AcceptInvitationDto,
-  LoginRequest,
-  MembershipDto,
-  RegisterRequest,
-  SessionDto,
-  UserDto,
-} from "@app/shared";
+import type { LoginRequest, MembershipDto, SessionDto, UserDto } from "@app/shared";
 
-export interface AcceptInviteOptions {
-  skipAuth?: boolean;
+export interface LoginResult {
+  twoFactorRedirect?: boolean;
+  session?: SessionDto | null;
 }
 
 export interface AuthContextValue {
   user: UserDto | null;
   memberships: MembershipDto[];
-  accessToken: string | null;
+  mfaVerified: boolean;
+  mfaSetupRequired: boolean;
+  mfaChallengeRequired: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginRequest) => Promise<SessionDto>;
-  register: (data: RegisterRequest) => Promise<SessionDto>;
-  acceptInvite: (data: AcceptInvitationDto, options?: AcceptInviteOptions) => Promise<SessionDto>;
-  logout: () => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<LoginResult>;
+  acceptInvite: (invitationId: string) => Promise<{ businessId: string; role: string }>;
+  logout: (redirectTo?: string) => Promise<void>;
   refreshSession: () => Promise<SessionDto | null>;
   setSession: (session: SessionDto | null) => void;
 }

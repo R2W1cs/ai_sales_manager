@@ -90,7 +90,16 @@ describe("Realtime WebSocket gateway & rooms (Socket.IO) (T-CONV-06)", () => {
           removed_at: null,
           business: { deleted_at: null },
         },
-        include: { business: true },
+        include: {
+          business: true,
+          role: {
+            include: {
+              role_permissions: {
+                include: { permission: true },
+              },
+            },
+          },
+        },
       });
     });
 

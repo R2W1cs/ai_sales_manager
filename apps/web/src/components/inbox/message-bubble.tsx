@@ -16,7 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { apiClient, getAccessToken } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { MessageAttachmentDto, MessageDto } from "@app/shared";
 
@@ -36,10 +36,8 @@ function AttachmentPreview({
     if (!isImage || !businessId) return undefined;
     let objectUrl: string | null = null;
     let cancelled = false;
-    const token = getAccessToken();
     void fetch(`/api/v1/attachments/content?key=${encodeURIComponent(attachment.s3Key)}`, {
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         "x-business-id": businessId,
       },
       credentials: "include",

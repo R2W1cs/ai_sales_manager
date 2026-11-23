@@ -1,6 +1,65 @@
 import type { Route } from "next";
 
-const AUTH_ROUTES = ["/login", "/register", "/invite", "/forgot-password", "/reset-password"];
+export const AUTH_ROUTES = [
+  "/login",
+  "/register",
+  "/invite",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/2fa",
+] as const;
+
+export function isPublicAuthRoute(pathname: string): boolean {
+  return (
+    AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
+    pathname.startsWith("/embed")
+  );
+}
+
+const CONTINUATION_DISALLOWED_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/2fa",
+];
+
+function isValidSameOriginPath(candidate: string | null | undefined): candidate is string {
+  return Boolean(
+    candidate &&
+    candidate.startsWith("/") &&
+    !candidate.startsWith("//") &&
+    !candidate.startsWith("/\\") &&
+    !candidate.includes(":"),
+  );
+}
+
+/**
+ * Validates same-origin continuation targets preserved across email verification,
+ * login, and MFA challenge/enrollment (e.g. `/invite?token=<id>`), preventing CWE-601 open redirects.
+ */
+export function getSafeAuthContinuationRedirect(
+  redirectParam: string | null | undefined,
+): Route | null {
+  if (!isValidSameOriginPath(redirectParam)) {
+    return null;
+  }
+
+  const isLoopTarget = CONTINUATION_DISALLOWED_ROUTES.some(
+    (route) =>
+      redirectParam === route ||
+      redirectParam.startsWith(`${route}?`) ||
+      redirectParam.startsWith(`${route}/`),
+  );
+
+  if (isLoopTarget) {
+    return null;
+  }
+
+  return redirectParam as Route;
+}
 
 /**
  * Computes a safe redirect destination for authenticated users:
@@ -34,14 +93,7 @@ export function getSafeRedirectUrl(
 
     const redirectParam = params.get("redirect");
 
-    if (
-      redirectParam &&
-      redirectParam.startsWith("/") &&
-      !redirectParam.startsWith("//") &&
-      !redirectParam.startsWith("/\\") &&
-      !redirectParam.includes(":")
-    ) {
-      // Prevent infinite redirect loop back to authentication routes
+    if (isValidSameOriginPath(redirectParam)) {
       const isAuthRoute = AUTH_ROUTES.some(
         (route) =>
           redirectParam === route ||
@@ -58,4 +110,32 @@ export function getSafeRedirectUrl(
   }
 
   return "/inbox" as Route;
+}
+
+/**
+ * Resolves the canonical post-authentication destination once any pending MFA
+ * setup or challenge has been satisfied.
+ */
+export function resolvePostAuthDestination(params: {
+  platformAdmin?: boolean;
+  membershipsCount: number;
+  continuation?: Route | null;
+  search?: string;
+}): Route {
+  if (params.platformAdmin) {
+    return "/operator" as Route;
+  }
+
+  const resolvedSearch =
+    params.search ?? (typeof window !== "undefined" ? window.location.search : "");
+  const continuation =
+    params.continuation !== undefined
+      ? params.continuation
+      : getSafeAuthContinuationRedirect(new URLSearchParams(resolvedSearch).get("redirect"));
+
+  if (continuation?.startsWith("/invite")) {
+    return continuation;
+  }
+
+  return getSafeRedirectUrl(resolvedSearch, params.membershipsCount > 0);
 }

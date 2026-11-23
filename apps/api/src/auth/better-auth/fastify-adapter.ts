@@ -1,29 +1,34 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 
+import { shouldTrustProxy } from "../../bootstrap";
+
+const TRUST_DEVICE_COOKIE_PATTERN = /^(?:__Secure-)?better-auth\.trust_device=/i;
+const TRUST_DEVICE_ANYWHERE_PATTERN = /(?:^|;\s*)(?:__Secure-)?better-auth\.trust_device=/i;
+
 /**
- * Better Auth ↔ Fastify bridge.
- *
- * Better Auth ships a web-standard `Request -> Response` handler. This adapter
- * is the thin translation layer for Fastify, kept in-repo rather than taking a
- * third-party Nest wrapper: it is small, it is covered by the HTTP integration
- * suite, and it avoids coupling auth to a package that must track both Nest and
- * Better Auth releases.
- *
- * It differs deliberately from the snippet in Better Auth's Fastify guide:
- *
- * - the body is forwarded as the **raw request bytes** rather than
- *   `JSON.stringify(request.body)`. Re-serializing corrupts
- *   `application/x-www-form-urlencoded` payloads and loses byte fidelity.
- * - `Set-Cookie` is copied via `getSetCookie()`, the only spec-guaranteed way
- *   to read multiple cookies off a `Headers` object. Sign-out emits three.
- * - the response is written through the Fastify reply API, so `onSend` hooks
- *   still run. Writing to `reply.raw` would skip the CORS and security-header
- *   plugins.
+ * Strips any `trust_device` cookies from an inbound `Cookie` header before
+ * Better Auth evaluates a sign-in request so trusted-device bypass is impossible
+ * even if a pre-existing valid cookie is presented.
  */
+export function stripTrustDeviceCookies(cookieHeader: string): string {
+  return cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && !TRUST_DEVICE_COOKIE_PATTERN.test(part))
+    .join("; ");
+}
+
+/** Checks whether an inbound Cookie header carries a `trust_device` cookie. */
+export function hasTrustDeviceCookie(cookieHeader: string | string[] | undefined): boolean {
+  if (!cookieHeader) return false;
+  const joined = Array.isArray(cookieHeader) ? cookieHeader.join("; ") : cookieHeader;
+  return TRUST_DEVICE_ANYWHERE_PATTERN.test(joined);
+}
 
 /** Converts Node/Fastify inbound headers into a web `Headers` object. */
 export function toWebHeaders(
   source: Record<string, string | string[] | undefined> | Headers | undefined,
+  options?: { stripTrustDevice?: boolean },
 ): Headers {
   if (!source) return new Headers();
   if (source instanceof Headers) return source;
@@ -31,6 +36,15 @@ export function toWebHeaders(
   const headers = new Headers();
   for (const [key, value] of Object.entries(source)) {
     if (value === undefined) continue;
+    const lowerKey = key.toLowerCase();
+    if (options?.stripTrustDevice && lowerKey === "cookie") {
+      const joined = Array.isArray(value) ? value.join("; ") : value;
+      const sanitized = stripTrustDeviceCookies(joined);
+      if (sanitized.length > 0) {
+        headers.set("cookie", sanitized);
+      }
+      continue;
+    }
     if (Array.isArray(value)) {
       for (const entry of value) headers.append(key, entry);
     } else {
@@ -42,23 +56,39 @@ export function toWebHeaders(
 
 /**
  * Alias used by call sites that hold plain Node header records rather than a
- * Fastify request: `AuthService`, `TenantGuard` and the Socket.IO handshake.
+ * Fastify request: `TenantGuard`, `PlatformAdminGuard`, and the Socket.IO handshake.
  * Matches the signature of Better Auth's own `fromNodeHeaders`.
  */
-export const fromNodeHeaders = toWebHeaders;
+export const fromNodeHeaders = (
+  source: Record<string, string | string[] | undefined> | Headers | undefined,
+): Headers => toWebHeaders(source);
 
-/** Absolute URL of the inbound request, honouring proxy forwarding headers. */
-export function resolveRequestUrl(request: FastifyRequest): URL {
-  const forwardedProto = request.headers["x-forwarded-proto"];
-  const proto =
-    (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto)?.split(",")[0]?.trim() ||
-    request.protocol;
+/**
+ * Absolute URL of the inbound request.
+ * Only honors `X-Forwarded-Proto` / `X-Forwarded-Host` when `shouldTrustProxy()` is enabled
+ * (controlled ingress that strips and overwrites client-supplied forwarding headers).
+ */
+export function resolveRequestUrl(request: FastifyRequest, trustProxy = shouldTrustProxy()): URL {
+  let proto = request.protocol || "http";
+  let host = request.headers.host || "localhost";
 
-  const forwardedHost = request.headers["x-forwarded-host"];
-  const host =
-    (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost)?.split(",")[0]?.trim() ||
-    request.headers.host ||
-    "localhost";
+  if (trustProxy) {
+    const forwardedProto = request.headers["x-forwarded-proto"];
+    const resolvedProto = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto)
+      ?.split(",")[0]
+      ?.trim();
+    if (resolvedProto === "http" || resolvedProto === "https") {
+      proto = resolvedProto;
+    }
+
+    const forwardedHost = request.headers["x-forwarded-host"];
+    const resolvedHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost)
+      ?.split(",")[0]
+      ?.trim();
+    if (resolvedHost) {
+      host = resolvedHost;
+    }
+  }
 
   return new URL(request.url, `${proto}://${host}`);
 }
@@ -75,18 +105,38 @@ export function toWebRequest(request: FastifyRequest): Request {
 
   return new Request(resolveRequestUrl(request).toString(), {
     method,
-    headers: toWebHeaders(request.headers),
+    headers: toWebHeaders(request.headers, { stripTrustDevice: true }),
     body,
   });
 }
 
-/** Copies a web `Response` onto a Fastify reply and sends it. */
-export async function sendWebResponse(reply: FastifyReply, response: Response): Promise<void> {
+/** Copies a web `Response` onto a Fastify reply and expires any trust_device cookies. */
+export async function sendWebResponse(
+  reply: FastifyReply,
+  response: Response,
+  options?: { expireTrustDeviceCookie?: boolean },
+): Promise<void> {
   reply.status(response.status);
 
+  let sawTrustCookie = Boolean(options?.expireTrustDeviceCookie);
   for (const cookie of response.headers.getSetCookie()) {
-    // `reply.header` appends for set-cookie, preserving every cookie.
+    // Strip any non-expiring trust_device Set-Cookie if emitted; pilot disables device trust.
+    if (TRUST_DEVICE_COOKIE_PATTERN.test(cookie.trim())) {
+      sawTrustCookie = true;
+      continue;
+    }
     reply.header("set-cookie", cookie);
+  }
+
+  if (sawTrustCookie) {
+    reply.header(
+      "set-cookie",
+      "better-auth.trust_device=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+    );
+    reply.header(
+      "set-cookie",
+      "__Secure-better-auth.trust_device=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax",
+    );
   }
 
   response.headers.forEach((value, key) => {
@@ -103,7 +153,8 @@ export async function sendWebResponse(reply: FastifyReply, response: Response): 
  */
 export function toFastifyHandler(handler: (request: Request) => Promise<Response>) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const expireTrustDeviceCookie = hasTrustDeviceCookie(request.headers.cookie);
     const response = await handler(toWebRequest(request));
-    await sendWebResponse(reply, response);
+    await sendWebResponse(reply, response, { expireTrustDeviceCookie });
   };
 }

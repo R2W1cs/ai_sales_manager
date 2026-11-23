@@ -177,21 +177,51 @@ test.describe("Admin Settings Flows & Governance (T-WEB-10)", () => {
     const user =
       role === "owner" ? mockOwnerUser : role === "admin" ? mockAdminUser : mockEmployeeUser;
 
-    // 1. Auth Refresh
-    await page.route("**/api/v1/auth/refresh", async (route: any) => {
+    // 1. Better Auth Session & Workspaces Bootstrap
+    const sessionUser = {
+      ...user,
+      platformAdmin: false,
+      emailVerified: true,
+      twoFactorEnabled: role === "owner" || role === "admin",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    await page.route("**/api/auth/get-session", async (route: any) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          user,
+          user: sessionUser,
+          session: {
+            id: `sess-${role}-1`,
+            userId: user.id,
+            expiresAt: "2099-01-01T00:00:00.000Z",
+            mfaVerified: true,
+            activeOrganizationId: mockBusiness.id,
+          },
+        }),
+      });
+    });
+
+    await page.route("**/api/v1/workspaces", async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          user: sessionUser,
           memberships: [
             {
-              id: `mem-${role}-1`,
               businessId: mockBusiness.id,
               role,
+              businessName: mockBusiness.name,
+              joinedAt: "2026-01-01T00:00:00.000Z",
             },
           ],
-          accessToken: "mock-jwt-settings-token",
+          mfaVerified: true,
+          mfaSetupRequired: false,
+          mfaChallengeRequired: false,
+          tokenType: "Bearer",
+          expiresIn: 604800,
         }),
       });
     });
@@ -340,6 +370,22 @@ test.describe("Admin Settings Flows & Governance (T-WEB-10)", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ conversations: [], nextCursor: null, totalCount: 0 }),
+      });
+    });
+
+    await page.route("**/api/v1/notifications*", async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], unreadCount: 0, nextCursor: null }),
+      });
+    });
+
+    await page.route("**/api/v1/businesses/*/onboarding", async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ completed: true, step: 6, steps: {} }),
       });
     });
   };

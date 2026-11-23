@@ -229,11 +229,13 @@ model User {
   email_verified_at DateTime? @db.Timestamptz
   last_login_at     DateTime? @db.Timestamptz
   platform_admin    Boolean   @default(false)
+  twoFactorEnabled  Boolean?  @default(false)
 
   sessions    Session[]
   accounts    Account[]
   members     Member[]
   invitations Invitation[]
+  twofactors  TwoFactor[]
 
   refresh_tokens        RefreshToken[]
   password_reset_tokens PasswordResetToken[]
@@ -258,9 +260,25 @@ model Session {
   userId               String
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
+  mfaVerified          Boolean  @default(false)
 
   @@index([userId])
   @@map("sessions")
+}
+
+model TwoFactor {
+  id                      String    @id @default(uuid())
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime? @db.Timestamptz
+
+  @@index([userId])
+  @@index([secret])
+  @@map("two_factors")
 }
 
 model Account {

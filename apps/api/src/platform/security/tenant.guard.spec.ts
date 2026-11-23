@@ -269,7 +269,7 @@ describe("TenantGuard (13 §2.4, 17 §4)", () => {
           error: {
             code: "business_required",
             message: "X-Business-Id header is required when user belongs to multiple businesses",
-            details: { hint: "pick_business" },
+            details: {},
           },
         },
       });

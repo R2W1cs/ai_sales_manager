@@ -2,10 +2,13 @@ import type { CanActivate, ExecutionContext } from "@nestjs/common";
 import { ForbiddenException, Injectable, Optional } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
+import { env } from "@app/shared/server";
+
 import { prisma } from "../../lib/prisma";
 import { InjectPrisma, type PrismaClient } from "../core/prisma.token";
+import { assertPrivilegedMfaSession, resolveAuthorizedTenantMembership } from "./membership-lookup";
 import type { PermissionCode } from "./permissions";
-import { isRoleName, PERMISSIONS_KEY, ROLE_PERMISSIONS } from "./permissions";
+import { isPrivilegedRole, isRoleName, PERMISSIONS_KEY, ROLE_PERMISSIONS } from "./permissions";
 import type { TenantRequest } from "./tenant.guard";
 
 interface RolePermissionRecord {
@@ -25,6 +28,8 @@ interface MembershipWithRole {
   [key: string]: unknown;
 }
 
+const EMPLOYEE_PERMISSION_SET = new Set<string>(ROLE_PERMISSIONS.employee);
+
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   private readonly prisma: PrismaClient;
@@ -41,7 +46,6 @@ export class PermissionsGuard implements CanActivate {
       PermissionCode[] | PermissionCode | undefined
     >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
-    // If no permission metadata attached, allow access
     if (!requiredPermissions) {
       return true;
     }
@@ -56,7 +60,7 @@ export class PermissionsGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest<TenantRequest>();
 
-    // Resolve membership
+    // Resolve membership from request context or authoritative Better Auth Member table
     let membership = req.membership as MembershipWithRole | undefined;
 
     if (!membership) {
@@ -65,49 +69,10 @@ export class PermissionsGuard implements CanActivate {
         typeof req.headers["x-business-id"] === "string"
           ? req.headers["x-business-id"].trim()
           : undefined;
-      // Falls back to a client-supplied header only as a last resort; the
-      // membership lookup below is what authorises it.
       const businessId =
         req.businessId ?? req.tenantId ?? req.sessionBusinessId ?? headerBusinessId;
 
-      if (userId && businessId) {
-        const dbMembership = await this.prisma.businessMember.findFirst({
-          where: {
-            user_id: userId,
-            business_id: businessId,
-            removed_at: null,
-            business: {
-              deleted_at: null,
-            },
-          },
-          include: {
-            business: true,
-            role: {
-              include: {
-                role_permissions: {
-                  include: {
-                    permission: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        if (!dbMembership) {
-          throw new ForbiddenException({
-            error: {
-              code: "forbidden",
-              message: "Access to this business is forbidden",
-            },
-          });
-        }
-
-        membership = dbMembership;
-        req.membership = dbMembership;
-        req.businessId = dbMembership.business_id;
-        req.tenantId = dbMembership.business_id;
-      } else {
+      if (!userId || !businessId) {
         throw new ForbiddenException({
           error: {
             code: "forbidden",
@@ -115,19 +80,40 @@ export class PermissionsGuard implements CanActivate {
           },
         });
       }
+
+      const resolved = await resolveAuthorizedTenantMembership(this.prisma, userId, businessId);
+      membership = resolved.membershipPayload as MembershipWithRole;
+      req.membership = membership;
+      req.businessId = resolved.businessId;
+      req.tenantId = resolved.businessId;
+    }
+
+    // Defense-in-depth: privileged roles or privileged permissions require an MFA-verified session
+    const roleName = membership.role?.name;
+    const requiresPrivilegedMfa =
+      isPrivilegedRole(roleName) || requiredList.some((perm) => !EMPLOYEE_PERMISSION_SET.has(perm));
+
+    if (requiresPrivilegedMfa) {
+      assertPrivilegedMfaSession({
+        session: req.session,
+        twoFactorEnabled: req.user?.twoFactorEnabled,
+        enforceAlways: env.NODE_ENV === "production",
+        enrollmentMessage:
+          "Two-factor authentication enrollment is required for privileged actions.",
+        challengeMessage:
+          "A verified two-factor authentication session is required for privileged actions.",
+      });
     }
 
     // Extract granted permission codes
     const grantedPermissions = new Set<string>();
 
-    // 1. From explicit permissions array if present
     if (Array.isArray(membership.permissions)) {
       for (const p of membership.permissions) {
         if (typeof p === "string") grantedPermissions.add(p);
       }
     }
 
-    // 2. From role_permissions relation
     const rolePermissions = membership.role?.role_permissions;
     if (Array.isArray(rolePermissions)) {
       for (const rp of rolePermissions) {
@@ -138,8 +124,6 @@ export class PermissionsGuard implements CanActivate {
       }
     }
 
-    // 3. Fallback to standard role mapping if role name is present
-    const roleName = membership.role?.name;
     if (isRoleName(roleName)) {
       const standardCodes = ROLE_PERMISSIONS[roleName];
       for (const code of standardCodes) {
@@ -147,7 +131,6 @@ export class PermissionsGuard implements CanActivate {
       }
     }
 
-    // Verify all required permissions are present
     const hasAll = requiredList.every((perm) => grantedPermissions.has(perm));
 
     if (!hasAll) {

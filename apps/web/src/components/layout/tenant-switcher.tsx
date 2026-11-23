@@ -64,7 +64,6 @@ export function TenantProvider({
     apiClient
       .get<{ name: string }>(`/api/v1/businesses/${currentBusinessId}`, {
         headers: { "x-business-id": currentBusinessId },
-        skipRefresh: true,
       })
       .then((res) => {
         if (mounted && res?.name) {

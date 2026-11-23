@@ -52,6 +52,11 @@ export const serverEnvSchema = z
      * defeat the auth rate limit (NFR-SEC-09).
      */
     TRUST_PROXY: envFlag.optional(),
+    /**
+     * Comma-separated trusted reverse-proxy IPs or CIDRs for Better Auth IP resolution
+     * (only evaluated when TRUST_PROXY is enabled).
+     */
+    TRUSTED_PROXIES: nonempty.optional(),
 
     AI_GATEWAY_API_KEY: nonempty.optional(),
     VERCEL_OIDC_TOKEN: nonempty.optional(),
@@ -101,6 +106,15 @@ export const serverEnvSchema = z
 
     if (ctx.value.NODE_ENV !== "production") {
       return;
+    }
+
+    if (ctx.value.BETTER_AUTH_SECRET === "local-better-auth-secret-min-32-chars-long!") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["BETTER_AUTH_SECRET"],
+        message: "Production BETTER_AUTH_SECRET must not use the local development fallback",
+      });
     }
 
     if (ctx.value.S3_ACCESS_KEY_ID && !ctx.value.S3_SECRET_ACCESS_KEY) {

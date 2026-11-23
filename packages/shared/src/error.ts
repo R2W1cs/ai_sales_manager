@@ -29,6 +29,11 @@ export const ErrorCodeSchema = z.enum([
   "not_implemented",
   "internal_error",
   "service_unavailable",
+  "csrf_rejected",
+  "mfa_required",
+  "mfa_setup_required",
+  "email_verification_required",
+  "invite_email_mismatch",
 ]);
 
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;

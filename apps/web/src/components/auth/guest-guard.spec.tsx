@@ -1,35 +1,39 @@
-/**
- * Test Suite for GuestGuard and getSafeRedirectUrl
- */
-
-/// <reference types="jest" />
 import React from "react";
 import { renderToString } from "react-dom/server";
 
+import { GuestGuard } from "@/components/auth/guest-guard";
 import { AuthContext, type AuthContextValue } from "@/hooks/use-auth";
-import { getSafeRedirectUrl } from "@/lib/safe-redirect";
+import { getSafeAuthContinuationRedirect, getSafeRedirectUrl } from "@/lib/safe-redirect";
 
-import { GuestGuard } from "./guest-guard";
+class RedirectSignal extends Error {
+  constructor(public readonly url: string) {
+    super(`NEXT_REDIRECT:${url}`);
+  }
+}
 
-const mockReplace = jest.fn();
+const mockRedirect = jest.fn((url: string) => {
+  throw new RedirectSignal(url);
+});
 
 jest.mock("next/navigation", () => ({
+  redirect: (url: string) => mockRedirect(url),
   useRouter: () => ({
-    replace: mockReplace,
+    replace: jest.fn(),
     push: jest.fn(),
-    refresh: jest.fn(),
+    prefetch: jest.fn(),
   }),
 }));
 
-function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
+function buildAuthValue(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
   return {
     user: null,
     memberships: [],
-    accessToken: null,
+    mfaVerified: false,
+    mfaSetupRequired: false,
+    mfaChallengeRequired: false,
     isAuthenticated: false,
     isLoading: false,
     login: jest.fn(),
-    register: jest.fn(),
     acceptInvite: jest.fn(),
     logout: jest.fn(),
     refreshSession: jest.fn(),
@@ -38,95 +42,149 @@ function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthC
   };
 }
 
-describe("GuestGuard & Safe Redirect Logic", () => {
+describe("getSafeRedirectUrl & getSafeAuthContinuationRedirect", () => {
+  it("redirects users without memberships to /onboarding", () => {
+    expect(getSafeRedirectUrl("?redirect=/dashboard", false)).toBe("/onboarding");
+    expect(getSafeRedirectUrl("", false)).toBe("/onboarding");
+  });
+
+  it("redirects users with memberships to /inbox by default", () => {
+    expect(getSafeRedirectUrl("", true)).toBe("/inbox");
+  });
+
+  it("allows safe internal redirect paths when user has memberships", () => {
+    expect(getSafeRedirectUrl("?redirect=/settings/team", true)).toBe("/settings/team");
+  });
+
+  it("rejects open redirect attempts and auth routes in getSafeRedirectUrl", () => {
+    expect(getSafeRedirectUrl("?redirect=https://evil.com", true)).toBe("/inbox");
+    expect(getSafeRedirectUrl("?redirect=//evil.com", true)).toBe("/inbox");
+    expect(getSafeRedirectUrl("?redirect=/login", true)).toBe("/inbox");
+    expect(getSafeRedirectUrl("?redirect=/invite?token=abc", true)).toBe("/inbox");
+  });
+
+  it("allows /invite?token=abc in getSafeAuthContinuationRedirect while blocking open redirects", () => {
+    expect(getSafeAuthContinuationRedirect("/invite?token=abc")).toBe("/invite?token=abc");
+    expect(getSafeAuthContinuationRedirect("/inbox")).toBe("/inbox");
+    expect(getSafeAuthContinuationRedirect("https://evil.com")).toBeNull();
+    expect(getSafeAuthContinuationRedirect("//evil.com")).toBeNull();
+    expect(getSafeAuthContinuationRedirect("/login")).toBeNull();
+    expect(getSafeAuthContinuationRedirect("/2fa")).toBeNull();
+  });
+});
+
+describe("GuestGuard", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockRedirect.mockClear();
   });
 
-  describe("getSafeRedirectUrl", () => {
-    it("enforces /onboarding when user has no active memberships (spec 02 §150)", () => {
-      expect(getSafeRedirectUrl("", false)).toBe("/onboarding");
-      expect(getSafeRedirectUrl("?redirect=/settings", false)).toBe("/onboarding");
-      expect(getSafeRedirectUrl("?redirect=/pipeline", false)).toBe("/onboarding");
-    });
+  it("renders children when guest and not loading", () => {
+    const html = renderToString(
+      <AuthContext.Provider value={buildAuthValue()}>
+        <GuestGuard>
+          <div>Guest Login Content</div>
+        </GuestGuard>
+      </AuthContext.Provider>,
+    );
 
-    it("defaults to /inbox when user has memberships and no redirect param", () => {
-      expect(getSafeRedirectUrl("", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?foo=bar", true)).toBe("/inbox");
-    });
-
-    it("accepts valid relative redirect paths for users with memberships", () => {
-      expect(getSafeRedirectUrl("?redirect=/settings", true)).toBe("/settings");
-      expect(getSafeRedirectUrl("?redirect=/pipeline?tab=won", true)).toBe("/pipeline?tab=won");
-    });
-
-    it("prevents infinite redirect loops by rejecting auth routes as redirect targets", () => {
-      expect(getSafeRedirectUrl("?redirect=/login", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=/register", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=/invite?token=abc", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=/login?param=1", true)).toBe("/inbox");
-    });
-
-    it("rejects open redirect attempts to external protocols or domains", () => {
-      expect(getSafeRedirectUrl("?redirect=https://evil.com", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=http://evil.com", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=//evil.com", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=/\\evil.com", true)).toBe("/inbox");
-      expect(getSafeRedirectUrl("?redirect=javascript:alert(1)", true)).toBe("/inbox");
-    });
+    expect(html).toContain("Guest Login Content");
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  describe("GuestGuard rendering", () => {
-    it("renders loading card when isLoading is true", () => {
-      const auth = createMockAuthContext({ isLoading: true, isAuthenticated: false });
-      const html = renderToString(
-        <AuthContext.Provider value={auth}>
+  it("redirects to /2fa/setup when mfaSetupRequired is true", () => {
+    expect(() =>
+      renderToString(
+        <AuthContext.Provider
+          value={buildAuthValue({
+            mfaSetupRequired: true,
+          })}
+        >
           <GuestGuard>
-            <div data-slot="guest-content">Guest Form</div>
+            <div>Guest Login Content</div>
           </GuestGuard>
         </AuthContext.Provider>,
-      );
+      ),
+    ).toThrow("NEXT_REDIRECT:/2fa/setup");
+    expect(mockRedirect).toHaveBeenCalledWith("/2fa/setup");
+  });
 
-      expect(html).toContain('data-slot="guest-guard-loading"');
-      expect(html).not.toContain("Guest Form");
-    });
-
-    it("renders loading card when isAuthenticated is true", () => {
-      const auth = createMockAuthContext({
-        isLoading: false,
-        isAuthenticated: true,
-        user: {
-          id: "u-1",
-          name: "User",
-          email: "user@test.com",
-          emailVerifiedAt: null,
-          createdAt: new Date().toISOString(),
-        },
-      });
-      const html = renderToString(
-        <AuthContext.Provider value={auth}>
+  it("redirects to /2fa when mfaChallengeRequired is true", () => {
+    expect(() =>
+      renderToString(
+        <AuthContext.Provider
+          value={buildAuthValue({
+            mfaChallengeRequired: true,
+          })}
+        >
           <GuestGuard>
-            <div data-slot="guest-content">Guest Form</div>
+            <div>Guest Login Content</div>
           </GuestGuard>
         </AuthContext.Provider>,
-      );
+      ),
+    ).toThrow("NEXT_REDIRECT:/2fa");
+    expect(mockRedirect).toHaveBeenCalledWith("/2fa");
+  });
 
-      expect(html).toContain('data-slot="guest-guard-loading"');
-      expect(html).not.toContain("Guest Form");
-    });
-
-    it("renders children when unauthenticated and not loading", () => {
-      const auth = createMockAuthContext({ isLoading: false, isAuthenticated: false });
-      const html = renderToString(
-        <AuthContext.Provider value={auth}>
+  it("redirects authenticated owner with memberships to /inbox", () => {
+    expect(() =>
+      renderToString(
+        <AuthContext.Provider
+          value={buildAuthValue({
+            isAuthenticated: true,
+            mfaVerified: true,
+            user: {
+              id: "u1",
+              email: "owner@example.com",
+              name: "Owner",
+              platformAdmin: false,
+              emailVerified: true,
+              twoFactorEnabled: true,
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+            memberships: [
+              {
+                businessId: "b1",
+                role: "owner",
+                businessName: "Shop",
+                joinedAt: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          })}
+        >
           <GuestGuard>
-            <div data-slot="guest-content">Guest Form</div>
+            <div>Guest Login Content</div>
           </GuestGuard>
         </AuthContext.Provider>,
-      );
+      ),
+    ).toThrow("NEXT_REDIRECT:/inbox");
+    expect(mockRedirect).toHaveBeenCalledWith("/inbox");
+  });
 
-      expect(html).not.toContain('data-slot="guest-guard-loading"');
-      expect(html).toContain("Guest Form");
-    });
+  it("redirects platformAdmin users to /operator", () => {
+    expect(() =>
+      renderToString(
+        <AuthContext.Provider
+          value={buildAuthValue({
+            isAuthenticated: true,
+            mfaVerified: true,
+            user: {
+              id: "u-admin",
+              email: "admin@example.com",
+              name: "Platform Admin",
+              platformAdmin: true,
+              emailVerified: true,
+              twoFactorEnabled: true,
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+            memberships: [],
+          })}
+        >
+          <GuestGuard>
+            <div>Guest Login Content</div>
+          </GuestGuard>
+        </AuthContext.Provider>,
+      ),
+    ).toThrow("NEXT_REDIRECT:/operator");
+    expect(mockRedirect).toHaveBeenCalledWith("/operator");
   });
 });

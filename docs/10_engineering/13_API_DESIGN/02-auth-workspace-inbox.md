@@ -1,17 +1,19 @@
 ## 4. Auth
 
-| Method | Path                              | Perm            | Notes                                                                                                                             |
-| ------ | --------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/api/v1/auth/register`           | Public          | Body: `email`, `password` (min 10), `name`. Creates `users`. **Does not** create a business. Duplicate email → **409** `conflict` |
-| `POST` | `/api/v1/auth/login`              | Public          | Body: `email`, `password`. Sets refresh cookie. 401 on bad credentials (same message as unknown email)                            |
-| `POST` | `/api/v1/auth/refresh`            | Cookie          | Rotates refresh; returns new access token                                                                                         |
-| `POST` | `/api/v1/auth/logout`             | Token or cookie | Revokes **this** refresh family; clears cookie; disconnects this user’s sockets for this session. **204**                         |
-| `GET`  | `/api/v1/auth/me`                 | Token           | `user` + `memberships`. No `X-Business-Id` required                                                                               |
-| `POST` | `/api/v1/auth/forgot-password`    | Public          | Always **204**. Sends email via Resend if the email exists. Should                                                                |
-| `POST` | `/api/v1/auth/reset-password`     | Public          | Body: `token`, `password`. Single-use (`12` password_reset_tokens). Revokes **all** refresh families for that user. Should        |
-| `GET`  | `/api/v1/auth/google`             | Public          | 302 to Google. Should                                                                                                             |
-| `GET`  | `/api/v1/auth/google/callback`    | Public          | Links by verified email (FR-AUTH-006). Sets cookie, 302 to `app.<apex>`. Should                                                   |
-| `POST` | `/api/v1/auth/invitations/accept` | Public          | Body: `token`, and either `{ password, name }` for a new user or login already established. Creates membership                    |
+| Method | Path                                                  | Perm            | Notes                                                                                                                             |
+| ------ | ----------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/api/v1/auth/register`                               | Public          | Body: `email`, `password` (min 10), `name`. Creates `users`. **Does not** create a business. Duplicate email → **409** `conflict` |
+| `POST` | `/api/v1/auth/login`                                  | Public          | Body: `email`, `password`. Sets refresh cookie. 401 on bad credentials (same message as unknown email)                            |
+| `POST` | `/api/v1/auth/refresh`                                | Cookie          | Rotates refresh; returns new access token                                                                                         |
+| `POST` | `/api/v1/auth/logout`                                 | Token or cookie | Revokes **this** refresh family; clears cookie; disconnects this user’s sockets for this session. **204**                         |
+| `GET`  | `/api/v1/auth/me`                                     | Token           | `user` + `memberships`. No `X-Business-Id` required                                                                               |
+| `POST` | `/api/v1/auth/forgot-password`                        | Public          | Always **204**. Sends email via Resend if the email exists. Should                                                                |
+| `POST` | `/api/v1/auth/reset-password`                         | Public          | Body: `token`, `password`. Single-use (`12` password_reset_tokens). Revokes **all** refresh families for that user. Should        |
+| `GET`  | `/api/v1/auth/google`                                 | Public          | 302 to Google. Should                                                                                                             |
+| `GET`  | `/api/v1/auth/google/callback`                        | Public          | Links by verified email (FR-AUTH-006). Sets cookie, 302 to `app.<apex>`. Should                                                   |
+| `POST` | `/api/v1/auth/invitations/accept`                     | Public          | Body: `token`, and either `{ password, name }` for a new user or login already established. Creates membership                    |
+| `GET`  | `/api/v1/workspaces`                                  | Authenticated   | Better Auth bootstrap: user, memberships, MFA session state                                                                       |
+| `POST` | `/api/v1/workspaces/invitations/:invitationId/accept` | Authenticated   | Accept pending invitation for session. Alias: `/api/v1/invitations/:invitationId/accept`                                          |
 
 Register/login **201/200** body: `Session` without listing other tenants’ data beyond memberships (`businessId`, `role`, business `name`).
 

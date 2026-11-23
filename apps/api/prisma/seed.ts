@@ -27,6 +27,7 @@ import {
   SenderType,
 } from "@prisma/client";
 import * as argon2 from "argon2";
+import { hashPassword } from "better-auth/crypto";
 import pg from "pg";
 
 import { CANONICAL_PLANS } from "@app/shared";
@@ -160,18 +161,26 @@ async function main() {
   await linkRolePermissions(employeeRole.id, employeePermissions);
 
   // --------------------------------------------------------------------------
-  // 2. Organization & Users (Better Auth & Native Auth Compatibility)
+  // 2. Organization & Users (Better Auth v1.7.27 Single Source of Truth)
   // --------------------------------------------------------------------------
   console.log("  → Creating users and Better Auth organization...");
   const passwordHash = await argon2.hash("Password123!", {
     type: argon2.argon2id,
   });
+  const betterAuthPasswordHash = await hashPassword("Password123!");
+
+  const DEMO_BUSINESS_ID = "a0000000-0000-0000-0000-000000000001";
+
+  // Clean up any legacy pre-alignment organization ID if present
+  await prisma.organization.deleteMany({
+    where: { id: "a0000000-0000-0000-0000-000000000000" },
+  });
 
   const organization = await prisma.organization.upsert({
-    where: { id: "a0000000-0000-0000-0000-000000000000" },
+    where: { id: DEMO_BUSINESS_ID },
     update: { name: "Maison Alyssa Tunis", slug: "maison-alyssa-tunis" },
     create: {
-      id: "a0000000-0000-0000-0000-000000000000",
+      id: DEMO_BUSINESS_ID,
       name: "Maison Alyssa Tunis",
       slug: "maison-alyssa-tunis",
       logo: "https://images.unsplash.com/photo-1543087903-1ac2ec7aa8c5?w=150&auto=format&fit=crop&q=80",
@@ -242,13 +251,13 @@ async function main() {
       // Better Auth Account
       await prisma.account.upsert({
         where: { id: `acc-${user.id}` },
-        update: { password: passwordHash },
+        update: { password: betterAuthPasswordHash },
         create: {
           id: `acc-${user.id}`,
           userId: user.id,
           providerId: "credential",
           accountId: user.id,
-          password: passwordHash,
+          password: betterAuthPasswordHash,
         },
       });
 
@@ -302,13 +311,13 @@ async function main() {
   });
   await prisma.account.upsert({
     where: { id: `acc-${operatorUser.id}` },
-    update: { password: passwordHash },
+    update: { password: betterAuthPasswordHash },
     create: {
       id: `acc-${operatorUser.id}`,
       userId: operatorUser.id,
       providerId: "credential",
       accountId: operatorUser.id,
-      password: passwordHash,
+      password: betterAuthPasswordHash,
     },
   });
 

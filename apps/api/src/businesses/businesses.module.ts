@@ -13,11 +13,13 @@ import { OnboardingController } from "./onboarding/onboarding.controller";
 import { OnboardingService } from "./onboarding/onboarding.service";
 import { BusinessesController } from "./workspace/businesses.controller";
 import { BusinessesService } from "./workspace/businesses.service";
+import { WorkspacesController } from "./workspace/workspaces.controller";
 
 @Module({
   imports: [RealtimeModule],
   controllers: [
     BusinessesController,
+    WorkspacesController,
     MembersController,
     OnboardingController,
     ActivationController,

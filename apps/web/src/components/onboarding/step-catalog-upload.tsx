@@ -378,9 +378,7 @@ function ValidationSummaryTable({
 
 function downloadCatalogTemplate(): void {
   fetch("/api/v1/products/import/template", {
-    headers: {
-      Authorization: `Bearer ${apiClient.getAccessToken() || ""}`,
-    },
+    credentials: "include",
   })
     .then((res) => {
       if (!res.ok) throw new Error("Impossible de télécharger le gabarit CSV");

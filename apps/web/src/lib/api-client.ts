@@ -22,23 +22,13 @@ export interface ApiErrorPayload {
   };
 }
 
-// In-memory access token storage (ZERO localStorage)
-let inMemoryAccessToken: string | null = null;
-
-// Callbacks
 type SessionExpiredHandler = () => void;
 type TokenRefreshedHandler = (session: SessionDto) => void;
+type MfaRequiredHandler = (kind: "mfa_setup_required" | "mfa_required") => void;
 
 const sessionExpiredHandlers = new Set<SessionExpiredHandler>();
 const tokenRefreshedHandlers = new Set<TokenRefreshedHandler>();
-
-export function getAccessToken(): string | null {
-  return inMemoryAccessToken;
-}
-
-export function setAccessToken(token: string | null): void {
-  inMemoryAccessToken = token;
-}
+const mfaRequiredHandlers = new Set<MfaRequiredHandler>();
 
 export function onSessionExpired(handler: SessionExpiredHandler): () => void {
   sessionExpiredHandlers.add(handler);
@@ -50,86 +40,72 @@ export function onTokenRefreshed(handler: TokenRefreshedHandler): () => void {
   return () => tokenRefreshedHandlers.delete(handler);
 }
 
-// Single-flight 401/mount refresh promise
-let refreshSessionPromise: Promise<SessionDto> | null = null;
+export function onMfaRequired(handler: MfaRequiredHandler): () => void {
+  mfaRequiredHandlers.add(handler);
+  return () => mfaRequiredHandlers.delete(handler);
+}
 
+let bootstrapPromise: Promise<SessionDto> | null = null;
+
+/**
+ * Loads the authoritative Better Auth user + workspace memberships from `GET /api/v1/workspaces`
+ * using the HttpOnly Better Auth session cookie.
+ */
 export async function refreshSession(): Promise<SessionDto> {
-  if (refreshSessionPromise) {
-    return refreshSessionPromise;
+  if (bootstrapPromise) {
+    return bootstrapPromise;
   }
 
-  refreshSessionPromise = (async () => {
+  bootstrapPromise = (async () => {
     try {
-      const refreshUrl =
+      const bootstrapUrl =
         typeof window !== "undefined"
-          ? "/api/v1/auth/refresh"
-          : `${env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`;
-      const refreshRes = await fetch(refreshUrl, {
-        method: "POST",
+          ? "/api/v1/workspaces"
+          : `${env.NEXT_PUBLIC_API_URL}/api/v1/workspaces`;
+      const res = await fetch(bootstrapUrl, {
+        method: "GET",
         headers: {
           Accept: "application/json",
         },
         credentials: "include",
       });
 
-      if (!refreshRes.ok) {
-        const errData = await refreshRes.json().catch(() => ({}));
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as ApiErrorPayload;
         throw new ApiClientError(
-          refreshRes.status,
+          res.status,
           errData?.error?.code ?? "unauthorized",
-          errData?.error?.message ?? "Session refresh failed",
+          errData?.error?.message ?? "Session bootstrap failed",
           errData?.error?.details,
           errData,
         );
       }
 
-      const newSession = (await refreshRes.json()) as SessionDto;
-      const newToken = newSession.accessToken ?? null;
-      setAccessToken(newToken);
-
-      // Notify all handlers
-      tokenRefreshedHandlers.forEach((h) => h(newSession));
-      return newSession;
-    } catch (refreshErr) {
-      // Clear session strictly on auth rejection (401/403), not on network drops or 5xx
-      if (
-        refreshErr instanceof ApiClientError &&
-        (refreshErr.status === 401 || refreshErr.status === 403)
-      ) {
-        setAccessToken(null);
+      const session = (await res.json()) as SessionDto;
+      tokenRefreshedHandlers.forEach((h) => h(session));
+      return session;
+    } catch (err) {
+      if (err instanceof ApiClientError && err.status === 401) {
         sessionExpiredHandlers.forEach((h) => h());
       }
-      throw refreshErr;
+      throw err;
     } finally {
-      refreshSessionPromise = null;
+      bootstrapPromise = null;
     }
   })();
 
-  return refreshSessionPromise;
-}
-
-async function requestTokenRefresh(): Promise<string | null> {
-  try {
-    const session = await refreshSession();
-    return session.accessToken ?? null;
-  } catch {
-    return null;
-  }
+  return bootstrapPromise;
 }
 
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
-  skipAuth?: boolean;
-  skipRefresh?: boolean;
-  _retry?: boolean;
-  token?: string | null;
 }
 
 export async function apiRequest<T = unknown>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
-  const { body, headers, skipAuth, skipRefresh, _retry, token, ...init } = options;
+  const { body, headers, ...init } = options;
 
   const baseUrl = typeof window !== "undefined" ? "" : env.NEXT_PUBLIC_API_URL;
   const url =
@@ -152,54 +128,15 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  const isAuthEndpoint =
-    path.includes("/auth/login") ||
-    path.includes("/auth/register") ||
-    path.includes("/auth/refresh") ||
-    path.includes("/auth/invitations/accept");
-
-  // Mutex Queue: Pause incoming requests while a refresh is in-flight to avoid redundant 401s
-  let tokenToUse = token;
-  if (tokenToUse === undefined) {
-    if (refreshSessionPromise && !skipAuth && !skipRefresh && !isAuthEndpoint) {
-      try {
-        const refreshedSession = await refreshSessionPromise;
-        tokenToUse = refreshedSession.accessToken ?? inMemoryAccessToken;
-      } catch {
-        tokenToUse = inMemoryAccessToken;
-      }
-    } else {
-      tokenToUse = inMemoryAccessToken;
-    }
-  }
-
-  if (!skipAuth && tokenToUse) {
-    reqHeaders["Authorization"] = `Bearer ${tokenToUse}`;
-  }
-
   const fetchOptions: RequestInit = {
     ...init,
     headers: reqHeaders,
     body: formattedBody,
-    credentials: "include", // Essential for HttpOnly refresh cookie
+    credentials: "include",
   };
 
   const res = await fetch(url, fetchOptions);
 
-  if (res.status === 401 && !skipRefresh && !_retry) {
-    if (!isAuthEndpoint) {
-      const refreshedToken = await requestTokenRefresh();
-
-      // Retry original request using the exact token minted by this refresh flight
-      return await apiRequest<T>(path, {
-        ...options,
-        token: refreshedToken,
-        _retry: true,
-      });
-    }
-  }
-
-  // Handle errors
   if (!res.ok) {
     let errorData: ApiErrorPayload | null = null;
     try {
@@ -224,6 +161,12 @@ export async function apiRequest<T = unknown>(
     const message = errorData?.error?.message ?? `Request failed with status ${res.status}`;
     const details = errorData?.error?.details;
 
+    if (res.status === 401) {
+      sessionExpiredHandlers.forEach((h) => h());
+    } else if (res.status === 403 && (code === "mfa_setup_required" || code === "mfa_required")) {
+      mfaRequiredHandlers.forEach((h) => h(code));
+    }
+
     throw new ApiClientError(res.status, code, message, details, errorData);
   }
 
@@ -243,9 +186,8 @@ export const apiClient = {
     apiRequest<T>(path, { ...options, method: "PATCH", body }),
   delete: <T = unknown>(path: string, options?: ApiRequestOptions) =>
     apiRequest<T>(path, { ...options, method: "DELETE" }),
-  getAccessToken,
-  setAccessToken,
   onSessionExpired,
   onTokenRefreshed,
+  onMfaRequired,
   refreshSession,
 };

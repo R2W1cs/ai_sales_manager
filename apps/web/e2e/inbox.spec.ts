@@ -80,21 +80,51 @@ const mockNotes = [
 
 test.describe("Realtime Inbox E2E Flow (T-WEB-03)", () => {
   test.beforeEach(async ({ page }) => {
-    // 1. Mock Authentication
-    await page.route("**/api/v1/auth/refresh", async (route) => {
+    // 1. Mock Better Auth Session & Workspaces Bootstrap
+    const sessionUser = {
+      ...mockUser,
+      platformAdmin: false,
+      emailVerified: true,
+      twoFactorEnabled: true,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    await page.route("**/api/auth/get-session", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          user: mockUser,
+          user: sessionUser,
+          session: {
+            id: "sess-inbox-1",
+            userId: mockUser.id,
+            expiresAt: "2099-01-01T00:00:00.000Z",
+            mfaVerified: true,
+            activeOrganizationId: mockBusiness.id,
+          },
+        }),
+      });
+    });
+
+    await page.route("**/api/v1/workspaces", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          user: sessionUser,
           memberships: [
             {
-              id: "mem-1",
               businessId: mockBusiness.id,
               role: "owner",
+              businessName: mockBusiness.name,
+              joinedAt: "2026-01-01T00:00:00.000Z",
             },
           ],
-          accessToken: "mock-jwt-token",
+          mfaVerified: true,
+          mfaSetupRequired: false,
+          mfaChallengeRequired: false,
+          tokenType: "Bearer",
+          expiresIn: 604800,
         }),
       });
     });
@@ -105,6 +135,38 @@ test.describe("Realtime Inbox E2E Flow (T-WEB-03)", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(mockBusiness),
+      });
+    });
+
+    await page.route("**/api/v1/notifications*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], unreadCount: 0, nextCursor: null }),
+      });
+    });
+
+    await page.route("**/api/v1/businesses/*/onboarding", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ completed: true, step: 6, steps: {} }),
+      });
+    });
+
+    await page.route(/.*\/api\/v1\/(billing\/)?usage.*/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cycleStart: "2026-09-01T00:00:00.000Z",
+          cycleEnd: "2026-10-01T00:00:00.000Z",
+          planCode: "starter",
+          limits: { aiMessages: 500, seats: 2, channels: 1 },
+          current: { aiMessages: 210, seats: 2, channels: 1 },
+          percentUsed: 42,
+          aiPaused: false,
+        }),
       });
     });
 

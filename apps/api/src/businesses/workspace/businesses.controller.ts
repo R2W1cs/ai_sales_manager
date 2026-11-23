@@ -15,10 +15,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 
-import { env } from "@app/shared/server";
-
+import { resolveAuthenticatedUserId } from "../../auth";
 import type { HttpRequest } from "../../platform/core/http";
-import { extractBearerToken, verifyAccessToken } from "../../platform/security/jwt";
 import { RequirePermission } from "../../platform/security/permissions";
 import { PermissionsGuard } from "../../platform/security/permissions.guard";
 import { CurrentBusinessId, TenantGuard } from "../../platform/security/tenant.guard";
@@ -30,11 +28,6 @@ import { BusinessesService } from "./businesses.service";
 export class BusinessesController {
   constructor(private readonly businessesService: BusinessesService) {}
 
-  /**
-   * 13 §5 POST /api/v1/businesses
-   * Authenticated user creates a new business workspace.
-   * Atomic transaction seeds tenant, owner membership, ai agent, ai settings, starter rules, onboarding.
-   */
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createBusiness(
@@ -56,8 +49,9 @@ export class BusinessesController {
       });
     }
 
-    const rawAccessToken = extractBearerToken(req.headers.authorization);
-    if (!rawAccessToken) {
+    const userId = await resolveAuthenticatedUserId(req.headers);
+
+    if (!userId) {
       throw new UnauthorizedException({
         error: {
           code: "unauthorized",
@@ -66,27 +60,9 @@ export class BusinessesController {
       });
     }
 
-    let userId: string;
-    try {
-      const secret = env.BETTER_AUTH_SECRET;
-      const payload = verifyAccessToken(rawAccessToken, secret);
-      userId = payload.sub;
-    } catch {
-      throw new UnauthorizedException({
-        error: {
-          code: "unauthorized",
-          message: "Invalid or expired access token",
-        },
-      });
-    }
-
     return this.businessesService.createBusiness(userId, body, idempotencyKey);
   }
 
-  /**
-   * 13 §5 GET /api/v1/businesses/:id
-   * Retrieve business profile details. Caller must be a member of the business.
-   */
   @Get(":id")
   @UseGuards(TenantGuard, PermissionsGuard)
   async getBusiness(
@@ -104,11 +80,6 @@ export class BusinessesController {
     return this.businessesService.getBusiness(businessId);
   }
 
-  /**
-   * 13 §5 PATCH /api/v1/businesses/:id
-   * Update business profile fields (name, industry, country, defaultLanguage, timezone, currency, phone).
-   * Guarded by business.write permission.
-   */
   @Patch(":id")
   @HttpCode(HttpStatus.OK)
   @UseGuards(TenantGuard, PermissionsGuard)

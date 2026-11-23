@@ -1,18 +1,30 @@
 import { z } from "zod";
 
-export const passwordSchema = z
-  .string()
-  .min(10, "Le mot de passe doit comporter au moins 10 caractères.")
-  .max(128, "Le mot de passe ne doit pas dépasser 128 caractères.");
+export type AuthSchemaTranslateFn = (key: string) => string;
 
-export const nameSchema = z
-  .string()
-  .trim()
-  .min(1, "Veuillez renseigner votre nom complet.")
-  .max(100, "Le nom ne doit pas dépasser 100 caractères.");
+export function createPasswordSchema(t: AuthSchemaTranslateFn) {
+  return z.string().min(10, t("validationPasswordMin")).max(128, t("validationPasswordMax"));
+}
 
-export const emailSchema = z
-  .string()
-  .trim()
-  .min(1, "L'adresse email est requise.")
-  .email("Veuillez saisir une adresse email valide.");
+export function createNameSchema(t: AuthSchemaTranslateFn) {
+  return z.string().trim().min(1, t("validationNameRequired")).max(100, t("validationNameMax"));
+}
+
+export function createEmailSchema(t: AuthSchemaTranslateFn) {
+  return z
+    .string()
+    .trim()
+    .min(1, t("validationEmailRequired"))
+    .max(255, t("validationEmailMax"))
+    .pipe(z.email(t("validationEmailInvalid")));
+}
+
+export function createLoginSchema(t: AuthSchemaTranslateFn) {
+  return z.object({
+    email: createEmailSchema(t),
+    password: z
+      .string()
+      .min(1, t("validationPasswordRequired"))
+      .max(128, t("validationPasswordMax")),
+  });
+}

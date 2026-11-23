@@ -5,5 +5,8 @@ export * from "./core/refresh";
 export * from "./better-auth/better-auth";
 export * from "./better-auth/better-auth-permissions";
 export * from "./better-auth/fastify-adapter";
+export * from "./better-auth/revocation-events";
+export * from "./better-auth/session-helper";
+export * from "./guards/auth-throttler.guard";
 export * from "./email/email.service";
 export const AUTH_DOMAIN = "auth";

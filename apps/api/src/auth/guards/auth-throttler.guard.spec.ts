@@ -1,7 +1,7 @@
 import type { ExecutionContext } from "@nestjs/common";
 import { HttpException, HttpStatus } from "@nestjs/common";
 
-import { AuthThrottlerGuard } from "./auth-throttler.guard";
+import { AuthThrottlerGuard, resolveAuthRateLimitBucket } from "./auth-throttler.guard";
 
 describe("Auth rate limiting / throttles 5/min (T-AUTH-04)", () => {
   let mockRedis: {
@@ -214,5 +214,108 @@ describe("Auth rate limiting / throttles 5/min (T-AUTH-04)", () => {
 
     expect(canActivate).toBe(true);
     expect(mockRedis.expire).toHaveBeenCalledWith("rate_limit:auth:ip:10.0.0.4", 60);
+  });
+
+  describe("resolveAuthRateLimitBucket", () => {
+    it("resolves distinct buckets and exact thresholds per auth route", () => {
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/request-password-reset")).toEqual({
+        bucket: "recovery_send",
+        limit: 3,
+        ttl: 60,
+        includeEmail: true,
+      });
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/send-verification-email").bucket).toBe(
+        "recovery_send",
+      );
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/sign-in/email")).toEqual({
+        bucket: "signin",
+        limit: 5,
+        ttl: 60,
+        includeEmail: true,
+      });
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/sign-up/email")).toEqual({
+        bucket: "signup",
+        limit: 5,
+        ttl: 60,
+        includeEmail: true,
+      });
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/two-factor/verify-totp")).toEqual({
+        bucket: "mfa",
+        limit: 5,
+        ttl: 60,
+        includeEmail: false,
+      });
+      expect(resolveAuthRateLimitBucket("POST", "/api/auth/reset-password")).toEqual({
+        bucket: "recovery_redeem",
+        limit: 10,
+        ttl: 60,
+        includeEmail: false,
+      });
+      expect(
+        resolveAuthRateLimitBucket("POST", "/api/v1/workspaces/invitations/inv-1/accept"),
+      ).toEqual({
+        bucket: "invite",
+        limit: 10,
+        ttl: 60,
+        includeEmail: false,
+      });
+      expect(resolveAuthRateLimitBucket("GET", "/api/auth/get-session")).toEqual({
+        bucket: "session_read",
+        limit: 120,
+        ttl: 60,
+        includeEmail: false,
+      });
+    });
+
+    it("keys MFA attempts by IP + hashed two_factor cookie and invite mutations by IP + userId", async () => {
+      mockPipeline.exec.mockResolvedValue([
+        [null, 1],
+        [null, 60],
+        [null, 1],
+        [null, 60],
+      ]);
+
+      const mfaReq = {
+        method: "POST",
+        url: "/api/auth/two-factor/verify-totp",
+        ip: "10.0.0.8",
+        body: {},
+        headers: { cookie: "better-auth.two_factor=challenge-tok-123" },
+        socket: { remoteAddress: "10.0.0.8" },
+      };
+      const mfaCtx = {
+        switchToHttp: () => ({
+          getRequest: () => mfaReq,
+          getResponse: () => ({ header: jest.fn() }),
+        }),
+      } as unknown as ExecutionContext;
+
+      await guard.canActivate(mfaCtx);
+      const incrCallsMfa = mockPipeline.incr.mock.calls.map((c: unknown[]) => c[0] as string);
+      expect(incrCallsMfa).toContain("rate_limit:auth:mfa:ip:10.0.0.8");
+      expect(incrCallsMfa.some((k) => k.startsWith("rate_limit:auth:mfa:actor:2fa:"))).toBe(true);
+
+      mockPipeline.incr.mockClear();
+
+      const inviteReq = {
+        method: "POST",
+        url: "/api/v1/invitations/inv-1/accept",
+        ip: "10.0.0.9",
+        user: { id: "user-42" },
+        body: {},
+        headers: {},
+        socket: { remoteAddress: "10.0.0.9" },
+      };
+      const inviteCtx = {
+        switchToHttp: () => ({
+          getRequest: () => inviteReq,
+          getResponse: () => ({ header: jest.fn() }),
+        }),
+      } as unknown as ExecutionContext;
+
+      await guard.canActivate(inviteCtx);
+      expect(mockPipeline.incr).toHaveBeenCalledWith("rate_limit:auth:invite:ip:10.0.0.9");
+      expect(mockPipeline.incr).toHaveBeenCalledWith("rate_limit:auth:invite:actor:user:user-42");
+    });
   });
 });
