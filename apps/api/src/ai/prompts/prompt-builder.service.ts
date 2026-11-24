@@ -11,6 +11,8 @@ import type {
   MinOrderPayload,
 } from "@app/shared";
 
+import { AI_TRANSPARENCY_PROMPT_BLOCK } from "./templates/disclosure";
+
 export interface PromptContext {
   businessId: string;
   conversationId: string;
@@ -110,7 +112,9 @@ export class PromptBuilderService {
       "- You do NOT execute tools during generation. All catalog lookups and checks have already been executed by the backend before your turn.",
       "- NEVER output simulated tool calls, code blocks, parameter dictionaries, or internal tool syntax (e.g. NEVER output '**Searching for products:**', '**Tool**:', '`search_products`', 'Parameters:', or function call JSON).",
       "- NEVER expose internal reasoning tags, function names, or technical instructions to the shopper.",
-      "- Speak directly to the customer as a warm, human salesperson.",
+      "- Speak directly to the customer as a warm sales advisor (you remain an automated assistant — see transparency block).",
+      "",
+      AI_TRANSPARENCY_PROMPT_BLOCK,
       "",
       `=== 4. SALES STRATEGY & BEHAVIOR ===`,
       `- Aggressiveness: ${salesStrategy.aggressiveness ?? "medium"}. Guide customers naturally to confirm their orders.`,

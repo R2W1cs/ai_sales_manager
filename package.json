@@ -48,6 +48,7 @@
     "pilot:seed": "pnpm --filter @app/api exec tsx prisma/seed-pilot-partners.ts",
     "pilot:report": "pnpm --filter @app/api exec node ../../scripts/pilot/interaction-report.mjs",
     "pilot:validate-fixtures": "node scripts/pilot/validate-fixtures.mjs",
+    "privacy:erase": "node scripts/privacy/erase-customer.mjs",
     "deploy:prod": "bash scripts/deploy-vps.sh"
   },
   "dependencies": {

@@ -26,16 +26,17 @@ Academic delivery artifacts (docs, demo video, defense deck, testing PDF) remain
 
 ## Quick links
 
-| Resource                          | Path                                                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Demo video (~3.5 min)             | [`docs/demo.mp4`](docs/demo.mp4)                                                                             |
-| Defense presentation (PowerPoint) | [`presentation/AI-Sales-Manager.pptx`](presentation/AI-Sales-Manager.pptx)                                   |
-| Defense presentation (browser)    | [`presentation/index.html`](presentation/index.html)                                                         |
-| Testing PDF report                | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf) |
-| Refactoring & optimization report | [`docs/05-refactoring/report.md`](docs/05-refactoring/report.md)                                             |
-| Requirements                      | [`docs/01-requirements/`](docs/01-requirements/)                                                             |
-| Methodology                       | [`docs/02-methodology/`](docs/02-methodology/)                                                               |
-| Design & architecture             | [`docs/03-design/`](docs/03-design/)                                                                         |
+| Resource                          | Path                                                                                                             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Demo video (~3.5 min)             | [`docs/demo.mp4`](docs/demo.mp4)                                                                                 |
+| Defense presentation (PowerPoint) | [`presentation/AI-Sales-Manager.pptx`](presentation/AI-Sales-Manager.pptx)                                       |
+| Defense presentation (browser)    | [`presentation/index.html`](presentation/index.html)                                                             |
+| Testing PDF report                | [`docs/04-testing/AI-Sales-Manager-Testing-Report.pdf`](docs/04-testing/AI-Sales-Manager-Testing-Report.pdf)     |
+| Refactoring & optimization report | [`docs/05-refactoring/report.md`](docs/05-refactoring/report.md)                                                 |
+| Requirements                      | [`docs/01-requirements/`](docs/01-requirements/)                                                                 |
+| Methodology                       | [`docs/02-methodology/`](docs/02-methodology/)                                                                   |
+| Design & architecture             | [`docs/03-design/`](docs/03-design/)                                                                             |
+| INPDP / Law 2004-63 legal pack    | [`docs/50_legal/`](docs/50_legal/) · [`/privacy`](apps/web/src/app/privacy) · [`/terms`](apps/web/src/app/terms) |
 
 ---
 
@@ -183,6 +184,7 @@ docs/03-design/           UML, ERD, ADRs, diagram PNGs
 docs/04-testing/          Testing dossier + PDF + k6 scripts (Asma)
 docs/05-refactoring/      Measured complexity & performance report
 docs/06-ethics/           Ethics reflection + AI usage log link (Aymen)
+docs/50_legal/            INPDP Privacy, Terms, DPA, filing checklist
 docs/demo.mp4             Product walkthrough
 presentation/             Defense deck (PPTX + HTML)
 backlog/                  Task cards and wave board

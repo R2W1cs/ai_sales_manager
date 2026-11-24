@@ -229,7 +229,7 @@ describe("Business workspace creation (`POST /businesses`) + seed agent, ai_sett
       include: { role: true },
     });
 
-    // 3. AI Agent seeded
+    // 3. AI Agent seeded (INPDP disclosure + human escalation defaults)
     expect(prismaMock.aiAgent.create).toHaveBeenCalledWith({
       data: {
         business_id: businessId,
@@ -237,6 +237,10 @@ describe("Business workspace creation (`POST /businesses`) + seed agent, ai_sett
         language: "fr",
         confidence_threshold: 0.65,
         enabled: true,
+        greeting_template:
+          "3aslema! Ena l'assistant automatique mte3 el boutique. Najem n3awnek 3al produits, el soum (TND) w el stock. Bech ta7ki m3a agent humain, ekteb « agent » wala « humain ».",
+        fallback_template:
+          "Tawa n7awel el conversation l conseiller humain mte3 el boutique. Wa7da sgheira.",
       },
     });
 

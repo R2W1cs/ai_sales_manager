@@ -77,6 +77,16 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      <footer className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-4 border-t border-border/60 px-6 py-6 text-xs text-muted-foreground">
+        <span>INPDP-ready · Law 2004-63 · Merchant controller / Platform processor</span>
+        <Link href={"/privacy" as Route} className="underline-offset-4 hover:underline">
+          Privacy
+        </Link>
+        <Link href={"/terms" as Route} className="underline-offset-4 hover:underline">
+          Terms
+        </Link>
+      </footer>
     </div>
   );
 }
