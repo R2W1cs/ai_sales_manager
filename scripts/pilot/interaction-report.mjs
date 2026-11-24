@@ -8,7 +8,15 @@
  *   pnpm pilot:report
  */
 import "dotenv/config";
-import pg from "pg";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Resolve `pg` from @app/api (workspace dependency) — root scripts cannot import it directly.
+const require = createRequire(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "../../apps/api/package.json"),
+);
+const pg = require("pg");
 
 let evaluateLaunchGate;
 try {
