@@ -28,7 +28,7 @@ Never push straight to `main` for product work. Open an issue first so the “wh
 main
   └─ feat/commercial-launch-gate
         ├─ implement seed + fixtures + gate tests
-        ├─ open Pull Request → CI (check:ci, Playwright, audit)
+        ├─ open [PR #18](https://github.com/R2W1cs/ai_sales_manager/pull/18) → CI (check:ci, Playwright, audit)
         └─ squash-merge to main when green
 ```
 
@@ -50,7 +50,7 @@ When CI or a review finds a bug on a feature branch, we **do not hide it on `mai
 
 ```text
 feat/commercial-launch-gate          (or main)
-  └─ bugfix/pilot-csv-schema
+  └─ bugfix/pilot-csv-price-column ([PR #20](https://github.com/R2W1cs/ai_sales_manager/pull/20))
         ├─ PR opens → GitHub Actions job "Pilot fixtures" goes RED
         ├─ engineer reads the failed job log
         ├─ push fix commit on the same bugfix branch
@@ -60,7 +60,7 @@ feat/commercial-launch-gate          (or main)
 
 What “solve it” looks like in practice:
 
-1. **Reproduce** — open the failed check URL on the PR; note the exact error (e.g. missing CSV column).
+1. **Reproduce** — open the failed check URL on the PR; note the exact error (`FAIL sara-stores.csv: missing columns price_tnd` — [failed job](https://github.com/R2W1cs/ai_sales_manager/actions/runs/45385388825/job/138414843328)).
 2. **Isolate** — `git checkout -b bugfix/...` from the failing tip (or push a fix commit if the PR already is the bugfix).
 3. **Fix + lock** — correct the fixture/code and keep `scripts/pilot/validate-fixtures.mjs` so the same class of error fails CI next time.
 4. **Verify** — local `pnpm` hooks + GitHub checks green.
