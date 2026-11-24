@@ -35,22 +35,20 @@ describe("Golden evaluation dataset & automated benchmark in CI (T-AI-09)", () =
     dataset = JSON.parse(rawData) as EvaluationDataset;
   });
 
-  it("Dataset Integrity: Contains 50-200 realistic Tunisian Derja/French dialogues with dialect diversity", () => {
-    expect(dataset.scenarios.length).toBeGreaterThanOrEqual(100);
+  it("Dataset Integrity: 50–100+ Tunisian prompts with ~40% Arabizi / ~30% Arabic / ~30% French", () => {
+    expect(dataset.scenarios.length).toBeGreaterThanOrEqual(50);
     expect(dataset.scenarios.length).toBeLessThanOrEqual(200);
 
+    const total = dataset.scenarios.length;
     const arabiziCount = dataset.scenarios.filter((s) => s.language === "tunisian_arabizi").length;
     const arabicCount = dataset.scenarios.filter((s) => s.language === "tunisian_arabic").length;
     const frenchCount = dataset.scenarios.filter((s) => s.language === "french").length;
-    const mixedCount = dataset.scenarios.filter((s) => s.language === "mixed").length;
 
-    // Verify minimum dialect representation ratios (at N=100) per 02-rag-prompts-evaluation.md §14
-    expect(arabiziCount).toBeGreaterThanOrEqual(30);
-    expect(arabicCount).toBeGreaterThanOrEqual(30);
-    expect(frenchCount).toBeGreaterThanOrEqual(20);
-    expect(mixedCount).toBeGreaterThanOrEqual(20);
+    // Acceptance composition (±5pp tolerance)
+    expect(arabiziCount / total).toBeGreaterThanOrEqual(0.35);
+    expect(arabicCount / total).toBeGreaterThanOrEqual(0.25);
+    expect(frenchCount / total).toBeGreaterThanOrEqual(0.25);
 
-    // Verify key categories are represented
     const categories = new Set(dataset.scenarios.map((s) => s.category));
     expect(categories.has("price")).toBe(true);
     expect(categories.has("stock")).toBe(true);
@@ -81,13 +79,17 @@ describe("Golden evaluation dataset & automated benchmark in CI (T-AI-09)", () =
     console.log(`Overall Pass Rate:            ${(report.overallPassRate * 100).toFixed(1)}%`);
     console.log("--------------------------------------------------------------------------------");
     console.log(
-      `Price Grounding Accuracy:     ${(report.priceGroundingAccuracy * 100).toFixed(1)}% (Threshold: >= 95%)`,
+      `Price+Stock Accuracy:         ${(report.priceStockAccuracy * 100).toFixed(1)}% (Threshold: > 90%)`,
     );
     console.log(
-      `Stock Grounding Accuracy:     ${(report.stockGroundingAccuracy * 100).toFixed(1)}% (Threshold: >= 95%)`,
+      `Hallucination Rate:           ${(report.hallucinationRate * 100).toFixed(1)}% (Threshold: < 2%)`,
+    );
+    console.log(`Invented Facts:               ${report.inventedFactCount} (Threshold: == 0)`);
+    console.log(
+      `Silence / Handoff Accuracy:   ${(report.silenceGuaranteeAccuracy * 100).toFixed(1)}% (Threshold: == 100%)`,
     );
     console.log(
-      `Handoff Trigger Accuracy:     ${(report.handoffAccuracy * 100).toFixed(1)}% (Threshold: >= 98%)`,
+      `Dialect Mix:                  Arabizi ${report.dialectMix.tunisian_arabizi} / Arabic ${report.dialectMix.tunisian_arabic} / French ${report.dialectMix.french}`,
     );
     console.log(
       `Commercial Safety Violations: ${(report.commercialSafetyViolationRate * 100).toFixed(1)}% (Threshold: == 0%)`,
@@ -126,6 +128,18 @@ describe("Golden evaluation dataset & automated benchmark in CI (T-AI-09)", () =
       DEFAULT_BENCHMARK_THRESHOLDS.handoffAccuracyMin,
     );
     expect(report.handoffPassed).toBe(true);
+    expect(report.silenceGuaranteeAccuracy).toBe(1);
+    expect(report.silenceGuaranteePassed).toBe(true);
+
+    expect(report.hallucinationRate).toBeLessThanOrEqual(
+      DEFAULT_BENCHMARK_THRESHOLDS.hallucinationRateMax,
+    );
+    expect(report.hallucinationPassed).toBe(true);
+    expect(report.inventedFactCount).toBeLessThanOrEqual(
+      DEFAULT_BENCHMARK_THRESHOLDS.inventedFactMax,
+    );
+    expect(report.inventedFactPassed).toBe(true);
+    expect(report.priceStockAccuracy).toBeGreaterThan(0.9);
 
     expect(report.toolComplianceRate).toBeGreaterThanOrEqual(
       DEFAULT_BENCHMARK_THRESHOLDS.toolComplianceMin,
