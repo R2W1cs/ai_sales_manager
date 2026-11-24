@@ -13,6 +13,7 @@
     "start": "node dist/main.mjs",
     "start:worker": "node dist/worker.mjs",
     "test": "jest",
+    "test:security-matrix": "jest test/security-matrix",
     "test:release-gates": "tsx --test --test-force-exit test/better-auth-release-gates.test.ts",
     "eval:golden": "jest --testPathPattern=\"test/golden-eval\" --verbose",
     "eval:bench": "tsx test/golden-eval/cli.ts",

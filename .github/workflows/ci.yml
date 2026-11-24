@@ -94,6 +94,9 @@ jobs:
       - name: Run check:ci (lint, format, types, tests, build)
         run: pnpm check:ci
 
+      - name: Run Security Matrix & Tenant Isolation Quality Gate
+        run: pnpm test:security-matrix
+
       - name: Golden eval benchmark (Derja / French gates)
         env:
           GROQ_API_KEY: ""

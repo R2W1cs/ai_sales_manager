@@ -39,6 +39,7 @@
     "eval:bench": "pnpm --filter @app/api eval:bench",
     "eval:bench:live": "pnpm --filter @app/api eval:bench:live",
     "test": "pnpm -r --if-present test",
+    "test:security-matrix": "pnpm --filter @app/api test:security-matrix",
     "test:e2e": "playwright test --project=chromium --workers=1",
     "test:everything": "node scripts/test-everything.mjs",
     "fix": "pnpm lint:fix && pnpm format:fix",
