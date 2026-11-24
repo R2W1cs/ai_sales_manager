@@ -1,4 +1,4 @@
-sku,name,description,price_tnd,stock,size,color,category
+sku,name,description,price,stock,size,color,category
 SARA-ROBE-001-S,Robe soirée satin,Robe longue satin pour soirées,189.000,8,S,Noir,Robes
 SARA-ROBE-001-M,Robe soirée satin,Robe longue satin pour soirées,189.000,12,M,Noir,Robes
 SARA-ROBE-001-L,Robe soirée satin,Robe longue satin pour soirées,189.000,6,L,Noir,Robes
