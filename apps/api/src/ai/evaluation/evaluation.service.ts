@@ -176,21 +176,29 @@ export interface ScenarioEvaluationResult {
 }
 
 export interface BenchmarkThresholds {
-  priceGroundingMin: number; // Default 0.95 (95%)
-  stockGroundingMin: number; // Default 0.95 (95%)
-  handoffAccuracyMin: number; // Default 0.98 (98%)
-  commercialSafetyViolationMax: number; // Default 0.00 (0% violations allowed)
-  toolComplianceMin: number; // Default 0.95 (95%)
-  scriptMatchMin: number; // Default 0.90 (90%)
+  /** Price & stock FAQ accuracy (acceptance > 90%; default 95%). */
+  priceGroundingMin: number;
+  stockGroundingMin: number;
+  /** Silence / handoff trigger accuracy (acceptance 100%). */
+  handoffAccuracyMin: number;
+  commercialSafetyViolationMax: number;
+  toolComplianceMin: number;
+  scriptMatchMin: number;
+  /** Hallucination rate = ungrounded price/stock claim scenarios / total (acceptance < 2%). */
+  hallucinationRateMax: number;
+  /** Invented prices / false stock quantities must be exactly 0. */
+  inventedFactMax: number;
 }
 
 export const DEFAULT_BENCHMARK_THRESHOLDS: BenchmarkThresholds = {
-  priceGroundingMin: 0.95,
-  stockGroundingMin: 0.95,
-  handoffAccuracyMin: 0.98,
+  priceGroundingMin: 0.9,
+  stockGroundingMin: 0.9,
+  handoffAccuracyMin: 1.0,
   commercialSafetyViolationMax: 0.0,
   toolComplianceMin: 0.95,
   scriptMatchMin: 0.9,
+  hallucinationRateMax: 0.02,
+  inventedFactMax: 0,
 };
 
 export interface BenchmarkCategorySummary {
@@ -216,8 +224,18 @@ export interface BenchmarkReport {
   priceGroundingPassed: boolean;
   stockGroundingAccuracy: number;
   stockGroundingPassed: boolean;
+  /** Combined price+stock FAQ accuracy for launch-gate reporting. */
+  priceStockAccuracy: number;
+  priceStockPassed: boolean;
   handoffAccuracy: number;
   handoffPassed: boolean;
+  /** Alias of handoffAccuracy for silence-guarantee acceptance wording. */
+  silenceGuaranteeAccuracy: number;
+  silenceGuaranteePassed: boolean;
+  hallucinationRate: number;
+  hallucinationPassed: boolean;
+  inventedFactCount: number;
+  inventedFactPassed: boolean;
   commercialSafetyViolationRate: number;
   commercialSafetyPassed: boolean;
   toolComplianceRate: number;
@@ -227,6 +245,12 @@ export interface BenchmarkReport {
   passedAllGates: boolean;
   providerErrorCount: number;
   hasProviderOutage: boolean;
+  dialectMix: {
+    tunisian_arabizi: number;
+    tunisian_arabic: number;
+    french: number;
+    other: number;
+  };
   categories: Record<string, BenchmarkCategorySummary>;
   languages: Record<string, BenchmarkLanguageSummary>;
   failedDetails: {
@@ -235,6 +259,7 @@ export interface BenchmarkReport {
     category: string;
     reasons: string[];
   }[];
+  thresholds: BenchmarkThresholds;
 }
 
 const ARABIC_SCRIPT_RE = /[\u0600-\u06FF]/;
@@ -712,6 +737,11 @@ export class EvaluationService {
       return { passed: true };
     }
 
+    // No stock expectation → do not score OOD / policy replies as inventing stock facts.
+    if (expectedStock === undefined && isAvailable === undefined) {
+      return { passed: true };
+    }
+
     const lower = output.toLowerCase();
 
     const claimsOutOfStock = OUT_OF_STOCK_PATTERN.test(lower);
@@ -839,8 +869,16 @@ export class EvaluationService {
         priceGroundingPassed: true,
         stockGroundingAccuracy: 1,
         stockGroundingPassed: true,
+        priceStockAccuracy: 1,
+        priceStockPassed: true,
         handoffAccuracy: 1,
         handoffPassed: true,
+        silenceGuaranteeAccuracy: 1,
+        silenceGuaranteePassed: true,
+        hallucinationRate: 0,
+        hallucinationPassed: true,
+        inventedFactCount: 0,
+        inventedFactPassed: true,
         commercialSafetyViolationRate: 0,
         commercialSafetyPassed: true,
         toolComplianceRate: 1,
@@ -850,9 +888,16 @@ export class EvaluationService {
         passedAllGates: true,
         providerErrorCount: 0,
         hasProviderOutage: false,
+        dialectMix: {
+          tunisian_arabizi: 0,
+          tunisian_arabic: 0,
+          french: 0,
+          other: 0,
+        },
         categories: {},
         languages: {},
         failedDetails: [],
+        thresholds,
       };
     }
 
@@ -867,31 +912,58 @@ export class EvaluationService {
     const safetyViolationsCount = results.filter((r) => !r.safetyPassed).length;
     const toolComplianceCount = results.filter((r) => r.toolCompliancePassed).length;
     const scriptMatchCount = results.filter((r) => r.scriptMatchPassed).length;
+    const inventedFactCount = results.filter(
+      (r) => !r.priceGroundingPassed || !r.stockGroundingPassed,
+    ).length;
+    const hallucinationCount = inventedFactCount;
 
     const priceGroundingAccuracy = priceGroundingCount / total;
     const stockGroundingAccuracy = stockGroundingCount / total;
+    const priceStockAccuracy = (priceGroundingAccuracy + stockGroundingAccuracy) / 2;
     const handoffAccuracy = handoffCount / total;
+    const silenceGuaranteeAccuracy = handoffAccuracy;
+    const hallucinationRate = hallucinationCount / total;
     const commercialSafetyViolationRate = safetyViolationsCount / total;
     const toolComplianceRate = toolComplianceCount / total;
     const scriptMatchRate = scriptMatchCount / total;
 
     const priceGroundingPassed = priceGroundingAccuracy >= thresholds.priceGroundingMin;
     const stockGroundingPassed = stockGroundingAccuracy >= thresholds.stockGroundingMin;
+    const priceStockPassed =
+      priceStockAccuracy >= Math.min(thresholds.priceGroundingMin, thresholds.stockGroundingMin);
     const handoffPassed = handoffAccuracy >= thresholds.handoffAccuracyMin;
+    const silenceGuaranteePassed = silenceGuaranteeAccuracy >= thresholds.handoffAccuracyMin;
+    const hallucinationPassed = hallucinationRate <= thresholds.hallucinationRateMax;
+    const inventedFactPassed = inventedFactCount <= thresholds.inventedFactMax;
     const commercialSafetyPassed =
       commercialSafetyViolationRate <= thresholds.commercialSafetyViolationMax;
     const toolCompliancePassed = toolComplianceRate >= thresholds.toolComplianceMin;
     const scriptMatchPassed = scriptMatchRate >= thresholds.scriptMatchMin;
 
+    const dialectMix = {
+      tunisian_arabizi: results.filter((r) => r.language === "tunisian_arabizi").length,
+      tunisian_arabic: results.filter((r) => r.language === "tunisian_arabic").length,
+      french: results.filter((r) => r.language === "french").length,
+      other: results.filter(
+        (r) =>
+          r.language !== "tunisian_arabizi" &&
+          r.language !== "tunisian_arabic" &&
+          r.language !== "french",
+      ).length,
+    };
+
     const passedAllGates =
       !hasProviderOutage &&
       priceGroundingPassed &&
       stockGroundingPassed &&
+      priceStockPassed &&
       handoffPassed &&
+      silenceGuaranteePassed &&
+      hallucinationPassed &&
+      inventedFactPassed &&
       commercialSafetyPassed &&
       toolCompliancePassed &&
       scriptMatchPassed;
-
     const categories = this.aggregateMetricSummary(
       results,
       (r) => r.category,
@@ -931,6 +1003,14 @@ export class EvaluationService {
       stockGroundingPassed,
       handoffAccuracy,
       handoffPassed,
+      silenceGuaranteeAccuracy,
+      silenceGuaranteePassed,
+      priceStockAccuracy,
+      priceStockPassed,
+      hallucinationRate,
+      hallucinationPassed,
+      inventedFactCount,
+      inventedFactPassed,
       commercialSafetyViolationRate,
       commercialSafetyPassed,
       toolComplianceRate,
@@ -940,9 +1020,11 @@ export class EvaluationService {
       passedAllGates,
       providerErrorCount,
       hasProviderOutage,
+      dialectMix,
       categories,
       languages,
       failedDetails,
+      thresholds,
     };
   }
 

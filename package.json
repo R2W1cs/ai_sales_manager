@@ -35,7 +35,7 @@
     "check:full": "pnpm check && pnpm test",
     "check:ci": "pnpm check:full && pnpm build",
     "bench": "node scripts/bench-http.mjs",
-    "eval:golden": "pnpm --filter @app/api eval:golden",
+    "eval:golden": "node scripts/eval/run-golden.mjs",
     "eval:bench": "pnpm --filter @app/api eval:bench",
     "eval:bench:live": "pnpm --filter @app/api eval:bench:live",
     "test": "pnpm -r --if-present test",

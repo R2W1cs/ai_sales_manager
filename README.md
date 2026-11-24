@@ -38,6 +38,7 @@ Academic delivery artifacts (docs, demo video, defense deck, testing PDF) remain
 | Design & architecture             | [`docs/03-design/`](docs/03-design/)                                                                             |
 | INPDP / Law 2004-63 legal pack    | [`docs/50_legal/`](docs/50_legal/) · [`/privacy`](apps/web/src/app/privacy) · [`/terms`](apps/web/src/app/terms) |
 | Meta App Review / Business Verify | [`docs/30_execution/META_APP_REVIEW_CHECKLIST.md`](docs/30_execution/META_APP_REVIEW_CHECKLIST.md)               |
+| Golden Derja/French AI eval       | [`docs/30_execution/GOLDEN_EVAL_BENCHMARK.md`](docs/30_execution/GOLDEN_EVAL_BENCHMARK.md) · `pnpm eval:golden`  |
 
 ---
 
