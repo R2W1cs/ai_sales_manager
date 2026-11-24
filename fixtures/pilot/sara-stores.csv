@@ -1,0 +1,23 @@
+sku,name,description,price_tnd,stock,size,color,category
+SARA-ROBE-001-S,Robe soirée satin,Robe longue satin pour soirées,189.000,8,S,Noir,Robes
+SARA-ROBE-001-M,Robe soirée satin,Robe longue satin pour soirées,189.000,12,M,Noir,Robes
+SARA-ROBE-001-L,Robe soirée satin,Robe longue satin pour soirées,189.000,6,L,Noir,Robes
+SARA-HOOD-002-M,Hoodie oversized,Hoodie coton oversized street,79.900,15,M,Beige,Hauts
+SARA-HOOD-002-L,Hoodie oversized,Hoodie coton oversized street,79.900,10,L,Beige,Hauts
+SARA-PANT-003-38,Pantalon large,Pantalon wide-leg taille haute,99.000,9,38,Noir,Bas
+SARA-PANT-003-40,Pantalon large,Pantalon wide-leg taille haute,99.000,11,40,Noir,Bas
+SARA-SAC-004,Sac bandoulière,Sac synthétique quotidien,59.500,20,,Camel,Accessoires
+SARA-ROBE-005-M,Robe lin été,Robe lin légère été,129.000,7,M,Blanc,Robes
+SARA-ROBE-005-L,Robe lin été,Robe lin légère été,129.000,5,L,Blanc,Robes
+SARA-VEST-006-S,Veste denim,Veste jean oversize,149.000,4,S,Bleu,Vestes
+SARA-VEST-006-M,Veste denim,Veste jean oversize,149.000,6,M,Bleu,Vestes
+SARA-JUPE-007-S,Jupe plissée,Jupe midi plissée,69.900,8,S,Rose,Bas
+SARA-JUPE-007-M,Jupe plissée,Jupe midi plissée,69.900,9,M,Rose,Bas
+SARA-TOP-008-M,Crop top côtelé,Top côtelé manches longues,39.900,18,M,Blanc,Hauts
+SARA-TOP-008-L,Crop top côtelé,Top côtelé manches longues,39.900,14,L,Blanc,Hauts
+SARA-CHEM-009-M,Chemise fluide,Chemise fluide bureau,89.000,10,M,Vert,Hauts
+SARA-CHEM-009-L,Chemise fluide,Chemise fluide bureau,89.000,8,L,Vert,Hauts
+SARA-BASK-010-39,Baskets blanches,Baskets cuir blanc,159.000,5,39,Blanc,Chaussures
+SARA-BASK-010-40,Baskets blanches,Baskets cuir blanc,159.000,7,40,Blanc,Chaussures
+SARA-CEIN-011,Ceinture fine,Ceinture cuir fine,29.900,25,,Noir,Accessoires
+SARA-ECHA-012,Écharpe laine,Écharpe laine douce,49.000,12,,Gris,Accessoires

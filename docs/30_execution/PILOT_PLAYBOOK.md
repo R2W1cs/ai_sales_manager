@@ -60,3 +60,12 @@ Copy into a sheet per merchant:
 ## Tracking
 
 Target exit: **3 design partners live**, ≥1 confirming orders weekly, first paid month from ≥1 shop.
+
+### Commercial launch gate (course / product bar)
+
+See [`PILOT_GATE_TRACKER.md`](./PILOT_GATE_TRACKER.md).
+
+- Seed three verticals locally: `pnpm db:seed` then `pnpm pilot:seed`
+- Measure interactions: `pnpm pilot:report` (requires ≥**20** inbound messages per merchant, IG+Messenger `active`, ≥1 confirmed COD order, 0 critical failures)
+- Live Meta proof: [`META_LIVE_LOOP.md`](./META_LIVE_LOOP.md)
+- GitHub process (branches / failing CI / bugfix): [`GITHUB_COMPANY_WORKFLOW.md`](./GITHUB_COMPANY_WORKFLOW.md)

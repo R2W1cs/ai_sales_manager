@@ -1,0 +1,23 @@
+sku,name,description,price_tnd,stock,size,color,category
+TPL-ECH-001-USB,Écouteurs USB-C,Écouteurs filaires USB-C,29.900,40,,Noir,Audio
+TPL-ECH-001-3.5,Écouteurs jack 3.5,Écouteurs filaires jack 3.5,24.900,35,,Noir,Audio
+TPL-BT-002,Enceinte Bluetooth,Enceinte portable Bluetooth,79.000,15,,Bleu,Audio
+TPL-CHG-003-20W,Chargeur 20W,Chargeur mural USB-C 20W,39.900,28,,Blanc,Charge
+TPL-CHG-003-65W,Chargeur 65W,Chargeur GaN USB-C 65W,99.000,12,,Noir,Charge
+TPL-CAB-004-1M,Câble USB-C 1m,Câble USB-C tressé 1m,14.900,50,1m,Noir,Câbles
+TPL-CAB-004-2M,Câble USB-C 2m,Câble USB-C tressé 2m,19.900,40,2m,Noir,Câbles
+TPL-POW-005-10000,Powerbank 10000mAh,Batterie externe 10000mAh,69.900,18,10000mAh,Noir,Power
+TPL-POW-005-20000,Powerbank 20000mAh,Batterie externe 20000mAh,99.900,10,20000mAh,Noir,Power
+TPL-SUP-006,Support téléphone,Support bureau réglable,24.500,22,,Gris,Accessoires
+TPL-ETU-007-14,Étui téléphone 14,Coque silicone modèle 14,19.900,30,,Transparent,Protection
+TPL-ETU-007-15,Étui téléphone 15,Coque silicone modèle 15,19.900,26,,Transparent,Protection
+TPL-VER-008-14,Verre trempé 14,Protection écran modèle 14,12.900,45,,Transparent,Protection
+TPL-VER-008-15,Verre trempé 15,Protection écran modèle 15,12.900,42,,Transparent,Protection
+TPL-SOUR-009,Souris sans fil,Souris optique sans fil,34.900,20,,Noir,PC
+TPL-CLAV-010,Clavier compact,Clavier compact USB,49.900,14,,Noir,PC
+TPL-HUB-011,Hub USB-C 5-en-1,Hub USB-C HDMI + USB,89.000,9,,Gris,PC
+TPL-LED-012,Lampe LED bureau,Lampe LED bureau USB,44.900,16,,Blanc,Maison
+TPL-CARD-013,Lecteur carte SD,Lecteur USB-C carte SD,17.900,25,,Noir,Stockage
+TPL-SSD-014-512,SSD externe 512Go,SSD portable USB-C 512Go,189.000,6,512Go,Argent,Stockage
+TPL-SSD-014-1T,SSD externe 1To,SSD portable USB-C 1To,279.000,4,1To,Argent,Stockage
+TPL-CAM-015,Webcam HD,Webcam Full HD 1080p,119.000,8,,Noir,PC

@@ -18,3 +18,4 @@ export * from "./customers";
 export * from "./notifications";
 export * from "./billing";
 export * from "./analytics";
+export * from "./pilot";
