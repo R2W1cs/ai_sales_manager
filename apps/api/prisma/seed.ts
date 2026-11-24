@@ -638,9 +638,9 @@ async function main() {
         aggressiveness: "medium",
       },
       greeting_template:
-        "Bonjour ! Bienvenue chez Maison Alyssa Tunis 🌸 Comment puis-je vous sublimer aujourd'hui ?",
+        "Bonjour ! Je suis l'assistant de vente automatisé de Maison Alyssa Tunis. Je peux vous aider sur les produits, les prix (TND) et le stock. Pour parler à un conseiller humain, écrivez « agent » ou « humain ».",
       fallback_template:
-        "Je consulte immédiatement un conseiller de notre équipe pour vous assister au mieux. Un instant svp.",
+        "Je transfère votre demande à un conseiller humain de Maison Alyssa. Un instant s'il vous plaît.",
     },
     create: {
       business_id: demoBusiness.id,
@@ -656,9 +656,9 @@ async function main() {
         aggressiveness: "medium",
       },
       greeting_template:
-        "Bonjour ! Bienvenue chez Maison Alyssa Tunis 🌸 Comment puis-je vous sublimer aujourd'hui ?",
+        "Bonjour ! Je suis l'assistant de vente automatisé de Maison Alyssa Tunis. Je peux vous aider sur les produits, les prix (TND) et le stock. Pour parler à un conseiller humain, écrivez « agent » ou « humain ».",
       fallback_template:
-        "Je consulte immédiatement un conseiller de notre équipe pour vous assister au mieux. Un instant svp.",
+        "Je transfère votre demande à un conseiller humain de Maison Alyssa. Un instant s'il vous plaît.",
     },
   });
 

@@ -125,6 +125,10 @@ export class BusinessesService {
           language: dto.defaultLanguage ?? "ar",
           confidence_threshold: 0.65,
           enabled: true,
+          greeting_template:
+            "3aslema! Ena l'assistant automatique mte3 el boutique. Najem n3awnek 3al produits, el soum (TND) w el stock. Bech ta7ki m3a agent humain, ekteb « agent » wala « humain ».",
+          fallback_template:
+            "Tawa n7awel el conversation l conseiller humain mte3 el boutique. Wa7da sgheira.",
         },
       });
 

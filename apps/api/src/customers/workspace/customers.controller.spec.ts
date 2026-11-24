@@ -9,6 +9,7 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import type { AuditService } from "../../businesses";
 import { PERMISSIONS_KEY } from "../../platform/security/permissions";
 import type { UpdateCustomerDto } from "../dto/update-customer.dto";
+import type { EraseService } from "../erase/erase.service";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
 
@@ -56,12 +57,18 @@ describe("CustomersController", () => {
         prismaMock as unknown as PrismaClient,
         auditServiceMock as unknown as AuditService,
       ),
+      { eraseCustomer: jest.fn().mockResolvedValue(undefined) } as unknown as EraseService,
     );
   });
 
   it("requires inbox.read permission", () => {
     const handler = Reflect.get(CustomersController.prototype, "getCustomer") as object;
     expect(Reflect.getMetadata(PERMISSIONS_KEY, handler)).toEqual(["inbox.read"]);
+  });
+
+  it("requires customers.erase permission for erase endpoint", () => {
+    const handler = Reflect.get(CustomersController.prototype, "eraseCustomer") as object;
+    expect(Reflect.getMetadata(PERMISSIONS_KEY, handler)).toEqual(["customers.erase"]);
   });
 
   it("returns a unified tenant-scoped profile with identities and order history", async () => {

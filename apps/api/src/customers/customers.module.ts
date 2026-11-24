@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { BusinessesModule } from "../businesses";
+import { EraseService } from "./erase/erase.service";
 import { IdentityResolverService } from "./identity/identity-resolver.service";
 import { MergeController } from "./identity/merge.controller";
 import { MergeService } from "./identity/merge.service";
@@ -14,6 +15,7 @@ import { CustomersService } from "./workspace/customers.service";
   controllers: [CustomersController, MergeController],
   providers: [
     CustomersService,
+    EraseService,
     IdentityResolverService,
     MergeService,
     LifecycleService,
@@ -21,6 +23,7 @@ import { CustomersService } from "./workspace/customers.service";
   ],
   exports: [
     CustomersService,
+    EraseService,
     IdentityResolverService,
     MergeService,
     LifecycleService,
