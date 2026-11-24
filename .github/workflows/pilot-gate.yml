@@ -1,0 +1,24 @@
+name: Pilot launch gate
+
+on:
+  push:
+    paths:
+      - "fixtures/pilot/**"
+      - "scripts/pilot/**"
+      - "packages/shared/src/pilot/**"
+      - ".github/workflows/pilot-gate.yml"
+  pull_request:
+    paths:
+      - "fixtures/pilot/**"
+      - "scripts/pilot/**"
+      - "packages/shared/src/pilot/**"
+      - ".github/workflows/pilot-gate.yml"
+
+jobs:
+  validate-fixtures:
+    name: Pilot fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Tunisia pilot CSV fixtures
+        run: node scripts/pilot/validate-fixtures.mjs

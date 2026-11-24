@@ -1,0 +1,22 @@
+sku,name,description,price_tnd,stock,size,color,category
+AZA-SER-001-30,Sérum vitamine C,Sérum éclat vitamine C 30ml,74.900,20,30ml,,Soins
+AZA-SER-001-50,Sérum vitamine C,Sérum éclat vitamine C 50ml,99.900,12,50ml,,Soins
+AZA-CREM-002,Crème hydratante,Crème visage hydratante jour,59.000,18,,Blanc,Soins
+AZA-NET-003,Gel nettoyant,Gel nettoyant doux,34.500,25,,Transparent,Soins
+AZA-MASQ-004,Masque argile,Masque argile purifiant,29.900,22,,Vert,Soins
+AZA-LVR-005-Nude,Rouge à lèvres mat,Rouge mat longue tenue,24.900,30,,Nude,Maquillage
+AZA-LVR-005-Rose,Rouge à lèvres mat,Rouge mat longue tenue,24.900,28,,Rose,Maquillage
+AZA-LVR-005-Rouge,Rouge à lèvres mat,Rouge mat longue tenue,24.900,15,,Rouge,Maquillage
+AZA-MSK-006,Mascara volume,Mascara volume waterproof,27.500,35,,Noir,Maquillage
+AZA-PAL-007,Palette nude,Palette ombres nude 9 teintes,49.900,14,,Nude,Maquillage
+AZA-SPF-008,Crème solaire SPF50,Protection solaire visage,45.000,16,,Blanc,Soins
+AZA-TON-009,Toner rose,Toner eau de rose,32.000,20,,Rose,Soins
+AZA-HUI-010,Huile argan,Huile argan pure 50ml,54.900,10,50ml,,Ambre,Soins
+AZA-BRU-011,Brush set,Set 5 pinceaux maquillage,39.900,18,,,Outils
+AZA-PAR-012,Parfum floral 50ml,Eau de parfum florale,89.000,8,50ml,,Parfums
+AZA-BAIN-013,Savon artisanal,Savon artisanal lavande,12.900,40,,Lavande,Corps
+AZA-LOT-014,Lotion corps,Lotion hydratante corps,28.500,22,,Blanc,Corps
+AZA-KIT-015,Kit découverte,Kit découverte 4 miniatures,64.900,9,,,Kits
+AZA-EYE-016,Contour des yeux,Crème contour des yeux,42.000,15,,Blanc,Soins
+AZA-BB-017-Claire,BB crème,BB crème teinte claire,36.900,11,,Claire,Maquillage
+AZA-BB-017-Medium,BB crème,BB crème teinte medium,36.900,13,,Medium,Maquillage
