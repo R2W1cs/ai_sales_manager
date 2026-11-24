@@ -198,4 +198,16 @@ Meta app setting **Deauthorize Callback URL**: `https://hooks.<apex>/api/v1/webh
 
 Body is `signed_request`: `base64url(sig).base64url(payload)`. HMAC-SHA256 of the payload with **`META_APP_SECRET`**, timing-safe compare to `sig`. Payload JSON includes `user_id`. Invalid → **401**, no row. Valid → §4.3 (deauthorize row). **200** after persist/enqueue per that table. Do **not** run this through `ChannelAdapter.mapInbound`. Do not parse `signed_request` on `POST /webhooks/meta`.
 
+### 4.6 Data Deletion Request callback (Meta App Review)
+
+Meta app setting **Data Deletion Request URL**: `https://hooks.<apex>/api/v1/webhooks/meta/data-deletion`.
+
+Same `signed_request` crypto as §4.5. Valid → persist `integration_events` with `external_event_id=meta_data_deletion_{confirmation_code}`, enqueue lifecycle cleanup when a `channel_account` matches, respond **200** JSON:
+
+```json
+{ "url": "https://<apex>/data-deletion?code={confirmation_code}", "confirmation_code": "…" }
+```
+
+Public status: `GET /api/v1/webhooks/meta/data-deletion-status?code=` and web page `/data-deletion`. Invalid signature → **401**.
+
 ---

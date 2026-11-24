@@ -86,6 +86,9 @@ export default function Home() {
         <Link href={"/terms" as Route} className="underline-offset-4 hover:underline">
           Terms
         </Link>
+        <Link href={"/data-deletion" as Route} className="underline-offset-4 hover:underline">
+          Data deletion
+        </Link>
       </footer>
     </div>
   );

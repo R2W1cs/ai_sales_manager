@@ -77,4 +77,29 @@ export class WebhooksController {
     const signedRequest = extractSignedRequest(body);
     return this.webhooksService.handleDeauthorize(signedRequest, req.headers);
   }
+
+  /**
+   * Meta App Dashboard → Data Deletion Request Callback URL.
+   * Body: signed_request (same crypto as deauthorize). Response: { url, confirmation_code }.
+   */
+  @Post(["webhooks/meta/data-deletion", "api/v1/webhooks/meta/data-deletion"])
+  @HttpCode(HttpStatus.OK)
+  async handleDataDeletion(
+    @Body() body: DeauthorizeBody | string,
+    @Req() req: RawBodyRequest,
+  ): Promise<{ url: string; confirmation_code: string }> {
+    const signedRequest = extractSignedRequest(body);
+    return this.webhooksService.handleDataDeletion(signedRequest, req.headers);
+  }
+
+  /** Public JSON status for Meta data-deletion confirmation pages. */
+  @Get(["webhooks/meta/data-deletion-status", "api/v1/webhooks/meta/data-deletion-status"])
+  @HttpCode(HttpStatus.OK)
+  async getDataDeletionStatus(@Query("code") code: string): Promise<{
+    confirmation_code: string;
+    status: "pending" | "completed" | "not_found";
+    requested_at: string | null;
+  }> {
+    return this.webhooksService.getDataDeletionStatus(code);
+  }
 }

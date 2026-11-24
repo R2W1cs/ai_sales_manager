@@ -8,13 +8,19 @@ Prove the launch-gate chain on a real thread before scaling pilots.
 - Meta app with Instagram + Messenger products
 - `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_SECRET` set in production
 - Business Page + Instagram professional account linked
+- App Review + Business Verification: [`META_APP_REVIEW_CHECKLIST.md`](./META_APP_REVIEW_CHECKLIST.md), [`META_BUSINESS_VERIFICATION_CHECKLIST.md`](./META_BUSINESS_VERIFICATION_CHECKLIST.md)
 
 ## Webhook setup
 
 1. Callback URL: `https://<API_DOMAIN>/api/v1/webhooks/meta`
 2. Verify token: same as `META_WEBHOOK_SECRET`
 3. Subscribe: `messages`, `messaging_postbacks`, `message_deliveries`, `message_reads` (as available)
-4. Run: `node scripts/meta/verify-webhook.mjs` against staging/prod
+4. Deauthorize: `/api/v1/webhooks/meta/deauthorize`
+5. Data Deletion: `/api/v1/webhooks/meta/data-deletion`
+6. Verify:
+   - `pnpm meta:verify-webhook`
+   - `pnpm meta:verify-webhook-hmac` (p95 &lt; 500ms)
+   - `pnpm meta:verify-data-deletion`
 
 ## E2E proof (must complete once personally)
 
