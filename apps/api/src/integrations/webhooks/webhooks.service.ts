@@ -468,6 +468,116 @@ export class WebhooksService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Meta App Dashboard → Data Deletion Request Callback.
+   * Verifies signed_request with META_APP_SECRET and returns Meta's required JSON:
+   * `{ url, confirmation_code }` (status page is PUBLIC_APP_URL/data-deletion?code=...).
+   */
+  async handleDataDeletion(
+    signedRequest?: string,
+    headers?: Record<string, unknown>,
+  ): Promise<{ url: string; confirmation_code: string }> {
+    if (!signedRequest) {
+      throw new UnauthorizedException({
+        error: {
+          code: "webhook_invalid_signature",
+          message: "Missing signed_request in data-deletion payload",
+        },
+      });
+    }
+
+    const appSecret = env.META_APP_SECRET ?? "";
+    const parsed = this.parseSignedRequest(signedRequest, appSecret);
+    if (!parsed?.user_id) {
+      throw new UnauthorizedException({
+        error: {
+          code: "webhook_invalid_signature",
+          message: "Invalid signed_request signature or payload",
+        },
+      });
+    }
+
+    const confirmationCode = crypto.randomBytes(16).toString("hex");
+    const userId = parsed.user_id;
+    const externalEventId = `meta_data_deletion_${confirmationCode}`;
+    const statusUrl = `${env.PUBLIC_APP_URL.replace(/\/$/, "")}/data-deletion?code=${confirmationCode}`;
+
+    const channelAccount = await this.prisma.channelAccount.findFirst({
+      where: {
+        OR: [{ authorized_meta_user_id: userId }, { external_account_id: userId }],
+      },
+    });
+
+    const payload: Prisma.InputJsonValue = {
+      ...parsed,
+      confirmation_code: confirmationCode,
+      deletion_status: "pending",
+      status_url: statusUrl,
+    };
+
+    const event = await this.prisma.integrationEvent.create({
+      data: {
+        business_id: channelAccount?.business_id ?? null,
+        channel_account_id: channelAccount?.id ?? null,
+        provider: "meta",
+        external_event_id: externalEventId,
+        payload,
+        headers: headers ? (headers as unknown as Prisma.InputJsonValue) : undefined,
+        signature_valid: true,
+        // Keep null so worker can run lifecycle cleanup when an account matches;
+        // unknown user still gets a durable confirmation row with immediate completion.
+        processed_at: channelAccount ? null : new Date(),
+      },
+    });
+
+    if (channelAccount) {
+      await this.enqueueWebhookJob(event.id);
+    }
+
+    return { url: statusUrl, confirmation_code: confirmationCode };
+  }
+
+  /**
+   * Public status lookup for Meta Data Deletion confirmation pages.
+   */
+  async getDataDeletionStatus(confirmationCode: string): Promise<{
+    confirmation_code: string;
+    status: "pending" | "completed" | "not_found";
+    requested_at: string | null;
+  }> {
+    const code = confirmationCode?.trim();
+    if (!code || !/^[a-f0-9]{16,64}$/i.test(code)) {
+      return { confirmation_code: code || "", status: "not_found", requested_at: null };
+    }
+
+    const event = await this.prisma.integrationEvent.findFirst({
+      where: {
+        provider: "meta",
+        external_event_id: `meta_data_deletion_${code}`,
+      },
+      select: { payload: true, processed_at: true, created_at: true },
+    });
+
+    if (!event) {
+      return { confirmation_code: code, status: "not_found", requested_at: null };
+    }
+
+    const payload =
+      event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
+        ? (event.payload as Record<string, unknown>)
+        : {};
+    const explicit =
+      payload.deletion_status === "completed" || payload.deletion_status === "pending"
+        ? payload.deletion_status
+        : null;
+
+    return {
+      confirmation_code: code,
+      status: explicit ?? (event.processed_at ? "completed" : "pending"),
+      requested_at: event.created_at.toISOString(),
+    };
+  }
+
+  /**
    * Helper parsing and verifying Meta signed_request.
    */
   private parseSignedRequest(signedRequest: string, secret: string): DeauthorizePayload | null {

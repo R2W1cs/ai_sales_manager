@@ -773,4 +773,53 @@ describe("Meta Webhooks ingestion & raw payload persistence (T-INT-02)", () => {
       expect(mockPrisma.integrationEvent.create).not.toHaveBeenCalled();
     });
   });
+
+  describe("6. Meta Data Deletion Callback", () => {
+    it("returns confirmation_code + status url for a valid signed_request", async () => {
+      const payload = {
+        user_id: "meta_user_999",
+        algorithm: "HMAC-SHA256",
+        issued_at: 1700000000,
+      };
+      const signedRequest = createSignedRequest(payload);
+      const req: Partial<RawBodyRequest> = {
+        headers: {},
+        body: { signed_request: signedRequest },
+      };
+
+      const res = await controller.handleDataDeletion(
+        { signed_request: signedRequest },
+        req as RawBodyRequest,
+      );
+
+      expect(res.confirmation_code).toMatch(/^[a-f0-9]{32}$/i);
+      expect(res.url).toContain(`/data-deletion?code=${res.confirmation_code}`);
+      expect(mockPrisma.integrationEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            business_id: "biz-1",
+            provider: "meta",
+            external_event_id: `meta_data_deletion_${res.confirmation_code}`,
+            signature_valid: true,
+            processed_at: null,
+          }),
+        }),
+      );
+      expect(mockQueue.add).toHaveBeenCalled();
+
+      const status = await controller.getDataDeletionStatus(res.confirmation_code);
+      expect(status.status).toBe("pending");
+      expect(status.confirmation_code).toBe(res.confirmation_code);
+    });
+
+    it("rejects invalid data-deletion signed_request with 401", async () => {
+      const signedRequest = createSignedRequest({ user_id: "meta_user_999" }, "wrong-secret");
+      await expect(
+        controller.handleDataDeletion({ signed_request: signedRequest }, {
+          headers: {},
+          body: { signed_request: signedRequest },
+        } as RawBodyRequest),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
 });

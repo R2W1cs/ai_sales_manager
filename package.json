@@ -44,6 +44,8 @@
     "fix": "pnpm lint:fix && pnpm format:fix",
     "prepare": "husky",
     "meta:verify-webhook": "node scripts/meta/verify-webhook.mjs",
+    "meta:verify-webhook-hmac": "node scripts/meta/verify-webhook-hmac.mjs",
+    "meta:verify-data-deletion": "node scripts/meta/verify-data-deletion.mjs",
     "meta:handoff-smoke": "node scripts/meta/e2e-handoff-smoke.mjs",
     "pilot:seed": "pnpm --filter @app/api exec tsx prisma/seed-pilot-partners.ts",
     "pilot:report": "pnpm --filter @app/api exec node ../../scripts/pilot/interaction-report.mjs",

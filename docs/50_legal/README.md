@@ -10,5 +10,6 @@ Course / production artifacts for Tunisian conversational social commerce under 
 | [`INPDP_FILING_CHECKLIST.md`](./INPDP_FILING_CHECKLIST.md) | Formal dossier checklist (**no invented filing IDs**) |
 | [`RETENTION_POLICY.md`](./RETENTION_POLICY.md)             | Retention + erase SOP                                 |
 
-Public pages: `/privacy`, `/terms`.  
-Erase API: `POST /api/v1/customers/:id/erase`. Ops: `pnpm privacy:erase`.
+Public pages: `/privacy`, `/terms`, `/data-deletion`.  
+Erase API: `POST /api/v1/customers/:id/erase`. Ops: `pnpm privacy:erase`.  
+Meta App Review / Business Verification: [`docs/30_execution/META_APP_REVIEW_CHECKLIST.md`](../30_execution/META_APP_REVIEW_CHECKLIST.md).
