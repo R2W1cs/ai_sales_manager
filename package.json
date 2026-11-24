@@ -46,7 +46,7 @@
     "meta:verify-webhook": "node scripts/meta/verify-webhook.mjs",
     "meta:handoff-smoke": "node scripts/meta/e2e-handoff-smoke.mjs",
     "pilot:seed": "pnpm --filter @app/api exec tsx prisma/seed-pilot-partners.ts",
-    "pilot:report": "node scripts/pilot/interaction-report.mjs",
+    "pilot:report": "pnpm --filter @app/api exec node ../../scripts/pilot/interaction-report.mjs",
     "pilot:validate-fixtures": "node scripts/pilot/validate-fixtures.mjs",
     "deploy:prod": "bash scripts/deploy-vps.sh"
   },
