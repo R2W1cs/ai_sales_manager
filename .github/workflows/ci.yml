@@ -136,7 +136,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: "pnpm"
+          # No cache: this job does not run `pnpm install`, only `pnpm audit`.
 
       - name: Run vulnerability audit (NFR-SEC-08)
         run: pnpm audit --audit-level=high
