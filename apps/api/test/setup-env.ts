@@ -16,4 +16,6 @@ process.env.S3_BUCKET = process.env.S3_BUCKET || "ai-sales-assets";
 process.env.AWS_REGION = process.env.AWS_REGION || "eu-west-3";
 process.env.META_GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v23.0";
 delete process.env.AI_GATEWAY_API_KEY;
+delete process.env.GROQ_API_KEY;
+delete process.env.ORCA_API_KEY;
 delete process.env.RESEND_API_KEY;
